@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+:root {
+  --bg: 12 12 14;
+  --surface: 20 20 24;
+  --card: 26 27 32;
+  --text: 237 238 240;
+  --muted: 160 174 192;
+  --accent: 251 146 60; /* orange-400 */
+  --glow: 249 115 22; /* orange-500 */
+}
+
+.dark {
+  --bg: 10 10 12;
+  --surface: 18 19 23;
+  --card: 22 23 28;
+  --text: 240 241 245;
+  --muted: 148 163 184;
+  --accent: 251 146 60;
+  --glow: 234 88 12; /* orange-600 */
+}
+
+@layer utilities {
+  .bg-dashboard {
+    background: radial-gradient(
+        800px 260px at 35% -10%,
+        rgba(var(--glow) / 0.2),
+        transparent 60%
+      ),
+      radial-gradient(
+        700px 240px at 85% -20%,
+        rgba(var(--accent) / 0.16),
+        transparent 60%
+      ),
+      linear-gradient(rgb(6 8 12), rgb(var(--bg)));
+  }
+
+  .card-glass {
+    @apply relative rounded-2xl bg-[rgb(var(--card))]/65 backdrop-blur-md border border-white/10;
+    box-shadow: 0 1px 1px rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.45);
+    transition: box-shadow 150ms ease;
+  }
+  .card-inner-ring::after {
+    content: "";
+    @apply pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10;
+  }
+
+  .neon-glow {
+    background: radial-gradient(
+        60% 140% at 10% -20%,
+        rgba(var(--glow) / 0.35),
+        transparent 60%
+      ),
+      radial-gradient(
+        40% 100% at 90% -10%,
+        rgba(var(--accent) / 0.25),
+        transparent 60%
+      );
+  }
+
+  .btn-neon {
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium text-white bg-[rgb(var(--glow))] transition;
+    box-shadow: 0 0 20px rgba(var(--glow)/.45);
+  }
+  .btn-neon:hover { box-shadow: 0 0 28px rgba(var(--glow)/.65); }
+
+  .segmented {
+    @apply inline-flex items-center rounded-2xl bg-white/5 border border-white/10 p-1 backdrop-blur;
+  }
+  .segmented-item {
+    @apply px-3 py-1.5 rounded-xl text-sm text-white/80 hover:text-white transition;
+  }
+  .segmented-item--active { @apply bg-white/10; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -1px 0 rgba(0,0,0,.35) }
+}
