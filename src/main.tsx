@@ -8,6 +8,8 @@ import Home from "./pages/Home.tsx";
 import Calculators from "./pages/Calculators.tsx";
 import RecipeBuilder from "./pages/RecipeBuilder.tsx";
 
+const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -18,7 +20,7 @@ const router = createBrowserRouter([
       { path: "recipes", element: <RecipeBuilder /> },
     ],
   },
-]);
+], { basename });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
