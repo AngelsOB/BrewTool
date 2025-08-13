@@ -1,4 +1,5 @@
 import CalculatorCard from "../components/CalculatorCard";
+import AbvCalculator from "../components/AbvCalculator";
 
 export default function Calculators() {
   return (
@@ -10,9 +11,9 @@ export default function Calculators() {
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <CalculatorCard title="ABV">
-          <div className="text-sm text-white/70">Coming next.</div>
-        </CalculatorCard>
+        <div id="abv">
+          <AbvCalculator />
+        </div>
         <CalculatorCard title="IBU">
           <div className="text-sm text-white/70">Coming next.</div>
         </CalculatorCard>

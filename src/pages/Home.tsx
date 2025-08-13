@@ -44,7 +44,7 @@ export default function Home() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link
-          to="/calculators"
+          to="/calculators#abv"
           className="card-glass card-inner-ring p-5 neon-glow"
         >
           <div className="flex items-start justify-between gap-3">
