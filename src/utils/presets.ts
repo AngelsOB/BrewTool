@@ -12,6 +12,12 @@ export type HopPreset = {
   category?: string; // Optional category, e.g., "US Hops", "Noble Hops", "New Zealand Hops"
 };
 
+export type YeastPreset = {
+  name: string;
+  attenuationPercent?: number;
+  category: string; // e.g., "Escarpment Labs", "Wyeast", "Fermentis"
+};
+
 export const GRAIN_PRESETS: GrainPreset[] = [
   { name: "Pilsner Malt", colorLovibond: 1.5, yield: 0.8 },
   { name: "Pale Malt (2-Row)", colorLovibond: 2, yield: 0.78 },
@@ -152,8 +158,47 @@ export const HOP_PRESETS: HopPreset[] = [
   { name: "Taurus", alphaAcidPercent: 15, category: "German Hops" },
 ];
 
+export const YEAST_PRESETS: YeastPreset[] = [
+  // Escarpment Labs
+  { name: "Foggy London Ale", category: "Escarpment Labs", attenuationPercent: 0.75 },
+  { name: "Vermont Ale", category: "Escarpment Labs", attenuationPercent: 0.78 },
+  { name: "Kölsch", category: "Escarpment Labs", attenuationPercent: 0.78 },
+  { name: "California Ale", category: "Escarpment Labs", attenuationPercent: 0.78 },
+  { name: "Old World Saison", category: "Escarpment Labs", attenuationPercent: 0.85 },
+  { name: "Cry Havoc", category: "Escarpment Labs", attenuationPercent: 0.8 },
+  { name: "Brett Brux", category: "Escarpment Labs", attenuationPercent: 0.85 },
+
+  // Wyeast
+  { name: "1056 American Ale", category: "Wyeast", attenuationPercent: 0.77 },
+  { name: "1318 London Ale III", category: "Wyeast", attenuationPercent: 0.75 },
+  { name: "1084 Irish Ale", category: "Wyeast", attenuationPercent: 0.75 },
+  { name: "1968 London ESB Ale", category: "Wyeast", attenuationPercent: 0.73 },
+  { name: "2565 Kölsch", category: "Wyeast", attenuationPercent: 0.78 },
+  { name: "3711 French Saison", category: "Wyeast", attenuationPercent: 0.85 },
+  { name: "3787 Trappist High Gravity", category: "Wyeast", attenuationPercent: 0.8 },
+
+  // Fermentis (Standard Dry Yeasts)
+  { name: "SafAle US-05", category: "Fermentis", attenuationPercent: 0.78 },
+  { name: "SafAle S-04", category: "Fermentis", attenuationPercent: 0.75 },
+  { name: "SafLager W-34/70", category: "Fermentis", attenuationPercent: 0.82 },
+  { name: "SafCider", category: "Fermentis", attenuationPercent: 1.00 },
+  { name: "SafBrew WB-06", category: "Fermentis", attenuationPercent: 0.80 },
+  { name: "SafAle K-97", category: "Fermentis", attenuationPercent: 0.75 },
+
+  // Lallemand (Standard Dry Yeasts)
+  { name: "LalBrew Nottingham", category: "Lallemand", attenuationPercent: 0.75 },
+  { name: "LalBrew BRY-97 American West Coast Ale", category: "Lallemand", attenuationPercent: 0.78 },
+  { name: "LalBrew Belle Saison", category: "Lallemand", attenuationPercent: 0.85 },
+  { name: "LalBrew Voss Kveik", category: "Lallemand", attenuationPercent: 0.8 },
+
+  // Other Common Yeasts
+  { name: "Imperial Organic Yeast A07 Flagship", category: "Imperial Yeast", attenuationPercent: 0.78 },
+  { name: "Omega Yeast OYL-004 West Coast Ale I", category: "Omega Yeast", attenuationPercent: 0.78 },
+];
+
 const CUSTOM_GRAINS_KEY = "beerapp.customGrains";
 const CUSTOM_HOPS_KEY = "beerapp.customHops";
+const CUSTOM_YEASTS_KEY = "beerapp.customYeasts";
 
 export function getGrainPresets(): GrainPreset[] {
   const custom = loadJson<GrainPreset[]>(CUSTOM_GRAINS_KEY, []);
@@ -177,4 +222,16 @@ export function addCustomHop(p: HopPreset): HopPreset[] {
   const next = [...list.filter((x) => x.name !== p.name), p];
   saveJson(CUSTOM_HOPS_KEY, next);
   return [...HOP_PRESETS, ...next];
+}
+
+export function getYeastPresets(): YeastPreset[] {
+  const custom = loadJson<YeastPreset[]>(CUSTOM_YEASTS_KEY, []);
+  return [...YEAST_PRESETS, ...custom];
+}
+
+export function addCustomYeast(p: YeastPreset): YeastPreset[] {
+  const list = loadJson<YeastPreset[]>(CUSTOM_YEASTS_KEY, []);
+  const next = [...list.filter((x) => x.name !== p.name), p];
+  saveJson(CUSTOM_YEASTS_KEY, next);
+  return [...YEAST_PRESETS, ...next];
 }

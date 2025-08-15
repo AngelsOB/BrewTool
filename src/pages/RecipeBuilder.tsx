@@ -3,6 +3,8 @@ import {
   useRecipeStore,
   type GrainItem,
   type HopItem,
+  type HopTimingType,
+  type YeastItem,
 } from "../hooks/useRecipeStore";
 import {
   abvSimple,
@@ -12,6 +14,7 @@ import {
   srmMoreyFromMcu,
   srmToHex,
 } from "../utils/calculations";
+import { ibuTotal } from "../calculators/ibu";
 import {
   addCustomGrain,
   addCustomHop,
@@ -35,6 +38,10 @@ export default function RecipeBuilder() {
     },
   ]);
   const [hops, setHops] = useState<HopItem[]>([]);
+  const [yeast, setYeast] = useState<YeastItem>({
+    name: "SafAle US-05",
+    attenuationPercent: 0.78,
+  });
   const [showCustomGrainInput, setShowCustomGrainInput] = useState(false);
   const [showCustomHopInput, setShowCustomHopInput] = useState(false);
 
@@ -100,6 +107,21 @@ export default function RecipeBuilder() {
   );
   const color = useMemo(() => srmToHex(srm), [srm]);
 
+  const ibu = useMemo(
+    () =>
+      ibuTotal(
+        hops.map((h) => ({
+          weightGrams: h.grams,
+          alphaAcidPercent: h.alphaAcidPercent,
+          boilTimeMinutes: h.timeMin,
+          type: h.type,
+        })),
+        batchVolumeL,
+        og
+      ),
+    [hops, batchVolumeL, og]
+  );
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -123,6 +145,7 @@ export default function RecipeBuilder() {
               targetFG: fg,
               grains,
               hops,
+              yeast,
             })
           }
         >
@@ -189,12 +212,12 @@ export default function RecipeBuilder() {
       </section>
 
       {/* Sticky summary bar (glass + warm accent) */}
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/40 px-3 py-2 shadow-soft ring-1 ring-neutral-900/5 supports-[backdrop-filter]:bg-white/25">
+      <div className="sticky top-14 z-10 mx-auto max-w-6xl py-2 backdrop-blur-md">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/40 px-3 py-2 shadow-soft ring-1 ring-neutral-900/5 supports-[backdrop-filter]:bg-white/25">
           <div className="text-sm font-medium tracking-tight text-white/50">
             Recipe Summary
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
               <span className="text-neutral-600">OG</span>
               <span className="font-semibold tracking-tight text-neutral-900">
@@ -217,12 +240,37 @@ export default function RecipeBuilder() {
                 style={{ backgroundColor: color }}
               />
             </div>
+            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
+              <span className="text-neutral-600">IBU</span>
+              <span className="font-semibold tracking-tight text-neutral-900">
+                {ibu.toFixed(0)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       <section className="space-y-3">
-        <div className="font-medium">Grain Bill</div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="font-medium">Grain Bill</div>
+          <button
+            className="hidden sm:block btn-neon"
+            onClick={() =>
+              setGrains((gs) => [
+                ...gs,
+                {
+                  id: crypto.randomUUID(),
+                  name: "",
+                  weightKg: 0,
+                  colorLovibond: 2,
+                  yield: 0.75,
+                },
+              ])
+            }
+          >
+            + Add Grain
+          </button>
+        </div>
         <div className="hidden sm:grid grid-cols-4 gap-2 text-xs text-white/60">
           <div>Grain</div>
           <div>Weight (kg)</div>
@@ -234,7 +282,7 @@ export default function RecipeBuilder() {
             <label className="flex flex-col">
               <div className="text-xs text-white/60 mb-1 sm:hidden">Grain</div>
               <select
-                className="w-full rounded-md border px-2"
+                className="w-full rounded-md border px-2 py-2.5"
                 onChange={(e) => {
                   if (e.target.value === "__add_custom__") {
                     setShowCustomGrainInput(true);
@@ -377,7 +425,7 @@ export default function RecipeBuilder() {
           </div>
         ))}
         <button
-          className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-50"
+          className="block sm:hidden w-full btn-neon"
           onClick={() =>
             setGrains((gs) => [
               ...gs,
@@ -396,9 +444,30 @@ export default function RecipeBuilder() {
       </section>
 
       <section className="space-y-3">
-        <div className="font-medium">Hop Schedule</div>
-        <div className="hidden sm:grid grid-cols-4 gap-2 text-xs text-white/60">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="font-medium">Hop Schedule</div>
+          <button
+            className="hidden sm:block btn-neon"
+            onClick={() =>
+              setHops((hs) => [
+                ...hs,
+                {
+                  id: crypto.randomUUID(),
+                  name: "",
+                  grams: 0,
+                  alphaAcidPercent: 0,
+                  timeMin: 60,
+                  type: "boil", // Default to 'boil'
+                },
+              ])
+            }
+          >
+            + Add Hop
+          </button>
+        </div>
+        <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-white/60">
           <div>Hop</div>
+          <div>Type</div>
           <div>Grams</div>
           <div>Alpha %</div>
           <div>Time (min)</div>
@@ -406,12 +475,12 @@ export default function RecipeBuilder() {
         {hops.map((h, i) => (
           <div
             key={h.id ?? i}
-            className="grid grid-cols-1 sm:grid-cols-4 gap-2"
+            className="grid grid-cols-1 sm:grid-cols-5 gap-2"
           >
             <label className="flex flex-col">
               <div className="text-xs text-white/60 mb-1 sm:hidden">Hop</div>
               <select
-                className="w-full rounded-md border px-2"
+                className="w-full rounded-md border px-2 py-2.5"
                 onChange={(e) => {
                   if (e.target.value === "__add_custom__") {
                     setShowCustomHopInput(true);
@@ -431,7 +500,7 @@ export default function RecipeBuilder() {
                     setShowCustomHopInput(false);
                   }
                 }}
-                defaultValue=""
+                defaultValue={h.name}
               >
                 <option value="" disabled>
                   Hops...
@@ -448,6 +517,24 @@ export default function RecipeBuilder() {
                   )
                 )}
                 <option value="__add_custom__">+ Add Custom Hop</option>
+              </select>
+            </label>
+            <label className="flex flex-col">
+              <div className="text-xs text-white/60 mb-1 sm:hidden">Type</div>
+              <select
+                className="w-full rounded-md border px-2 py-2.5"
+                value={h.type}
+                onChange={(e) => {
+                  const c = [...hops];
+                  c[i] = { ...h, type: e.target.value as HopTimingType };
+                  setHops(c);
+                }}
+              >
+                <option value="boil">Boil</option>
+                <option value="dry hop">Dry Hop</option>
+                <option value="whirlpool">Whirlpool</option>
+                <option value="first wort">First Wort</option>
+                <option value="mash">Mash</option>
               </select>
             </label>
             {showCustomHopInput && (
@@ -542,7 +629,7 @@ export default function RecipeBuilder() {
           </div>
         ))}
         <button
-          className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-50"
+          className="block sm:hidden w-full btn-neon"
           onClick={() =>
             setHops((hs) => [
               ...hs,
@@ -552,6 +639,7 @@ export default function RecipeBuilder() {
                 grams: 0,
                 alphaAcidPercent: 0,
                 timeMin: 60,
+                type: "boil",
               },
             ])
           }

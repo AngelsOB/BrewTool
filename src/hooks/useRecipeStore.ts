@@ -9,6 +9,13 @@ export type GrainItem = {
   yield: number; // as a decimal, e.g., 0.75 for 75%
 };
 
+export type HopTimingType =
+  | "boil"
+  | "dry hop"
+  | "whirlpool"
+  | "first wort"
+  | "mash";
+
 export type HopItem = {
   id: string;
   name: string;
@@ -16,6 +23,7 @@ export type HopItem = {
   alphaAcidPercent: number; // %
   timeMin: number; // boil minutes
   category?: string; // Optional category, e.g., "US Hops", "Noble Hops", "New Zealand Hops"
+  type: HopTimingType;
 };
 
 export type YeastItem = {

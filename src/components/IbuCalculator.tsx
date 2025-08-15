@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import CalculatorCard from "./CalculatorCard";
-import { ibuTotal, type HopAddition } from "../calculators/ibu";
+import {
+  ibuTotal,
+  type HopAddition,
+  type HopTimingType,
+} from "../calculators/ibu";
 
 type VolumeUnit = "L" | "gal";
 
@@ -8,9 +12,9 @@ export default function IbuCalculator() {
   const [volumeUnit, setVolumeUnit] = useState<VolumeUnit>("L");
   const [postBoilVolume, setPostBoilVolume] = useState<string>("20"); // L by default
   const [og, setOg] = useState<string>("1.050");
-  const [hops, setHops] = useState<Array<{ grams: string; aa: string; time: string }>>([
-    { grams: "20", aa: "10", time: "60" },
-  ]);
+  const [hops, setHops] = useState<
+    Array<{ grams: string; aa: string; time: string }>
+  >([{ grams: "20", aa: "10", time: "60" }]);
 
   const liters = useMemo(() => {
     const v = Number(postBoilVolume);
@@ -27,14 +31,16 @@ export default function IbuCalculator() {
         weightGrams: Number(h.grams),
         alphaAcidPercent: Number(h.aa),
         boilTimeMinutes: Number(h.time),
+        type: "boil" as HopTimingType, // Default to 'boil' for this calculator
       }))
-      .filter((h) =>
-        Number.isFinite(h.weightGrams) &&
-        Number.isFinite(h.alphaAcidPercent) &&
-        Number.isFinite(h.boilTimeMinutes) &&
-        h.weightGrams > 0 &&
-        h.alphaAcidPercent > 0 &&
-        h.boilTimeMinutes >= 0,
+      .filter(
+        (h) =>
+          Number.isFinite(h.weightGrams) &&
+          Number.isFinite(h.alphaAcidPercent) &&
+          Number.isFinite(h.boilTimeMinutes) &&
+          h.weightGrams > 0 &&
+          h.alphaAcidPercent > 0 &&
+          h.boilTimeMinutes >= 0
       );
     if (additions.length === 0) return null;
     return ibuTotal(additions, liters, gravity);
@@ -133,7 +139,9 @@ export default function IbuCalculator() {
         <div>
           <button
             className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-50"
-            onClick={() => setHops((h) => [...h, { grams: "", aa: "", time: "" }])}
+            onClick={() =>
+              setHops((h) => [...h, { grams: "", aa: "", time: "" }])
+            }
           >
             + Hop Addition
           </button>
@@ -151,5 +159,3 @@ export default function IbuCalculator() {
     </CalculatorCard>
   );
 }
-
-
