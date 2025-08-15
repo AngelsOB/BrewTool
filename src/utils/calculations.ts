@@ -6,17 +6,24 @@ export function ogFromPoints(points: number): number {
 }
 
 export function pointsFromGrainBill(
-  grains: Array<{ weightKg: number; colorLovibond: number; yield: number }>,
-  batchVolumeL: number
+  grains: Array<{ weightKg: number; yield: number }>,
+  batchVolumeL: number,
+  efficiencyDecimal = 0.72
 ): number {
-  const ppgPerLovibond = 37; // Standard PPG (points per pound per gallon) for 1 LoviBond grain
-  const gravityPoints = grains.reduce(
-    (sum, grain) =>
-      sum + grain.weightKg * grain.yield * ppgPerLovibond * grain.colorLovibond,
-    0
-  );
-  const galPerL = 0.264172; // Conversion from liters to gallons
-  return gravityPoints / (batchVolumeL * galPerL);
+  // Convert grain bill into gravity points (GU) per gallon
+  // Uses PPG derived from yield (46 ppg reference for table sugar), NOT color
+  const lbsPerKg = 2.20462;
+  const galPerL = 0.264172;
+  const volumeGal = batchVolumeL * galPerL;
+  if (!Number.isFinite(volumeGal) || volumeGal <= 0) return 0;
+
+  const totalGU = grains.reduce((sum, g) => {
+    const weightLb = g.weightKg * lbsPerKg;
+    const ppg = ppgFromYieldDecimal(g.yield);
+    return sum + weightLb * ppg * efficiencyDecimal;
+  }, 0);
+
+  return totalGU / volumeGal;
 }
 
 export function abvSimple(og: number, fg: number): number {
@@ -49,4 +56,30 @@ export function srmToHex(srm: number): string {
   const b = clamp(255 * Math.exp(-0.02 * srm), 0, 255);
   const toHex = (n: number) => Math.round(n).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// OG from grain bill (auto)
+export function ppgFromYieldDecimal(yieldDecimal: number): number {
+  // 46 ppg is table sugar reference
+  return 46 * yieldDecimal;
+}
+
+export function ogFromGrainBill(
+  grains: Array<{ weightKg: number; yield: number }>,
+  volumeL: number,
+  efficiencyDecimal: number
+): number {
+  const lbsPerKg = 2.20462;
+  const galPerL = 0.264172;
+  const volumeGal = volumeL * galPerL;
+  if (!Number.isFinite(volumeGal) || volumeGal <= 0) return 1.0;
+
+  const totalGU = grains.reduce((sum, g) => {
+    const weightLb = g.weightKg * lbsPerKg;
+    const ppg = ppgFromYieldDecimal(g.yield);
+    return sum + weightLb * ppg * efficiencyDecimal;
+  }, 0);
+
+  const points = totalGU / volumeGal; // gravity points per gallon
+  return 1 + points / 1000;
 }

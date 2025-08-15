@@ -70,7 +70,15 @@ export default function RecipeBuilder() {
 
   const abv = useMemo(
     () =>
-      abvSimple(ogFromPoints(pointsFromGrainBill(grains, batchVolumeL)), fg),
+      abvSimple(
+        ogFromPoints(
+          pointsFromGrainBill(
+            grains.map((g) => ({ weightKg: g.weightKg, yield: g.yield })),
+            batchVolumeL
+          )
+        ),
+        fg
+      ),
     [grains, batchVolumeL, fg]
   );
   const srm = useMemo(
@@ -78,7 +86,13 @@ export default function RecipeBuilder() {
     [grains, batchVolumeL]
   );
   const og = useMemo(
-    () => ogFromPoints(pointsFromGrainBill(grains, batchVolumeL)),
+    () =>
+      ogFromPoints(
+        pointsFromGrainBill(
+          grains.map((g) => ({ weightKg: g.weightKg, yield: g.yield })),
+          batchVolumeL
+        )
+      ),
     [grains, batchVolumeL]
   );
   const color = useMemo(() => srmToHex(srm), [srm]);
