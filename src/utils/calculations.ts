@@ -48,14 +48,67 @@ export function srmMoreyFromMcu(mcu: number): number {
 }
 
 export function srmToHex(srm: number): string {
-  // Approximate SRM to RGB mapping based on empirical curve
+  // SRM -> Hex using a well-known SRM palette with linear interpolation.
+  // Clamped to [1, 40].
+  const stops: Array<{ s: number; hex: string }> = [
+    { s: 1, hex: "#F3F993" },
+    { s: 2, hex: "#F5F75C" },
+    { s: 3, hex: "#F6F513" },
+    { s: 4, hex: "#EAE615" },
+    { s: 5, hex: "#E0D01B" },
+    { s: 6, hex: "#D5BC26" },
+    { s: 7, hex: "#CDAA37" },
+    { s: 8, hex: "#C1963C" },
+    { s: 9, hex: "#BE8C3A" },
+    { s: 10, hex: "#BE823A" },
+    { s: 12, hex: "#C17A37" },
+    { s: 14, hex: "#BF7138" },
+    { s: 15, hex: "#BC6733" },
+    { s: 17, hex: "#B26033" },
+    { s: 18, hex: "#A85839" },
+    { s: 20, hex: "#985336" },
+    { s: 24, hex: "#8D4C32" },
+    { s: 26, hex: "#7C452D" },
+    { s: 30, hex: "#6B3A1E" },
+    { s: 35, hex: "#5D341A" },
+    { s: 40, hex: "#4E2A0C" },
+  ];
+
   const clamp = (v: number, min: number, max: number) =>
     Math.max(min, Math.min(max, v));
-  const r = clamp(255 * Math.exp(-0.1 * srm), 0, 255);
-  const g = clamp(255 * Math.exp(-0.07 * srm), 0, 255);
-  const b = clamp(255 * Math.exp(-0.02 * srm), 0, 255);
-  const toHex = (n: number) => Math.round(n).toString(16).padStart(2, "0");
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  const sr = clamp(srm, 1, 40);
+
+  const hexToRgb = (hex: string): [number, number, number] => {
+    const h = hex.replace("#", "");
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return [r, g, b];
+  };
+  const rgbToHex = (r: number, g: number, b: number): string => {
+    const to = (n: number) => Math.round(n).toString(16).padStart(2, "0");
+    return `#${to(r)}${to(g)}${to(b)}`;
+  };
+
+  // Find bounding stops
+  let lower = stops[0];
+  let upper = stops[stops.length - 1];
+  for (let i = 0; i < stops.length; i++) {
+    if (stops[i].s <= sr) lower = stops[i];
+    if (stops[i].s >= sr) {
+      upper = stops[i];
+      break;
+    }
+  }
+  if (lower.s === upper.s) return lower.hex;
+
+  const t = (sr - lower.s) / (upper.s - lower.s);
+  const [lr, lg, lb] = hexToRgb(lower.hex);
+  const [ur, ug, ub] = hexToRgb(upper.hex);
+  const r = lr + (ur - lr) * t;
+  const g = lg + (ug - lg) * t;
+  const b = lb + (ub - lb) * t;
+  return rgbToHex(r, g, b);
 }
 
 // OG from grain bill (auto)

@@ -24,6 +24,7 @@ export default function RecipeBuilder() {
   const [name, setName] = useState("New Recipe");
   const [batchVolumeL, setBatchVolumeL] = useState(20);
   const [fg, setFg] = useState(1.01);
+  const [efficiencyPct, setEfficiencyPct] = useState(72); // brewhouse efficiency percentage
   const [grains, setGrains] = useState<GrainItem[]>([
     {
       id: crypto.randomUUID(),
@@ -74,12 +75,13 @@ export default function RecipeBuilder() {
         ogFromPoints(
           pointsFromGrainBill(
             grains.map((g) => ({ weightKg: g.weightKg, yield: g.yield })),
-            batchVolumeL
+            batchVolumeL,
+            efficiencyPct / 100
           )
         ),
         fg
       ),
-    [grains, batchVolumeL, fg]
+    [grains, batchVolumeL, fg, efficiencyPct]
   );
   const srm = useMemo(
     () => srmMoreyFromMcu(mcuFromGrainBill(grains, batchVolumeL)),
@@ -90,10 +92,11 @@ export default function RecipeBuilder() {
       ogFromPoints(
         pointsFromGrainBill(
           grains.map((g) => ({ weightKg: g.weightKg, yield: g.yield })),
-          batchVolumeL
+          batchVolumeL,
+          efficiencyPct / 100
         )
       ),
-    [grains, batchVolumeL]
+    [grains, batchVolumeL, efficiencyPct]
   );
   const color = useMemo(() => srmToHex(srm), [srm]);
 
@@ -127,7 +130,7 @@ export default function RecipeBuilder() {
         </button>
       </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <label className="block">
           <div className="text-sm text-neutral-700 mb-1">Name</div>
           <input
@@ -144,6 +147,18 @@ export default function RecipeBuilder() {
             className="w-full rounded-md border px-3 py-2"
             value={batchVolumeL}
             onChange={(e) => setBatchVolumeL(Number(e.target.value))}
+          />
+        </label>
+        <label className="block">
+          <div className="text-sm text-neutral-700 mb-1">Efficiency (%)</div>
+          <input
+            type="number"
+            step="1"
+            min="40"
+            max="95"
+            className="w-full rounded-md border px-3 py-2"
+            value={efficiencyPct}
+            onChange={(e) => setEfficiencyPct(Number(e.target.value))}
           />
         </label>
         <label className="block">
@@ -171,19 +186,40 @@ export default function RecipeBuilder() {
             />
           </div>
         </label>
-        <div className="rounded-lg border bg-emerald-500/10 px-4 py-3">
-          <div className="text-sm text-neutral-700">Stats</div>
-          <div className="text-sm text-white/70">ABV: {abv.toFixed(2)}%</div>
-          <div className="text-sm text-white/70">
-            Color (SRM): {srm.toFixed(1)}
-          </div>
-          <div className="text-sm text-white/70">OG: {og.toFixed(3)}</div>
-          <div
-            className="h-6 w-24 rounded mt-1"
-            style={{ backgroundColor: color }}
-          />
-        </div>
       </section>
+
+      {/* Sticky summary bar (glass + warm accent) */}
+      <div className="mx-auto max-w-6xl">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/40 px-3 py-2 shadow-soft ring-1 ring-neutral-900/5 supports-[backdrop-filter]:bg-white/25">
+          <div className="text-sm font-medium tracking-tight text-white/50">
+            Recipe Summary
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
+              <span className="text-neutral-600">OG</span>
+              <span className="font-semibold tracking-tight text-neutral-900">
+                {og.toFixed(3)}
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
+              <span className="text-neutral-600">ABV</span>
+              <span className="font-semibold tracking-tight text-neutral-900">
+                {abv.toFixed(2)}%
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
+              <span className="text-neutral-600">SRM</span>
+              <span className="font-semibold tracking-tight text-neutral-900">
+                {srm.toFixed(1)}
+              </span>
+              <span
+                className="h-4 w-8 shrink-0 rounded-md border border-white/20"
+                style={{ backgroundColor: color }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <section className="space-y-3">
         <div className="font-medium">Grain Bill</div>
