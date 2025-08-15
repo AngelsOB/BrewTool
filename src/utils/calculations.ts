@@ -5,6 +5,20 @@ export function ogFromPoints(points: number): number {
   return 1 + points / 1000;
 }
 
+export function pointsFromGrainBill(
+  grains: Array<{ weightKg: number; colorLovibond: number; yield: number }>,
+  batchVolumeL: number
+): number {
+  const ppgPerLovibond = 37; // Standard PPG (points per pound per gallon) for 1 LoviBond grain
+  const gravityPoints = grains.reduce(
+    (sum, grain) =>
+      sum + grain.weightKg * grain.yield * ppgPerLovibond * grain.colorLovibond,
+    0
+  );
+  const galPerL = 0.264172; // Conversion from liters to gallons
+  return gravityPoints / (batchVolumeL * galPerL);
+}
+
 export function abvSimple(og: number, fg: number): number {
   return (og - fg) * 131.25;
 }

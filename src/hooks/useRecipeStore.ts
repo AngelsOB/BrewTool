@@ -6,6 +6,7 @@ export type GrainItem = {
   name: string;
   weightKg: number; // kilograms
   colorLovibond: number; // °L
+  yield: number; // as a decimal, e.g., 0.75 for 75%
 };
 
 export type HopItem = {
@@ -14,6 +15,7 @@ export type HopItem = {
   grams: number;
   alphaAcidPercent: number; // %
   timeMin: number; // boil minutes
+  category?: string; // Optional category, e.g., "US Hops", "Noble Hops", "New Zealand Hops"
 };
 
 export type YeastItem = {
