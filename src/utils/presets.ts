@@ -1,3 +1,5 @@
+import { loadJson, saveJson } from "./storage";
+
 export type GrainPreset = {
   name: string;
   colorLovibond: number;
@@ -34,3 +36,30 @@ export const HOP_PRESETS: HopPreset[] = [
   { name: "East Kent Goldings", alphaAcidPercent: 5 },
   { name: "Fuggle", alphaAcidPercent: 4.5 },
 ];
+
+const CUSTOM_GRAINS_KEY = "beerapp.customGrains";
+const CUSTOM_HOPS_KEY = "beerapp.customHops";
+
+export function getGrainPresets(): GrainPreset[] {
+  const custom = loadJson<GrainPreset[]>(CUSTOM_GRAINS_KEY, []);
+  return [...GRAIN_PRESETS, ...custom];
+}
+
+export function getHopPresets(): HopPreset[] {
+  const custom = loadJson<HopPreset[]>(CUSTOM_HOPS_KEY, []);
+  return [...HOP_PRESETS, ...custom];
+}
+
+export function addCustomGrain(p: GrainPreset): GrainPreset[] {
+  const list = loadJson<GrainPreset[]>(CUSTOM_GRAINS_KEY, []);
+  const next = [...list.filter((x) => x.name !== p.name), p];
+  saveJson(CUSTOM_GRAINS_KEY, next);
+  return [...GRAIN_PRESETS, ...next];
+}
+
+export function addCustomHop(p: HopPreset): HopPreset[] {
+  const list = loadJson<HopPreset[]>(CUSTOM_HOPS_KEY, []);
+  const next = [...list.filter((x) => x.name !== p.name), p];
+  saveJson(CUSTOM_HOPS_KEY, next);
+  return [...HOP_PRESETS, ...next];
+}

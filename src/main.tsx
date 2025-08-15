@@ -10,17 +10,20 @@ import RecipeBuilder from "./pages/RecipeBuilder.tsx";
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-    children: [
-      { index: true, element: <Home /> },
-      { path: "calculators", element: <Calculators /> },
-      { path: "recipes", element: <RecipeBuilder /> },
-    ],
-  },
-], { basename });
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <App />,
+      children: [
+        { index: true, element: <Home /> },
+        { path: "calculators", element: <Calculators /> },
+        { path: "recipes", element: <RecipeBuilder /> },
+      ],
+    },
+  ],
+  { basename }
+);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

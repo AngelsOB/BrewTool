@@ -10,7 +10,12 @@ import {
   srmMoreyFromMcu,
   srmToHex,
 } from "../utils/calculations";
-import { GRAIN_PRESETS, HOP_PRESETS } from "../utils/presets";
+import {
+  addCustomGrain,
+  addCustomHop,
+  getGrainPresets,
+  getHopPresets,
+} from "../utils/presets";
 
 export default function RecipeBuilder() {
   const upsert = useRecipeStore((s) => s.upsert);
@@ -124,45 +129,43 @@ export default function RecipeBuilder() {
 
       <section className="space-y-3">
         <div className="font-medium">Grain Bill</div>
-        <div className="grid grid-cols-3 gap-2 text-xs text-white/60">
+        <div className="hidden sm:grid grid-cols-3 gap-2 text-xs text-white/60">
           <div>Grain</div>
           <div>Weight (kg)</div>
           <div>Color (°L)</div>
         </div>
         {grains.map((g, i) => (
-          <div key={g.id} className="grid grid-cols-3 gap-2">
-            <div className="flex gap-2">
+          <div key={g.id} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="text-xs text-white/60 sm:hidden">Grain</div>
+            <div className="flex gap-2 min-w-0">
               <select
-                className="rounded-md border px-2"
+                className="w-full rounded-md border px-2"
                 onChange={(e) => {
-                  const preset = GRAIN_PRESETS.find((p) => p.name === e.target.value);
+                  const preset = getGrainPresets().find(
+                    (p) => p.name === e.target.value
+                  );
                   if (!preset) return;
                   const c = [...grains];
-                  c[i] = { ...g, name: preset.name, colorLovibond: preset.colorLovibond };
+                  c[i] = {
+                    ...g,
+                    name: preset.name,
+                    colorLovibond: preset.colorLovibond,
+                  };
                   setGrains(c);
                 }}
                 defaultValue=""
               >
                 <option value="" disabled>
-                  Preset
+                  Grains...
                 </option>
-                {GRAIN_PRESETS.map((p) => (
+                {getGrainPresets().map((p) => (
                   <option key={p.name} value={p.name}>
                     {p.name}
                   </option>
                 ))}
               </select>
-              <input
-                className="rounded-md border px-3 py-2 flex-1"
-                placeholder="Custom name"
-                value={g.name}
-                onChange={(e) => {
-                  const c = [...grains];
-                  c[i] = { ...g, name: e.target.value };
-                  setGrains(c);
-                }}
-              />
             </div>
+            <div className="text-xs text-white/60 sm:hidden">Weight (kg)</div>
             <input
               className="rounded-md border px-3 py-2"
               type="number"
@@ -175,6 +178,7 @@ export default function RecipeBuilder() {
                 setGrains(c);
               }}
             />
+            <div className="text-xs text-white/60 sm:hidden">Color (°L)</div>
             <input
               className="rounded-md border px-3 py-2"
               type="number"
@@ -209,46 +213,47 @@ export default function RecipeBuilder() {
 
       <section className="space-y-3">
         <div className="font-medium">Hop Schedule</div>
-        <div className="grid grid-cols-4 gap-2 text-xs text-white/60">
+        <div className="hidden sm:grid grid-cols-4 gap-2 text-xs text-white/60">
           <div>Hop</div>
           <div>Grams</div>
           <div>Alpha %</div>
           <div>Time (min)</div>
         </div>
         {hops.map((h, i) => (
-          <div key={h.id ?? i} className="grid grid-cols-4 gap-2">
-            <div className="flex gap-2">
+          <div
+            key={h.id ?? i}
+            className="grid grid-cols-1 sm:grid-cols-4 gap-2"
+          >
+            <div className="text-xs text-white/60 sm:hidden">Hop</div>
+            <div className="flex gap-2 min-w-0">
               <select
-                className="rounded-md border px-2"
+                className="w-full rounded-md border px-2"
                 onChange={(e) => {
-                  const preset = HOP_PRESETS.find((p) => p.name === e.target.value);
+                  const preset = getHopPresets().find(
+                    (p) => p.name === e.target.value
+                  );
                   if (!preset) return;
                   const c = [...hops];
-                  c[i] = { ...h, name: preset.name, alphaAcidPercent: preset.alphaAcidPercent } as HopItem;
+                  c[i] = {
+                    ...h,
+                    name: preset.name,
+                    alphaAcidPercent: preset.alphaAcidPercent,
+                  } as HopItem;
                   setHops(c);
                 }}
                 defaultValue=""
               >
                 <option value="" disabled>
-                  Preset
+                  Hops...
                 </option>
-                {HOP_PRESETS.map((p) => (
+                {getHopPresets().map((p) => (
                   <option key={p.name} value={p.name}>
                     {p.name}
                   </option>
                 ))}
               </select>
-              <input
-                className="rounded-md border px-3 py-2 flex-1"
-                placeholder="Custom name"
-                value={h.name}
-                onChange={(e) => {
-                  const c = [...hops];
-                  c[i] = { ...h, name: e.target.value } as HopItem;
-                  setHops(c);
-                }}
-              />
             </div>
+            <div className="text-xs text-white/60 sm:hidden">Grams</div>
             <input
               className="rounded-md border px-3 py-2"
               type="number"
@@ -261,6 +266,7 @@ export default function RecipeBuilder() {
                 setHops(c);
               }}
             />
+            <div className="text-xs text-white/60 sm:hidden">Alpha %</div>
             <input
               className="rounded-md border px-3 py-2"
               type="number"
@@ -269,10 +275,14 @@ export default function RecipeBuilder() {
               value={h.alphaAcidPercent}
               onChange={(e) => {
                 const c = [...hops];
-                c[i] = { ...h, alphaAcidPercent: Number(e.target.value) } as HopItem;
+                c[i] = {
+                  ...h,
+                  alphaAcidPercent: Number(e.target.value),
+                } as HopItem;
                 setHops(c);
               }}
             />
+            <div className="text-xs text-white/60 sm:hidden">Time (min)</div>
             <input
               className="rounded-md border px-3 py-2"
               type="number"
@@ -306,13 +316,92 @@ export default function RecipeBuilder() {
         </button>
       </section>
 
+      <section className="space-y-2">
+        <div className="font-medium">Add Custom Grain Preset</div>
+        <form
+          className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.currentTarget as HTMLFormElement & {
+              gname: HTMLInputElement;
+              glov: HTMLInputElement;
+            };
+            const name = form.gname.value.trim();
+            const lov = Number(form.glov.value);
+            if (!name || !Number.isFinite(lov)) return;
+            addCustomGrain({ name, colorLovibond: lov });
+            form.reset();
+          }}
+        >
+          <input
+            name="gname"
+            className="rounded-md border px-3 py-2"
+            placeholder="Grain name"
+          />
+          <input
+            name="glov"
+            type="number"
+            step="0.1"
+            className="rounded-md border px-3 py-2"
+            placeholder="Color °L"
+          />
+          <button
+            className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-50"
+            type="submit"
+          >
+            + Add Grain Preset
+          </button>
+        </form>
+      </section>
+
+      <section className="space-y-2">
+        <div className="font-medium">Add Custom Hop Preset</div>
+        <form
+          className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.currentTarget as HTMLFormElement & {
+              hname: HTMLInputElement;
+              haa: HTMLInputElement;
+            };
+            const name = form.hname.value.trim();
+            const aa = Number(form.haa.value);
+            if (!name || !Number.isFinite(aa)) return;
+            addCustomHop({ name, alphaAcidPercent: aa });
+            form.reset();
+          }}
+        >
+          <input
+            name="hname"
+            className="rounded-md border px-3 py-2"
+            placeholder="Hop name"
+          />
+          <input
+            name="haa"
+            type="number"
+            step="0.1"
+            className="rounded-md border px-3 py-2"
+            placeholder="Alpha %"
+          />
+          <button
+            className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-50"
+            type="submit"
+          >
+            + Add Hop Preset
+          </button>
+        </form>
+      </section>
+
       <section className="space-y-3">
         <div className="font-medium">Hop Schedule (preview)</div>
         {hops.length === 0 ? (
           <div className="text-sm text-white/70">No hops yet.</div>
         ) : (
           hops.map((h, i) => (
-            <div key={h.id ?? i} className="grid grid-cols-3 gap-2">
+            <div
+              key={h.id ?? i}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+            >
               <input
                 className="rounded-md border px-3 py-2"
                 placeholder="Name"
