@@ -23,16 +23,27 @@
 @layer utilities {
   .bg-dashboard {
     background: radial-gradient(
-        800px 260px at 35% -10%,
-        rgba(var(--glow) / 0.2),
-        transparent 60%
+        1000px 360px at 15% -10%,
+        rgba(255 230 200 / 0.4),
+        transparent 55%
       ),
       radial-gradient(
-        700px 240px at 85% -20%,
-        rgba(var(--accent) / 0.16),
-        transparent 60%
+        900px 300px at 85% -10%,
+        rgba(var(--accent) / 0.28),
+        transparent 50%
       ),
-      linear-gradient(rgb(6 8 12), rgb(var(--bg)));
+      radial-gradient(
+        1500px 520px at 50% 120%,
+        rgba(255 230 200 / 0.4),
+        transparent 47%
+      ),
+      linear-gradient(
+        180deg,
+        rgb(10 12 16) 0%,
+        rgb(6 8 12) 35%,
+        rgb(var(--bg)) 100%
+      );
+    background-attachment: fixed, fixed, fixed, fixed;
   }
 
   .card-glass {
