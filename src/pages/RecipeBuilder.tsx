@@ -15,11 +15,13 @@ import {
   srmToHex,
 } from "../utils/calculations";
 import { ibuTotal } from "../calculators/ibu";
+import HopFlavorRadar from "../components/HopFlavorRadar";
 import {
   addCustomGrain,
   addCustomHop,
   getGrainPresets,
   getHopPresets,
+  getYeastPresets,
 } from "../utils/presets";
 
 export default function RecipeBuilder() {
@@ -76,6 +78,37 @@ export default function RecipeBuilder() {
     return grouped;
   }, []);
 
+  const sortedYeastPresets = useMemo(() => {
+    const presets = getYeastPresets();
+    const categories = Array.from(
+      new Set(presets.map((p) => p.category))
+    ).filter(Boolean) as string[];
+    categories.sort((a, b) => a.localeCompare(b));
+
+    const grouped: Record<string, typeof presets> = {};
+    categories.forEach((cat) => (grouped[cat] = []));
+
+    // Ensure 'Other' category exists for yeasts without a category
+    if (!grouped["Other"]) {
+      grouped["Other"] = [];
+    }
+
+    presets.forEach((p) => {
+      if (p.category) {
+        grouped[p.category].push(p);
+      } else {
+        grouped["Other"].push(p);
+      }
+    });
+
+    // Sort yeasts within each category alphabetically
+    for (const category in grouped) {
+      grouped[category].sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return grouped;
+  }, []);
+
   const abv = useMemo(
     () =>
       abvSimple(
@@ -121,6 +154,20 @@ export default function RecipeBuilder() {
       ),
     [hops, batchVolumeL, og]
   );
+
+  // Collect distinct hop flavor series (up to 3)
+  const hopFlavorSeries = useMemo(() => {
+    const seen = new Set<string>();
+    const series: { name: string; flavor: NonNullable<HopItem["flavor"]> }[] =
+      [];
+    for (const h of hops) {
+      if (!h.name || !h.flavor || seen.has(h.name)) continue;
+      seen.add(h.name);
+      series.push({ name: h.name, flavor: h.flavor });
+      if (series.length >= 3) break;
+    }
+    return series;
+  }, [hops]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -271,14 +318,18 @@ export default function RecipeBuilder() {
             + Add Grain
           </button>
         </div>
-        <div className="hidden sm:grid grid-cols-4 gap-2 text-xs text-white/60">
+        <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-white/60">
           <div>Grain</div>
           <div>Weight (kg)</div>
           <div>Color (°L)</div>
           <div>Yield (%)</div>
+          <div></div> {/* For the remove button */}
         </div>
         {grains.map((g, i) => (
-          <div key={g.id} className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+          <div
+            key={g.id}
+            className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content] gap-2"
+          >
             <label className="flex flex-col">
               <div className="text-xs text-white/60 mb-1 sm:hidden">Grain</div>
               <select
@@ -410,7 +461,7 @@ export default function RecipeBuilder() {
                 Yield (%)
               </div>
               <input
-                className="rounded-md border px-3 py-2"
+                className="rounded-md border px-3 py-2 w-full"
                 type="number"
                 step="0.01"
                 placeholder="Yield %"
@@ -422,6 +473,31 @@ export default function RecipeBuilder() {
                 }}
               />
             </label>
+            <div className="flex justify-end items-center">
+              <button
+                className="p-1 text-neutral-400 hover:text-red-500 transition w-fit"
+                onClick={() =>
+                  setGrains((currentGrains) =>
+                    currentGrains.filter((grain) => grain.id !== g.id)
+                  )
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         ))}
         <button
@@ -465,17 +541,18 @@ export default function RecipeBuilder() {
             + Add Hop
           </button>
         </div>
-        <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-white/60">
+        <div className="hidden sm:grid grid-cols-6 gap-2 text-xs text-white/60">
           <div>Hop</div>
           <div>Type</div>
           <div>Grams</div>
           <div>Alpha %</div>
           <div>Time (min)</div>
+          <div></div> {/* For the remove button */}
         </div>
         {hops.map((h, i) => (
           <div
             key={h.id ?? i}
-            className="grid grid-cols-1 sm:grid-cols-5 gap-2"
+            className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content] gap-2"
           >
             <label className="flex flex-col">
               <div className="text-xs text-white/60 mb-1 sm:hidden">Hop</div>
@@ -495,6 +572,7 @@ export default function RecipeBuilder() {
                       name: preset.name,
                       alphaAcidPercent: preset.alphaAcidPercent,
                       category: preset.category, // Set the category here
+                      flavor: preset.flavor,
                     } as HopItem;
                     setHops(c);
                     setShowCustomHopInput(false);
@@ -614,7 +692,7 @@ export default function RecipeBuilder() {
                 Time (min)
               </div>
               <input
-                className="rounded-md border px-3 py-2"
+                className="rounded-md border px-3 py-2 w-full"
                 type="number"
                 step="1"
                 placeholder="Time (min)"
@@ -626,6 +704,31 @@ export default function RecipeBuilder() {
                 }}
               />
             </label>
+            <div className="flex justify-end items-center">
+              <button
+                className="p-1 text-neutral-400 hover:text-red-500 transition w-fit"
+                onClick={() =>
+                  setHops((currentHops) =>
+                    currentHops.filter((hop) => hop.id !== h.id)
+                  )
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         ))}
         <button
@@ -646,6 +749,78 @@ export default function RecipeBuilder() {
         >
           + Add Hop
         </button>
+      </section>
+
+      {hopFlavorSeries.length > 0 && (
+        <section className="space-y-2">
+          <div className="font-medium">Hop Flavor Profile</div>
+          <div className="rounded-xl border border-white/10 p-3 shadow-soft">
+            <HopFlavorRadar series={hopFlavorSeries} />
+          </div>
+        </section>
+      )}
+
+      <section className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="font-medium">Yeast</div>
+          <button
+            className="p-1 text-neutral-400 hover:text-red-500 transition w-fit ml-auto self-end"
+            onClick={() =>
+              setYeast({
+                name: "",
+                attenuationPercent: undefined,
+              })
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <label className="flex flex-col">
+          <select
+            className="w-full rounded-md border px-2 py-2.5"
+            value={yeast.name}
+            onChange={(e) => {
+              const preset = getYeastPresets().find(
+                (p) => p.name === e.target.value
+              );
+              if (!preset) return;
+              setYeast(preset);
+            }}
+          >
+            <option value="" disabled>
+              Select Yeast...
+            </option>
+            {Object.entries(sortedYeastPresets).map(
+              ([category, yeastsInCat]) => (
+                <optgroup key={category} label={category}>
+                  {yeastsInCat.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )
+            )}
+          </select>
+        </label>
+        {yeast.attenuationPercent && (
+          <div className="text-sm text-neutral-600">
+            Est. Attenuation: {(yeast.attenuationPercent * 100).toFixed(0)}%
+          </div>
+        )}
       </section>
     </div>
   );

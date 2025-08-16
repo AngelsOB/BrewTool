@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { loadJson, saveJson } from "../utils/storage";
+import type { HopFlavorProfile } from "../utils/presets";
 
 export type GrainItem = {
   id: string;
@@ -24,6 +25,7 @@ export type HopItem = {
   timeMin: number; // boil minutes
   category?: string; // Optional category, e.g., "US Hops", "Noble Hops", "New Zealand Hops"
   type: HopTimingType;
+  flavor?: HopFlavorProfile; // optional sensory profile copied from preset
 };
 
 export type YeastItem = {
