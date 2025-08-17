@@ -17,6 +17,7 @@ import {
 import { ibuTotal } from "../calculators/ibu";
 import HopFlavorRadar from "../components/HopFlavorRadar";
 import InputWithSuffix from "../components/InputWithSuffix";
+import InlineEditableNumber from "../components/InlineEditableNumber";
 import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
 import {
   addCustomGrain,
@@ -662,7 +663,7 @@ export default function RecipeBuilder() {
               <div className="text-xs text-white/60 mb-1 sm:hidden">
                 Alpha %
               </div>
-              <InputWithSuffix
+              <InlineEditableNumber
                 value={h.alphaAcidPercent}
                 onChange={(n) => {
                   const c = [...hops];
@@ -670,7 +671,7 @@ export default function RecipeBuilder() {
                   setHops(c);
                 }}
                 suffix="%"
-                suffixClassName="right-4 text-[10px]"
+                suffixClassName="left-9 right-0.5 text-[10px]"
                 step={0.1}
                 placeholder="12"
               />
