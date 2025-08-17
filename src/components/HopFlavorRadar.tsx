@@ -4,21 +4,39 @@ import { HOP_FLAVOR_KEYS } from "../utils/presets";
 type Series = { name: string; flavor: HopFlavorProfile };
 
 type Props = {
-  series: Series[]; // up to 3 preferred
+  series: Series[]; // any length
   maxValue?: number; // default 5
   size?: number; // px, default 320
+  title?: string;
+  emptyHint?: string;
 };
 
-const COLORS = [
-  "#22c55e", // green
-  "#3b82f6", // blue
-  "#ef4444", // red
-];
+// Generate distinct colors per series index
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) =>
+    l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = (x: number) =>
+    Math.round(255 * x)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+}
+
+function colorForIndex(index: number, total: number): string {
+  const hue = Math.round((360 * index) / Math.max(total, 6));
+  return hslToHex(hue, 70, 50);
+}
 
 export default function HopFlavorRadar({
   series,
   maxValue = 5,
   size = 320,
+  title,
+  emptyHint,
 }: Props) {
   const radius = size / 2 - 30;
   const center = { x: size / 2, y: size / 2 };
@@ -44,10 +62,19 @@ export default function HopFlavorRadar({
   }
 
   const rings = [0.2, 0.4, 0.6, 0.8, 1];
-  const limited = series.slice(0, 3);
+  const list = series;
+
+  const isAllZero =
+    series.length === 0 ||
+    series.every((s) => HOP_FLAVOR_KEYS.every((k) => (s.flavor[k] || 0) === 0));
 
   return (
     <div className="flex flex-col gap-3">
+      {title && (
+        <div className="text-center text-sm font-medium text-neutral-700">
+          {title}
+        </div>
+      )}
       <svg
         width={size}
         height={size}
@@ -119,11 +146,11 @@ export default function HopFlavorRadar({
           );
         })}
         {/* Series Polygons */}
-        {limited.map((s, si) => {
+        {list.map((s, si) => {
           const pts = HOP_FLAVOR_KEYS.map((k, i) =>
             pointFor(i, s.flavor[k] || 0)
           ).join(" ");
-          const color = COLORS[si % COLORS.length];
+          const color = colorForIndex(si, list.length);
           return (
             <g key={s.name}>
               <polygon
@@ -135,17 +162,28 @@ export default function HopFlavorRadar({
             </g>
           );
         })}
+        {isAllZero && (
+          <text
+            x={center.x}
+            y={center.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-neutral-400 text-xs"
+          >
+            {emptyHint || "No data"}
+          </text>
+        )}
       </svg>
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-        {limited.map((s, i) => (
+        {list.map((s, i) => (
           <div
             key={s.name}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-2 py-1"
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/60 px-2 py-1"
           >
             <span
               className="inline-block h-3 w-3 rounded-sm"
-              style={{ backgroundColor: COLORS[i % COLORS.length] }}
+              style={{ backgroundColor: colorForIndex(i, list.length) }}
             />
             <span className="font-medium text-neutral-800">{s.name}</span>
           </div>

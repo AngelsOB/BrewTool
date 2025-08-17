@@ -26,6 +26,13 @@ export type HopItem = {
   category?: string; // Optional category, e.g., "US Hops", "Noble Hops", "New Zealand Hops"
   type: HopTimingType;
   flavor?: HopFlavorProfile; // optional sensory profile copied from preset
+  // Extra timing metadata per addition type
+  // Dry hop specifics
+  dryHopStage?: "primary" | "post-fermentation" | "keg";
+  dryHopDays?: number;
+  // Whirlpool specifics
+  whirlpoolTempC?: number;
+  whirlpoolTimeMin?: number;
 };
 
 export type YeastItem = {

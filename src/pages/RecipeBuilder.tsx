@@ -16,6 +16,8 @@ import {
 } from "../utils/calculations";
 import { ibuTotal } from "../calculators/ibu";
 import HopFlavorRadar from "../components/HopFlavorRadar";
+import InputWithSuffix from "../components/InputWithSuffix";
+import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
 import {
   addCustomGrain,
   addCustomHop,
@@ -155,7 +157,9 @@ export default function RecipeBuilder() {
     [hops, batchVolumeL, og]
   );
 
-  // Collect distinct hop flavor series (up to 3)
+  // (kept inlined where used to avoid dead code)
+
+  // Collect distinct hop flavor series (all)
   const hopFlavorSeries = useMemo(() => {
     const seen = new Set<string>();
     const series: { name: string; flavor: NonNullable<HopItem["flavor"]> }[] =
@@ -164,10 +168,19 @@ export default function RecipeBuilder() {
       if (!h.name || !h.flavor || seen.has(h.name)) continue;
       seen.add(h.name);
       series.push({ name: h.name, flavor: h.flavor });
-      if (series.length >= 3) break;
     }
     return series;
   }, [hops]);
+
+  const estimatedTotalFlavor = useMemo(
+    () => estimateRecipeHopFlavor(hops, batchVolumeL),
+    [hops, batchVolumeL]
+  );
+
+  const hasSecondTiming = useMemo(
+    () => hops.some((x) => x.type === "dry hop" || x.type === "whirlpool"),
+    [hops]
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -541,20 +554,33 @@ export default function RecipeBuilder() {
             + Add Hop
           </button>
         </div>
-        <div className="hidden sm:grid grid-cols-6 gap-2 text-xs text-white/60">
+        <div
+          className={
+            "hidden sm:grid gap-2 text-xs text-white/60 " +
+            (hasSecondTiming
+              ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]"
+              : "sm:grid-cols-[minmax(0,1fr)_minmax(0,.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]")
+          }
+        >
           <div>Hop</div>
-          <div>Type</div>
-          <div>Grams</div>
           <div>Alpha %</div>
-          <div>Time (min)</div>
+          <div>Method</div>
+          <div>Timing A</div>
+          {hasSecondTiming && <div>Timing B</div>}
+          <div>Amount</div>
           <div></div> {/* For the remove button */}
         </div>
         {hops.map((h, i) => (
           <div
             key={h.id ?? i}
-            className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content] gap-2"
+            className={
+              "grid grid-cols-1 gap-2 " +
+              (hasSecondTiming
+                ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]"
+                : "sm:grid-cols-[minmax(0,1fr)_minmax(0,.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]")
+            }
           >
-            <label className="flex flex-col">
+            <label className="flex flex-col sm:order-1">
               <div className="text-xs text-white/60 mb-1 sm:hidden">Hop</div>
               <select
                 className="w-full rounded-md border px-2 py-2.5"
@@ -597,7 +623,7 @@ export default function RecipeBuilder() {
                 <option value="__add_custom__">+ Add Custom Hop</option>
               </select>
             </label>
-            <label className="flex flex-col">
+            <label className="flex flex-col sm:order-3">
               <div className="text-xs text-white/60 mb-1 sm:hidden">Type</div>
               <select
                 className="w-full rounded-md border px-2 py-2.5"
@@ -615,6 +641,157 @@ export default function RecipeBuilder() {
                 <option value="mash">Mash</option>
               </select>
             </label>
+            {/* Grams (moved up to match header order) */}
+            <label className="flex flex-col sm:order-6">
+              <div className="text-xs text-white/60 mb-1 sm:hidden">Grams</div>
+              <InputWithSuffix
+                value={h.grams}
+                onChange={(n) => {
+                  const c = [...hops];
+                  c[i] = { ...h, grams: n } as HopItem;
+                  setHops(c);
+                }}
+                suffix=" g"
+                suffixClassName="right-3 text-[10px]"
+                step={0.1}
+                placeholder="10"
+              />
+            </label>
+            {/* Alpha % (moved up to match header order) */}
+            <label className="flex flex-col sm:order-2">
+              <div className="text-xs text-white/60 mb-1 sm:hidden">
+                Alpha %
+              </div>
+              <InputWithSuffix
+                value={h.alphaAcidPercent}
+                onChange={(n) => {
+                  const c = [...hops];
+                  c[i] = { ...h, alphaAcidPercent: n } as HopItem;
+                  setHops(c);
+                }}
+                suffix="%"
+                suffixClassName="right-4 text-[10px]"
+                step={0.1}
+                placeholder="12"
+              />
+            </label>
+            {/* Timing A column */}
+            <label className="flex flex-col sm:order-4">
+              <div className="text-xs text-white/60 mb-1 sm:hidden">
+                Timing A
+              </div>
+              {h.type === "dry hop" ? (
+                <select
+                  className="w-full rounded-md border px-2 py-2.5"
+                  value={h.dryHopStage ?? "primary"}
+                  onChange={(e) => {
+                    const c = [...hops];
+                    c[i] = {
+                      ...h,
+                      dryHopStage: e.target.value as
+                        | "primary"
+                        | "post-fermentation"
+                        | "keg",
+                    } as HopItem;
+                    setHops(c);
+                  }}
+                >
+                  <option value="primary">Primary</option>
+                  <option value="post-fermentation">Post-Fermentation</option>
+                  <option value="keg">Keg</option>
+                </select>
+              ) : h.type === "whirlpool" ? (
+                <InputWithSuffix
+                  value={h.whirlpoolTempC ?? 80}
+                  onChange={(n) => {
+                    const c = [...hops];
+                    c[i] = { ...h, whirlpoolTempC: n } as HopItem;
+                    setHops(c);
+                  }}
+                  suffix="°C"
+                  suffixClassName="right-3 text-[10px]"
+                  step={0.1}
+                  placeholder="80"
+                />
+              ) : (
+                <InputWithSuffix
+                  value={h.timeMin ?? 0}
+                  onChange={(n) => {
+                    const c = [...hops];
+                    c[i] = { ...h, timeMin: n } as HopItem;
+                    setHops(c);
+                  }}
+                  suffix=" min"
+                  suffixClassName="right-3 text-[10px]"
+                  step={1}
+                  placeholder="60"
+                />
+              )}
+            </label>
+
+            {/* Timing B column (only when grid includes it) */}
+            {hasSecondTiming && (
+              <label className="flex flex-col sm:order-5">
+                <div className="text-xs text-white/60 mb-1 sm:hidden">
+                  Timing B
+                </div>
+                {h.type === "dry hop" ? (
+                  <InputWithSuffix
+                    value={h.dryHopDays ?? 3}
+                    onChange={(n) => {
+                      const c = [...hops];
+                      c[i] = { ...h, dryHopDays: n } as HopItem;
+                      setHops(c);
+                    }}
+                    suffix=" days"
+                    suffixClassName="right-3 text-[10px]"
+                    step={0.5}
+                    placeholder="3"
+                  />
+                ) : h.type === "whirlpool" ? (
+                  <InputWithSuffix
+                    value={h.whirlpoolTimeMin ?? 15}
+                    onChange={(n) => {
+                      const c = [...hops];
+                      c[i] = { ...h, whirlpoolTimeMin: n } as HopItem;
+                      setHops(c);
+                    }}
+                    suffix=" min"
+                    suffixClassName="right-3 text-[10px]"
+                    step={1}
+                    placeholder="15"
+                  />
+                ) : (
+                  <div className="h-10" />
+                )}
+              </label>
+            )}
+            {/* Remove generic time input; handled contextually above */}
+            <div className="flex justify-end items-center sm:order-7">
+              <button
+                className="p-1 text-neutral-400 hover:text-red-500 transition w-fit"
+                onClick={() =>
+                  setHops((currentHops) =>
+                    currentHops.filter((hop) => hop.id !== h.id)
+                  )
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
             {showCustomHopInput && (
               <form
                 className="grid grid-cols-1 sm:grid-cols-3 gap-2 col-span-full"
@@ -652,83 +829,6 @@ export default function RecipeBuilder() {
                 </button>
               </form>
             )}
-            <label className="flex flex-col">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">Grams</div>
-              <input
-                className="rounded-md border px-3 py-2"
-                type="number"
-                step="0.1"
-                placeholder="Grams"
-                value={h.grams}
-                onChange={(e) => {
-                  const c = [...hops];
-                  c[i] = { ...h, grams: Number(e.target.value) } as HopItem;
-                  setHops(c);
-                }}
-              />
-            </label>
-            <label className="flex flex-col">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">
-                Alpha %
-              </div>
-              <input
-                className="rounded-md border px-3 py-2"
-                type="number"
-                step="0.1"
-                placeholder="Alpha %"
-                value={h.alphaAcidPercent}
-                onChange={(e) => {
-                  const c = [...hops];
-                  c[i] = {
-                    ...h,
-                    alphaAcidPercent: Number(e.target.value),
-                  } as HopItem;
-                  setHops(c);
-                }}
-              />
-            </label>
-            <label className="flex flex-col">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">
-                Time (min)
-              </div>
-              <input
-                className="rounded-md border px-3 py-2 w-full"
-                type="number"
-                step="1"
-                placeholder="Time (min)"
-                value={h.timeMin}
-                onChange={(e) => {
-                  const c = [...hops];
-                  c[i] = { ...h, timeMin: Number(e.target.value) } as HopItem;
-                  setHops(c);
-                }}
-              />
-            </label>
-            <div className="flex justify-end items-center">
-              <button
-                className="p-1 text-neutral-400 hover:text-red-500 transition w-fit"
-                onClick={() =>
-                  setHops((currentHops) =>
-                    currentHops.filter((hop) => hop.id !== h.id)
-                  )
-                }
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
           </div>
         ))}
         <button
@@ -752,12 +852,10 @@ export default function RecipeBuilder() {
       </section>
 
       {hopFlavorSeries.length > 0 && (
-        <section className="space-y-2">
-          <div className="font-medium">Hop Flavor Profile</div>
-          <div className="rounded-xl border border-white/10 p-3 shadow-soft">
-            <HopFlavorRadar series={hopFlavorSeries} />
-          </div>
-        </section>
+        <FlavorGraphs
+          baseSeries={hopFlavorSeries}
+          estFlavor={estimatedTotalFlavor}
+        />
       )}
 
       <section className="space-y-3">
@@ -823,5 +921,55 @@ export default function RecipeBuilder() {
         )}
       </section>
     </div>
+  );
+}
+
+function FlavorGraphs({
+  baseSeries,
+  estFlavor,
+}: {
+  baseSeries: { name: string; flavor: NonNullable<HopItem["flavor"]> }[];
+  estFlavor: NonNullable<HopItem["flavor"]>;
+}) {
+  const [mode, setMode] = useState<"base" | "estimated">("base");
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="font-medium">Hop Flavor Profile</div>
+        <div className="flex items-center gap-2 text-sm">
+          <button
+            className={`rounded-md px-2 py-1 border ${
+              mode === "base" ? "bg-white/80" : "bg-white/30"
+            }`}
+            onClick={() => setMode("base")}
+          >
+            Preset
+          </button>
+          <button
+            className={`rounded-md px-2 py-1 border ${
+              mode === "estimated" ? "bg-white/80" : "bg-white/30"
+            }`}
+            onClick={() => setMode("estimated")}
+          >
+            Estimated
+          </button>
+        </div>
+      </div>
+      <div className="rounded-xl border border-white/10 p-3 shadow-soft">
+        {mode === "base" ? (
+          <HopFlavorRadar
+            title="Base hop profiles"
+            emptyHint="Pick hops with flavor data"
+            series={baseSeries}
+          />
+        ) : (
+          <HopFlavorRadar
+            title="Estimated final aroma emphasis"
+            emptyHint="Increase dose or add late/dry hops"
+            series={[{ name: "Total (est.)", flavor: estFlavor }]}
+          />
+        )}
+      </div>
+    </section>
   );
 }
