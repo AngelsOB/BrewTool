@@ -39,9 +39,10 @@ export const HOP_FLAVOR_KEYS = [
   "stoneFruit",
   "berry",
   "floral",
-  "grassy",
-  "herbal",
+  // Swap positions so spice sits where grassy was to better match the color wheel
   "spice",
+  "herbal",
+  "grassy",
   "resinPine",
 ] as const;
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useRecipeStore,
   type GrainItem,
@@ -14,8 +14,17 @@ import {
   srmMoreyFromMcu,
   srmToHex,
 } from "../utils/calculations";
+import {
+  totalGrainWeightKg,
+  computePreBoilVolumeL,
+  computeMashWaterL,
+  computeSpargeWaterL,
+  computeSpargeFromMashUsedL,
+  type WaterParams,
+} from "../utils/calculations";
 import { ibuTotal } from "../calculators/ibu";
 import HopFlavorRadar from "../components/HopFlavorRadar";
+import HopFlavorMini from "../components/HopFlavorMini";
 import InputWithSuffix from "../components/InputWithSuffix";
 import InlineEditableNumber from "../components/InlineEditableNumber";
 import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
@@ -31,7 +40,7 @@ export default function RecipeBuilder() {
   const upsert = useRecipeStore((s) => s.upsert);
   const [name, setName] = useState("New Recipe");
   const [batchVolumeL, setBatchVolumeL] = useState(20);
-  const [fg, setFg] = useState(1.01);
+  // Legacy fg state removed; we use fgUsed/fgEstimated for display and saving
   const [efficiencyPct, setEfficiencyPct] = useState(72); // brewhouse efficiency percentage
   const [grains, setGrains] = useState<GrainItem[]>([
     {
@@ -49,6 +58,67 @@ export default function RecipeBuilder() {
   });
   const [showCustomGrainInput, setShowCustomGrainInput] = useState(false);
   const [showCustomHopInput, setShowCustomHopInput] = useState(false);
+
+  // Water profile/volumes inputs
+  const [mashThicknessLPerKg, setMashThicknessLPerKg] = useState(3);
+  const [grainAbsorptionLPerKg, setGrainAbsorptionLPerKg] = useState(0.8);
+  const [mashTunDeadspaceL, setMashTunDeadspaceL] = useState(0.5);
+  const [mashTunCapacityL, setMashTunCapacityL] = useState<number | undefined>(
+    undefined
+  );
+  const [boilTimeMin, setBoilTimeMin] = useState(60);
+  const [boilOffRateLPerHour, setBoilOffRateLPerHour] = useState(3);
+  const [showWaterSettings, setShowWaterSettings] = useState(false);
+  const [showBatchDetails, setShowBatchDetails] = useState(false);
+  const batchRef = useRef<HTMLDivElement | null>(null);
+  const [showIbuDetails, setShowIbuDetails] = useState(false);
+  const ibuRef = useRef<HTMLDivElement | null>(null);
+  const [hoverOpen, _setHoverOpen] = useState(false);
+  const [hoverAllowed, setHoverAllowed] = useState(true);
+  const hoverDisableTimerRef = useRef<number | null>(null);
+  const [brewMethod, setBrewMethod] = useState<
+    "three-vessel" | "biab-full" | "biab-sparge"
+  >("three-vessel");
+  const [coolingShrinkagePercent, setCoolingShrinkagePercent] = useState(4);
+  const [kettleLossL, setKettleLossL] = useState(0.5);
+  const [chillerLossL, setChillerLossL] = useState(0);
+  // Gravity auto/manual toggles and manual entries
+  const [ogAuto, setOgAuto] = useState(true);
+  const [actualOg, setActualOg] = useState<number | undefined>(undefined);
+  const [fgAuto, setFgAuto] = useState(true);
+  const [actualFg, setActualFg] = useState<number | undefined>(undefined);
+  // Fermentation parameters for FG estimation
+  const [fermentTempC] = useState(20);
+  const [fermentDays] = useState(14);
+
+  // Handlers to toggle auto/manual and capture current values when switching to manual
+  const onToggleOgAuto = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setOgAuto((prev) => {
+      const next = !prev;
+      if (!next) {
+        // entering manual → freeze current auto value only if no prior manual entry
+        if (actualOg == null) setActualOg(ogAutoCalc);
+      }
+      return next;
+    });
+  };
+  const onToggleFgAuto = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setFgAuto((prev) => {
+      const next = !prev;
+      if (!next) {
+        if (actualFg == null) setActualFg(fgEstimated);
+      }
+      return next;
+    });
+  };
 
   const sortedHopPresets = useMemo(() => {
     const presets = getHopPresets();
@@ -112,25 +182,15 @@ export default function RecipeBuilder() {
     return grouped;
   }, []);
 
-  const abv = useMemo(
-    () =>
-      abvSimple(
-        ogFromPoints(
-          pointsFromGrainBill(
-            grains.map((g) => ({ weightKg: g.weightKg, yield: g.yield })),
-            batchVolumeL,
-            efficiencyPct / 100
-          )
-        ),
-        fg
-      ),
-    [grains, batchVolumeL, fg, efficiencyPct]
-  );
+  // Color (SRM)
   const srm = useMemo(
     () => srmMoreyFromMcu(mcuFromGrainBill(grains, batchVolumeL)),
     [grains, batchVolumeL]
   );
-  const og = useMemo(
+  const color = useMemo(() => srmToHex(srm), [srm]);
+
+  // Auto OG calculation
+  const ogAutoCalc = useMemo(
     () =>
       ogFromPoints(
         pointsFromGrainBill(
@@ -141,7 +201,24 @@ export default function RecipeBuilder() {
       ),
     [grains, batchVolumeL, efficiencyPct]
   );
-  const color = useMemo(() => srmToHex(srm), [srm]);
+  const ogUsed = useMemo(
+    () => (ogAuto ? ogAutoCalc : actualOg ?? ogAutoCalc),
+    [ogAuto, actualOg, ogAutoCalc]
+  );
+
+  // FG estimation based on yeast attenuation, temp and time
+  const fgEstimated = useMemo(() => {
+    const baseAtt = yeast.attenuationPercent ?? 0.75; // decimal
+    let effAtt =
+      baseAtt + (fermentTempC - 20) * 0.004 + (fermentDays - 10) * 0.002;
+    effAtt = Math.max(0.6, Math.min(0.92, effAtt));
+    return 1 + (ogUsed - 1) * (1 - effAtt);
+  }, [yeast.attenuationPercent, fermentTempC, fermentDays, ogUsed]);
+  const fgUsed = useMemo(
+    () => (fgAuto ? fgEstimated : actualFg ?? fgEstimated),
+    [fgAuto, actualFg, fgEstimated]
+  );
+  const abv = useMemo(() => abvSimple(ogUsed, fgUsed), [ogUsed, fgUsed]);
 
   const ibu = useMemo(
     () =>
@@ -153,10 +230,121 @@ export default function RecipeBuilder() {
           type: h.type,
         })),
         batchVolumeL,
-        og
+        ogUsed
       ),
-    [hops, batchVolumeL, og]
+    [hops, batchVolumeL, ogUsed]
   );
+
+  // Water calculations (live)
+  const totalGrainKg = useMemo(() => totalGrainWeightKg(grains), [grains]);
+  const waterParams = useMemo<WaterParams>(
+    () => ({
+      mashThicknessLPerKg,
+      grainAbsorptionLPerKg,
+      mashTunDeadspaceL,
+      mashTunCapacityL,
+      boilTimeMin,
+      boilOffRateLPerHour,
+      // Brewfather-style always on
+      coolingShrinkagePercent,
+      kettleLossL,
+      chillerLossL,
+    }),
+    [
+      mashThicknessLPerKg,
+      grainAbsorptionLPerKg,
+      mashTunDeadspaceL,
+      mashTunCapacityL,
+      boilTimeMin,
+      boilOffRateLPerHour,
+      coolingShrinkagePercent,
+      kettleLossL,
+      chillerLossL,
+    ]
+  );
+  const preBoilVolumeL = useMemo(
+    () => computePreBoilVolumeL(batchVolumeL, waterParams),
+    [batchVolumeL, waterParams]
+  );
+  const mashWaterL = useMemo(
+    () => computeMashWaterL(totalGrainKg, waterParams),
+    [totalGrainKg, waterParams]
+  );
+  const spargeWaterL = useMemo(
+    () => computeSpargeWaterL(totalGrainKg, batchVolumeL, waterParams),
+    [totalGrainKg, batchVolumeL, waterParams]
+  );
+
+  // Mash/sparge finalization with optional BIAB logic and capacity capping
+  const absorptionL = useMemo(
+    () => Math.max(0, grainAbsorptionLPerKg) * totalGrainKg,
+    [grainAbsorptionLPerKg, totalGrainKg]
+  );
+  const deadspaceL = useMemo(
+    () => Math.max(0, mashTunDeadspaceL),
+    [mashTunDeadspaceL]
+  );
+
+  const desiredMashFullVolumeL = useMemo(
+    () => preBoilVolumeL + absorptionL + deadspaceL,
+    [preBoilVolumeL, absorptionL, deadspaceL]
+  );
+
+  const { finalMashL, finalSpargeL, capacityExceeded } = useMemo(() => {
+    const capacity = mashTunCapacityL;
+    if (brewMethod === "biab-full") {
+      let usedMash = desiredMashFullVolumeL;
+      let usedSparge = 0;
+      if (capacity && usedMash > capacity) {
+        usedMash = capacity;
+        usedSparge = computeSpargeFromMashUsedL(
+          totalGrainKg,
+          batchVolumeL,
+          waterParams,
+          usedMash
+        );
+        return {
+          finalMashL: usedMash,
+          finalSpargeL: usedSparge,
+          capacityExceeded: true,
+        };
+      }
+      return {
+        finalMashL: usedMash,
+        finalSpargeL: usedSparge,
+        capacityExceeded: false,
+      };
+    }
+    // three-vessel or biab-sparge -> thickness-based mash, with capacity cap
+    if (capacity && mashWaterL > capacity) {
+      const usedMash = capacity;
+      const usedSparge = computeSpargeFromMashUsedL(
+        totalGrainKg,
+        batchVolumeL,
+        waterParams,
+        usedMash
+      );
+      return {
+        finalMashL: usedMash,
+        finalSpargeL: usedSparge,
+        capacityExceeded: true,
+      };
+    }
+    return {
+      finalMashL: mashWaterL,
+      finalSpargeL: spargeWaterL,
+      capacityExceeded: false,
+    };
+  }, [
+    brewMethod,
+    mashTunCapacityL,
+    desiredMashFullVolumeL,
+    mashWaterL,
+    spargeWaterL,
+    totalGrainKg,
+    batchVolumeL,
+    waterParams,
+  ]);
 
   // (kept inlined where used to avoid dead code)
 
@@ -183,6 +371,39 @@ export default function RecipeBuilder() {
     [hops]
   );
 
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!showBatchDetails) return;
+      const target = e.target as Node | null;
+      if (batchRef.current && target && !batchRef.current.contains(target)) {
+        setShowBatchDetails(false);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [showBatchDetails]);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!showIbuDetails) return;
+      const target = e.target as Node | null;
+      if (ibuRef.current && target && !ibuRef.current.contains(target)) {
+        setShowIbuDetails(false);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [showIbuDetails]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverDisableTimerRef.current) {
+        window.clearTimeout(hoverDisableTimerRef.current);
+        hoverDisableTimerRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -202,11 +423,17 @@ export default function RecipeBuilder() {
               name,
               createdAt: new Date().toISOString(),
               batchVolumeL,
-              targetOG: og,
-              targetFG: fg,
+              targetOG: ogUsed,
+              targetFG: fgUsed,
               grains,
               hops,
               yeast,
+              water: {
+                ...waterParams,
+                mashWaterL,
+                spargeWaterL,
+                preBoilVolumeL,
+              },
             })
           }
         >
@@ -224,7 +451,9 @@ export default function RecipeBuilder() {
           />
         </label>
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">Batch Volume (L)</div>
+          <div className="text-sm text-neutral-700 mb-1">
+            Target Batch Volume (L)
+          </div>
           <input
             type="number"
             step="0.1"
@@ -246,43 +475,220 @@ export default function RecipeBuilder() {
           />
         </label>
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">OG / FG</div>
+          <div className="text-sm text-neutral-700 mb-1 flex items-center gap-2">
+            <button
+              type="button"
+              className="underline underline-offset-2"
+              onClick={onToggleOgAuto}
+            >
+              {ogAuto ? "Target OG (auto)" : "Actual OG"}
+            </button>
+            <span className="text-neutral-400">/</span>
+            <button
+              type="button"
+              className="underline underline-offset-2"
+              onClick={onToggleFgAuto}
+            >
+              {fgAuto ? "Target FG (auto)" : "Actual FG"}
+            </button>
+          </div>
           <div className="flex gap-2">
-            <input
-              type="number"
-              step="0.001"
-              min="1.000"
-              max="1.2"
-              className="w-full rounded-md border px-3 py-2"
-              value={og.toFixed(3)}
-              placeholder="1.050"
-              readOnly
-            />
-            <input
-              type="number"
-              step="0.001"
-              min="0.990"
-              max="1.2"
-              className="w-full rounded-md border px-3 py-2"
-              value={fg}
-              onChange={(e) => setFg(Number(e.target.value))}
-              placeholder="1.010"
-            />
+            <div className="flex-1">
+              <input
+                type="number"
+                step="0.001"
+                min="1.000"
+                max="1.2"
+                className="w-full rounded-md border px-3 py-2"
+                value={(ogAuto ? ogAutoCalc : actualOg ?? ogAutoCalc).toFixed(
+                  3
+                )}
+                onChange={(e) => !ogAuto && setActualOg(Number(e.target.value))}
+                placeholder="1.050"
+                readOnly={ogAuto}
+              />
+            </div>
+            <div className="flex-1">
+              <input
+                type="number"
+                step="0.001"
+                min="0.990"
+                max="1.2"
+                className="w-full rounded-md border px-3 py-2"
+                value={(fgAuto ? fgEstimated : actualFg ?? fgEstimated).toFixed(
+                  3
+                )}
+                onChange={(e) => !fgAuto && setActualFg(Number(e.target.value))}
+                placeholder="1.010"
+                readOnly={fgAuto}
+              />
+            </div>
           </div>
         </label>
       </section>
+
+      {/* Water settings (hidden by default) */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-white/70">
+          Water is automatic from grains + target volume.
+        </div>
+        <button
+          className="text-sm underline underline-offset-4 hover:text-white/90"
+          onClick={() => setShowWaterSettings((v) => !v)}
+        >
+          {showWaterSettings ? "Hide water settings" : "Show water settings"}
+        </button>
+      </div>
+      {showWaterSettings && (
+        <section className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">Mash Thickness</div>
+            <InputWithSuffix
+              value={mashThicknessLPerKg}
+              onChange={(n) => setMashThicknessLPerKg(n)}
+              suffix=" L/kg"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="3.0"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">Brew Method</div>
+            <select
+              className="w-full rounded-md border px-2 py-2.5"
+              value={brewMethod}
+              onChange={(e) =>
+                setBrewMethod(
+                  e.target.value as "three-vessel" | "biab-full" | "biab-sparge"
+                )
+              }
+            >
+              <option value="three-vessel">3-vessel</option>
+              <option value="biab-full">BIAB (full-volume)</option>
+              <option value="biab-sparge">BIAB (with sparge)</option>
+            </select>
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">
+              Grain Absorption
+            </div>
+            <InputWithSuffix
+              value={grainAbsorptionLPerKg}
+              onChange={(n) => setGrainAbsorptionLPerKg(n)}
+              suffix=" L/kg"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="0.8"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">
+              Mash Tun Deadspace
+            </div>
+            <InputWithSuffix
+              value={mashTunDeadspaceL}
+              onChange={(n) => setMashTunDeadspaceL(n)}
+              suffix=" L"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="0.5"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">
+              Mash Tun Capacity
+            </div>
+            <InputWithSuffix
+              value={mashTunCapacityL ?? 0}
+              onChange={(n) =>
+                setMashTunCapacityL(Number.isFinite(n) && n > 0 ? n : undefined)
+              }
+              suffix=" L"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="optional"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">Boil Time</div>
+            <InputWithSuffix
+              value={boilTimeMin}
+              onChange={(n) => setBoilTimeMin(n)}
+              suffix=" min"
+              suffixClassName="right-3 text-[10px]"
+              step={5}
+              placeholder="60"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">Boil-off Rate</div>
+            <InputWithSuffix
+              value={boilOffRateLPerHour}
+              onChange={(n) => setBoilOffRateLPerHour(n)}
+              suffix=" L/hr"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="3.0"
+            />
+          </label>
+          {/* Split loss fields (always on) */}
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">
+              Cooling Shrinkage (%)
+            </div>
+            <InlineEditableNumber
+              value={coolingShrinkagePercent}
+              onChange={(n) => setCoolingShrinkagePercent(n)}
+              suffix="%"
+              suffixClassName="left-9 right-0.5 text-[10px]"
+              step={0.1}
+              placeholder="4"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">Kettle Loss</div>
+            <InputWithSuffix
+              value={kettleLossL}
+              onChange={(n) => setKettleLossL(n)}
+              suffix=" L"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="0.5"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">Chiller Loss</div>
+            <InputWithSuffix
+              value={chillerLossL}
+              onChange={(n) => setChillerLossL(n)}
+              suffix=" L"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="0"
+            />
+          </label>
+        </section>
+      )}
+
+      {capacityExceeded && (
+        <div className="rounded-md border border-amber-400/50 bg-amber-200/50 p-3 text-sm text-amber-900">
+          Mash water exceeds mash tun capacity ({mashTunCapacityL?.toFixed(1)}{" "}
+          L). Using {finalMashL.toFixed(1)} L mash and {finalSpargeL.toFixed(1)}{" "}
+          L sparge.
+        </div>
+      )}
 
       {/* Sticky summary bar (glass + warm accent) */}
       <div className="sticky top-14 z-10 mx-auto max-w-6xl py-2 backdrop-blur-md">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/40 px-3 py-2 shadow-soft ring-1 ring-neutral-900/5 supports-[backdrop-filter]:bg-white/25">
           <div className="text-sm font-medium tracking-tight text-white/50">
-            Recipe Summary
+            {name}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3">
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
               <span className="text-neutral-600">OG</span>
               <span className="font-semibold tracking-tight text-neutral-900">
-                {og.toFixed(3)}
+                {ogUsed.toFixed(3)}
               </span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
@@ -301,11 +707,162 @@ export default function RecipeBuilder() {
                 style={{ backgroundColor: color }}
               />
             </div>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
-              <span className="text-neutral-600">IBU</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
-                {ibu.toFixed(0)}
-              </span>
+            <div className="relative group" ref={ibuRef}>
+              <div
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 pr-8 py-1.5 text-sm shadow-soft relative cursor-pointer select-none"
+                onClick={() => setShowIbuDetails((v) => !v)}
+                aria-expanded={showIbuDetails}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setShowIbuDetails((v) => !v);
+                  }
+                }}
+              >
+                <span className="text-neutral-600">IBU</span>
+                <span className="font-semibold tracking-tight text-neutral-900">
+                  {ibu.toFixed(0)}
+                </span>
+                <HopFlavorMini
+                  flavor={estimatedTotalFlavor}
+                  size={40}
+                  maxValue={5}
+                  className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2"
+                />
+              </div>
+              <div
+                className={
+                  "absolute right-0 mt-2 z-20 " +
+                  (showIbuDetails ? "block" : "hidden") +
+                  " group-hover:block"
+                }
+              >
+                <div className="relative rounded-xl border border-white/10 ring-1 ring-white/60 bg-white/90 p-2 shadow-2xl shadow-black/30 backdrop-blur-3xl supports-[backdrop-filter]:bg-white/70">
+                  <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/90" />
+                  <div className="rounded-lg bg-neutral-900 p-2">
+                    <HopFlavorRadar
+                      series={[
+                        { name: "Total (est.)", flavor: estimatedTotalFlavor },
+                      ]}
+                      colorStrategy="dominant"
+                      labelColorize={true}
+                      showLegend={false}
+                      ringRadius={100}
+                      outerPadding={80}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Batch volume with click-to-toggle details */}
+            <div
+              className="relative"
+              ref={batchRef}
+              onMouseEnter={() => hoverAllowed && _setHoverOpen(true)}
+              onMouseLeave={() => _setHoverOpen(false)}
+            >
+              <div
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft cursor-pointer select-none"
+                onClick={() => {
+                  if (showBatchDetails) {
+                    // closing via click; disable hover reopen briefly
+                    setShowBatchDetails(false);
+                    setHoverAllowed(false);
+                    if (hoverDisableTimerRef.current) {
+                      window.clearTimeout(hoverDisableTimerRef.current);
+                    }
+                    hoverDisableTimerRef.current = window.setTimeout(() => {
+                      setHoverAllowed(true);
+                      hoverDisableTimerRef.current = null;
+                    }, 600);
+                  } else {
+                    setShowBatchDetails(true);
+                  }
+                }}
+                aria-expanded={showBatchDetails}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (showBatchDetails) {
+                      setShowBatchDetails(false);
+                      setHoverAllowed(false);
+                      if (hoverDisableTimerRef.current) {
+                        window.clearTimeout(hoverDisableTimerRef.current);
+                      }
+                      hoverDisableTimerRef.current = window.setTimeout(() => {
+                        setHoverAllowed(true);
+                        hoverDisableTimerRef.current = null;
+                      }, 600);
+                    } else {
+                      setShowBatchDetails(true);
+                    }
+                  }
+                }}
+              >
+                <span className="text-neutral-600">Batch</span>
+                <span className="font-semibold tracking-tight text-neutral-900">
+                  {batchVolumeL.toFixed(1)} L
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={
+                    "h-3 w-3 text-neutral-600 transition-transform duration-200 " +
+                    (showBatchDetails ? "rotate-180" : "")
+                  }
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 9l6 6 6-6"
+                  />
+                </svg>
+              </div>
+              <div
+                className={
+                  "absolute right-0 mt-2 z-20 " +
+                  (showBatchDetails || (hoverAllowed && hoverOpen)
+                    ? "block"
+                    : "hidden")
+                }
+              >
+                <div className="relative flex items-center justify-end gap-2">
+                  <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/90" />
+                  <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
+                    <span
+                      className="text-neutral-600"
+                      style={{
+                        WebkitTextStroke: "0.6px rgba(0,0,0,0.9)",
+                      }}
+                    >
+                      Pre-boil
+                    </span>
+                    <span className="font-semibold tracking-tight text-neutral-900">
+                      {preBoilVolumeL.toFixed(1)} L
+                    </span>
+                  </div>
+                  <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
+                    <span
+                      className="text-neutral-600"
+                      style={{
+                        WebkitTextStroke: "0.6px rgba(0,0,0,0.9)",
+                      }}
+                    >
+                      Mash / Sparge
+                    </span>
+                    <span className="font-semibold tracking-tight text-neutral-900">
+                      {finalMashL.toFixed(1)} / {finalSpargeL.toFixed(1)} L
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -334,9 +891,9 @@ export default function RecipeBuilder() {
         </div>
         <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-white/60">
           <div>Grain</div>
-          <div>Weight (kg)</div>
-          <div>Color (°L)</div>
-          <div>Yield (%)</div>
+          <div>Weight</div>
+          <div>Color</div>
+          <div>Yield</div>
           <div></div> {/* For the remove button */}
         </div>
         {grains.map((g, i) => (
@@ -440,51 +997,51 @@ export default function RecipeBuilder() {
               <div className="text-xs text-white/60 mb-1 sm:hidden">
                 Weight (kg)
               </div>
-              <input
-                className="rounded-md border px-3 py-2"
-                type="number"
-                step="0.01"
-                placeholder="Weight (kg)"
+              <InputWithSuffix
                 value={g.weightKg}
-                onChange={(e) => {
+                onChange={(n) => {
                   const c = [...grains];
-                  c[i] = { ...g, weightKg: Number(e.target.value) };
+                  c[i] = { ...g, weightKg: n };
                   setGrains(c);
                 }}
+                suffix=" kg"
+                suffixClassName="right-3 text-[10px]"
+                step={0.01}
+                placeholder="0.00"
               />
             </label>
             <label className="flex flex-col">
               <div className="text-xs text-white/60 mb-1 sm:hidden">
                 Color (°L)
               </div>
-              <input
-                className="rounded-md border px-3 py-2"
-                type="number"
-                step="0.1"
-                placeholder="Color °L"
+              <InlineEditableNumber
                 value={g.colorLovibond}
-                onChange={(e) => {
+                onChange={(n) => {
                   const c = [...grains];
-                  c[i] = { ...g, colorLovibond: Number(e.target.value) };
+                  c[i] = { ...g, colorLovibond: n };
                   setGrains(c);
                 }}
+                suffix="°L"
+                suffixClassName="left-9 right-0.5 text-[10px]"
+                step={0.1}
+                placeholder="2.0"
               />
             </label>
             <label className="flex flex-col">
               <div className="text-xs text-white/60 mb-1 sm:hidden">
                 Yield (%)
               </div>
-              <input
-                className="rounded-md border px-3 py-2 w-full"
-                type="number"
-                step="0.01"
-                placeholder="Yield %"
+              <InlineEditableNumber
                 value={g.yield}
-                onChange={(e) => {
+                onChange={(n) => {
                   const c = [...grains];
-                  c[i] = { ...g, yield: Number(e.target.value) };
+                  c[i] = { ...g, yield: n };
                   setGrains(c);
                 }}
+                suffix="%"
+                suffixClassName="left-9 right-0.5 text-[10px]"
+                step={0.01}
+                placeholder="75"
               />
             </label>
             <div className="flex justify-end items-center">
@@ -962,12 +1519,21 @@ function FlavorGraphs({
             title="Base hop profiles"
             emptyHint="Pick hops with flavor data"
             series={baseSeries}
+            colorStrategy="index"
+            labelColorize={true}
+            outerPadding={72}
+            ringRadius={140}
           />
         ) : (
           <HopFlavorRadar
             title="Estimated final aroma emphasis"
             emptyHint="Increase dose or add late/dry hops"
             series={[{ name: "Total (est.)", flavor: estFlavor }]}
+            colorStrategy="dominant"
+            labelColorize={true}
+            showLegend={false}
+            outerPadding={72}
+            ringRadius={140}
           />
         )}
       </div>

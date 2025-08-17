@@ -136,3 +136,145 @@ export function ogFromGrainBill(
   const points = totalGU / volumeGal; // gravity points per gallon
   return 1 + points / 1000;
 }
+
+// ==========================
+// Water calculations
+// ==========================
+
+export type WaterParams = {
+  // Mash thickness expressed in liters of water per kilogram of grain
+  mashThicknessLPerKg: number;
+  // Typical grain absorption in liters per kilogram (after lautering)
+  grainAbsorptionLPerKg: number;
+  // Volume that cannot be drained from the mash tun
+  mashTunDeadspaceL: number;
+  // Optional physical capacity of mash tun (used by UI to warn/adjust)
+  mashTunCapacityL?: number;
+  // Boil time in minutes
+  boilTimeMin: number;
+  // Boil-off rate in liters per hour
+  boilOffRateLPerHour: number;
+  // Simple-mode combined kettle trub loss in liters
+  trubLossL?: number;
+  // Advanced mode: post-boil shrinkage percent (e.g., 4 means 4%)
+  coolingShrinkagePercent?: number;
+  // Advanced mode: losses separated
+  kettleLossL?: number; // kettle deadspace + trub left in kettle
+  chillerLossL?: number; // losses in plate immersion chiller, hoses
+  fermenterLossL?: number; // not used for pre-boil if target is into fermenter
+};
+
+export function totalGrainWeightKg(
+  grains: Array<{ weightKg: number }>
+): number {
+  return grains.reduce((sum, g) => sum + (g.weightKg || 0), 0);
+}
+
+export function computePreBoilVolumeL(
+  batchVolumeL: number,
+  params: Pick<
+    WaterParams,
+    | "boilTimeMin"
+    | "boilOffRateLPerHour"
+    | "trubLossL"
+    | "coolingShrinkagePercent"
+    | "kettleLossL"
+    | "chillerLossL"
+  >
+): number {
+  // If advanced fields are provided, redirect to advanced solver for consistency
+  if (
+    params.coolingShrinkagePercent != null ||
+    params.kettleLossL != null ||
+    params.chillerLossL != null
+  ) {
+    return computePreBoilVolumeLAdvanced(batchVolumeL, params).preBoilL;
+  }
+  const boilHours = Math.max(0, (params.boilTimeMin || 0) / 60);
+  const boilOff = Math.max(0, params.boilOffRateLPerHour || 0) * boilHours;
+  const trub = Math.max(0, params.trubLossL || 0);
+  return Math.max(0, batchVolumeL + boilOff + trub);
+}
+
+export function computePreBoilVolumeLAdvanced(
+  batchVolumeIntoFermenterL: number,
+  params: Pick<
+    WaterParams,
+    | "boilTimeMin"
+    | "boilOffRateLPerHour"
+    | "coolingShrinkagePercent"
+    | "kettleLossL"
+    | "chillerLossL"
+  >
+): { preBoilL: number; postBoilHotL: number } {
+  const boilHours = Math.max(0, (params.boilTimeMin || 0) / 60);
+  const boilOff = Math.max(0, params.boilOffRateLPerHour || 0) * boilHours;
+  const shrinkPct = Math.max(0, params.coolingShrinkagePercent ?? 4);
+  const shrinkFactor = 1 - shrinkPct / 100;
+  const kettleLoss = Math.max(0, params.kettleLossL ?? 0);
+  const chillerLoss = Math.max(0, params.chillerLossL ?? 0);
+
+  // Solve for hot post-boil kettle volume so that after shrinkage and losses
+  // the volume into fermenter equals the batch target.
+  // V_hot * shrinkFactor - (kettleLoss + chillerLoss) = batch
+  const postBoilHotL =
+    (batchVolumeIntoFermenterL + kettleLoss + chillerLoss) /
+    Math.max(0.0001, shrinkFactor);
+  const preBoilL = postBoilHotL + boilOff;
+  return {
+    preBoilL: Math.max(0, preBoilL),
+    postBoilHotL: Math.max(0, postBoilHotL),
+  };
+}
+
+export function computeMashWaterL(
+  totalGrainKg: number,
+  params: Pick<WaterParams, "mashThicknessLPerKg" | "mashTunDeadspaceL">
+): number {
+  const thickness = Math.max(0, params.mashThicknessLPerKg || 0);
+  const deadspace = Math.max(0, params.mashTunDeadspaceL || 0);
+  return Math.max(0, totalGrainKg * thickness + deadspace);
+}
+
+export function computeSpargeWaterL(
+  totalGrainKg: number,
+  batchVolumeL: number,
+  params: WaterParams
+): number {
+  // If advanced parameters are present, use advanced pre-boil math that
+  // accounts for shrinkage and split losses; otherwise use simple model.
+  const hasAdvanced =
+    params.coolingShrinkagePercent != null ||
+    params.kettleLossL != null ||
+    params.chillerLossL != null;
+  const preBoil = hasAdvanced
+    ? computePreBoilVolumeLAdvanced(batchVolumeL, {
+        boilTimeMin: params.boilTimeMin,
+        boilOffRateLPerHour: params.boilOffRateLPerHour,
+        coolingShrinkagePercent: params.coolingShrinkagePercent,
+        kettleLossL: params.kettleLossL,
+        chillerLossL: params.chillerLossL,
+      }).preBoilL
+    : computePreBoilVolumeL(batchVolumeL, params);
+  const mashWater = computeMashWaterL(totalGrainKg, params);
+  const absorption =
+    Math.max(0, params.grainAbsorptionLPerKg || 0) * totalGrainKg;
+  const deadspace = Math.max(0, params.mashTunDeadspaceL || 0);
+  const mashRunoff = Math.max(0, mashWater - absorption - deadspace);
+  const sparge = Math.max(0, preBoil - mashRunoff);
+  return sparge;
+}
+
+export function computeSpargeFromMashUsedL(
+  totalGrainKg: number,
+  batchVolumeL: number,
+  params: WaterParams,
+  mashWaterUsedL: number
+): number {
+  const preBoil = computePreBoilVolumeL(batchVolumeL, params);
+  const absorption =
+    Math.max(0, params.grainAbsorptionLPerKg || 0) * totalGrainKg;
+  const deadspace = Math.max(0, params.mashTunDeadspaceL || 0);
+  const mashRunoff = Math.max(0, mashWaterUsedL - absorption - deadspace);
+  return Math.max(0, preBoil - mashRunoff);
+}

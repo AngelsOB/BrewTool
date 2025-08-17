@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { loadJson, saveJson } from "../utils/storage";
 import type { HopFlavorProfile } from "../utils/presets";
+import type { WaterParams } from "../utils/calculations";
 
 export type GrainItem = {
   id: string;
@@ -51,6 +52,12 @@ export type Recipe = {
   hops: HopItem[];
   yeast?: YeastItem;
   notes?: string;
+  water?: WaterParams & {
+    // Cached computed values for convenience when viewing a saved recipe
+    mashWaterL?: number;
+    spargeWaterL?: number;
+    preBoilVolumeL?: number;
+  };
 };
 
 type State = {
