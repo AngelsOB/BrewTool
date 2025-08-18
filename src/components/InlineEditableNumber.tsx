@@ -1,4 +1,3 @@
-import React from "react";
 import InputWithSuffix from "./InputWithSuffix";
 
 type Props = {

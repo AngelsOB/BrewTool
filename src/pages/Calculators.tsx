@@ -1,6 +1,7 @@
 import CalculatorCard from "../components/CalculatorCard";
 import AbvCalculator from "../components/AbvCalculator";
 import IbuCalculator from "../components/IbuCalculator";
+import WaterSaltsCalc from "../components/WaterSaltsCalc";
 
 export default function Calculators() {
   return (
@@ -16,6 +17,7 @@ export default function Calculators() {
           <AbvCalculator />
         </div>
         <IbuCalculator />
+        <WaterSaltsCalc />
         <CalculatorCard title="SRM">
           <div className="text-sm text-white/70">Coming next.</div>
         </CalculatorCard>

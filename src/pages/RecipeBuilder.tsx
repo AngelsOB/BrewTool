@@ -27,6 +27,7 @@ import HopFlavorRadar from "../components/HopFlavorRadar";
 import HopFlavorMini from "../components/HopFlavorMini";
 import InputWithSuffix from "../components/InputWithSuffix";
 import InlineEditableNumber from "../components/InlineEditableNumber";
+import WaterSaltsCalc from "../components/WaterSaltsCalc";
 import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
 import {
   addCustomGrain,
@@ -35,6 +36,7 @@ import {
   getHopPresets,
   getYeastPresets,
 } from "../utils/presets";
+import type { Recipe } from "../hooks/useRecipeStore";
 
 export default function RecipeBuilder() {
   const upsert = useRecipeStore((s) => s.upsert);
@@ -51,7 +53,16 @@ export default function RecipeBuilder() {
       yield: 0.75,
     },
   ]);
-  const [hops, setHops] = useState<HopItem[]>([]);
+  const [hops, setHops] = useState<HopItem[]>([
+    {
+      id: crypto.randomUUID(),
+      name: "",
+      grams: 0,
+      alphaAcidPercent: 0,
+      timeMin: 60,
+      type: "boil",
+    },
+  ]);
   const [yeast, setYeast] = useState<YeastItem>({
     name: "SafAle US-05",
     attenuationPercent: 0.78,
@@ -82,6 +93,23 @@ export default function RecipeBuilder() {
   const [coolingShrinkagePercent, setCoolingShrinkagePercent] = useState(4);
   const [kettleLossL, setKettleLossL] = useState(0.5);
   const [chillerLossL, setChillerLossL] = useState(0);
+  // Mash schedule (affects fermentability)
+  const [mashSteps, setMashSteps] = useState<
+    {
+      id: string;
+      type: "infusion" | "decoction" | "ramp";
+      tempC: number;
+      timeMin: number;
+      decoctionPercent?: number;
+    }[]
+  >([
+    {
+      id: crypto.randomUUID(),
+      type: "infusion",
+      tempC: 66,
+      timeMin: 60,
+    },
+  ]);
   // Gravity auto/manual toggles and manual entries
   const [ogAuto, setOgAuto] = useState(true);
   const [actualOg, setActualOg] = useState<number | undefined>(undefined);
@@ -209,11 +237,34 @@ export default function RecipeBuilder() {
   // FG estimation based on yeast attenuation, temp and time
   const fgEstimated = useMemo(() => {
     const baseAtt = yeast.attenuationPercent ?? 0.75; // decimal
+    // Use steps if provided; otherwise assume a single 66C/60m step (no change)
+    let stepTimeTotal = 0;
+    let tempAdjAcc = 0;
+    let decoAdjAcc = 0;
+    for (const s of mashSteps) {
+      const t = Math.max(0, s.timeMin || 0);
+      stepTimeTotal += t;
+      tempAdjAcc += (66 - (s.tempC || 66)) * 0.006 * t;
+      if (s.type === "decoction") decoAdjAcc += 0.005 * t;
+    }
+    const avgTempAdj = stepTimeTotal > 0 ? tempAdjAcc / stepTimeTotal : 0;
+    const avgDecoAdj = stepTimeTotal > 0 ? decoAdjAcc / stepTimeTotal : 0;
+    const totalMashTime = stepTimeTotal > 0 ? stepTimeTotal : 60;
+    const mashTimeAdj = Math.max(
+      -0.03,
+      Math.min(0.03, ((totalMashTime - 60) / 15) * 0.005)
+    );
+
     let effAtt =
-      baseAtt + (fermentTempC - 20) * 0.004 + (fermentDays - 10) * 0.002;
-    effAtt = Math.max(0.6, Math.min(0.92, effAtt));
+      baseAtt +
+      avgTempAdj +
+      avgDecoAdj +
+      mashTimeAdj +
+      (fermentTempC - 20) * 0.004 +
+      (fermentDays - 10) * 0.002;
+    effAtt = Math.max(0.6, Math.min(0.95, effAtt));
     return 1 + (ogUsed - 1) * (1 - effAtt);
-  }, [yeast.attenuationPercent, fermentTempC, fermentDays, ogUsed]);
+  }, [yeast.attenuationPercent, fermentTempC, fermentDays, ogUsed, mashSteps]);
   const fgUsed = useMemo(
     () => (fgAuto ? fgEstimated : actualFg ?? fgEstimated),
     [fgAuto, actualFg, fgEstimated]
@@ -370,6 +421,10 @@ export default function RecipeBuilder() {
     () => hops.some((x) => x.type === "dry hop" || x.type === "whirlpool"),
     [hops]
   );
+  const hasDecoctionStep = useMemo(
+    () => mashSteps.some((s) => s.type === "decoction"),
+    [mashSteps]
+  );
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -411,14 +466,14 @@ export default function RecipeBuilder() {
           <h1 className="text-3xl font-semibold tracking-tight">
             Recipe Builder
           </h1>
-          <p className="mt-1 text-white/70 text-sm">
+          <p className="mt-1 text-muted text-sm">
             Inline stats update as you type.
           </p>
         </div>
         <button
           className="btn-neon"
-          onClick={() =>
-            upsert({
+          onClick={() => {
+            const recipe: Recipe = {
               id: crypto.randomUUID(),
               name,
               createdAt: new Date().toISOString(),
@@ -428,20 +483,22 @@ export default function RecipeBuilder() {
               grains,
               hops,
               yeast,
+              mash: { steps: mashSteps },
               water: {
                 ...waterParams,
                 mashWaterL,
                 spargeWaterL,
                 preBoilVolumeL,
               },
-            })
-          }
+            };
+            upsert(recipe);
+          }}
         >
           Save Recipe
         </button>
       </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <section className="section-soft grid grid-cols-1 sm:grid-cols-4 gap-4">
         <label className="block">
           <div className="text-sm text-neutral-700 mb-1">Name</div>
           <input
@@ -529,7 +586,7 @@ export default function RecipeBuilder() {
 
       {/* Water settings (hidden by default) */}
       <div className="flex items-center justify-between">
-        <div className="text-sm text-white/70">
+        <div className="text-sm text-muted">
           Water is automatic from grains + target volume.
         </div>
         <button
@@ -868,9 +925,9 @@ export default function RecipeBuilder() {
         </div>
       </div>
 
-      <section className="space-y-3">
+      <section className="section-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="font-medium">Grain Bill</div>
+          <div className="font-semibold text-primary-strong">Grain Bill</div>
           <button
             className="hidden sm:block btn-neon"
             onClick={() =>
@@ -889,7 +946,7 @@ export default function RecipeBuilder() {
             + Add Grain
           </button>
         </div>
-        <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-white/60">
+        <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-muted">
           <div>Grain</div>
           <div>Weight</div>
           <div>Color</div>
@@ -902,7 +959,7 @@ export default function RecipeBuilder() {
             className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content] gap-2"
           >
             <label className="flex flex-col">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">Grain</div>
+              <div className="text-xs text-muted mb-1 sm:hidden">Grain</div>
               <select
                 className="w-full rounded-md border px-2 py-2.5"
                 onChange={(e) => {
@@ -994,7 +1051,7 @@ export default function RecipeBuilder() {
               </form>
             )}
             <label className="flex flex-col">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">
+              <div className="text-xs text-muted mb-1 sm:hidden">
                 Weight (kg)
               </div>
               <InputWithSuffix
@@ -1011,7 +1068,7 @@ export default function RecipeBuilder() {
               />
             </label>
             <label className="flex flex-col">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">
+              <div className="text-xs text-muted mb-1 sm:hidden">
                 Color (°L)
               </div>
               <InlineEditableNumber
@@ -1028,9 +1085,7 @@ export default function RecipeBuilder() {
               />
             </label>
             <label className="flex flex-col">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">
-                Yield (%)
-              </div>
+              <div className="text-xs text-muted mb-1 sm:hidden">Yield (%)</div>
               <InlineEditableNumber
                 value={g.yield}
                 onChange={(n) => {
@@ -1090,9 +1145,151 @@ export default function RecipeBuilder() {
         </button>
       </section>
 
-      <section className="space-y-3">
+      {/* Mash schedule */}
+      <section className="section-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="font-medium">Hop Schedule</div>
+          <div className="font-semibold text-primary-strong">Mash Schedule</div>
+          <button
+            className="hidden sm:block btn-neon"
+            onClick={() =>
+              setMashSteps((xs) => [
+                ...xs,
+                {
+                  id: crypto.randomUUID(),
+                  type: "infusion" as const,
+                  tempC: 66,
+                  timeMin: 15,
+                },
+              ])
+            }
+          >
+            + Add Step
+          </button>
+        </div>
+        <div className="space-y-2">
+          <div
+            className={
+              "hidden sm:grid gap-2 text-xs text-muted " +
+              (hasDecoctionStep
+                ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.6fr)_min-content]"
+                : "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]")
+            }
+          >
+            <div>Type</div>
+            <div>Temp</div>
+            <div>Time</div>
+            {hasDecoctionStep && <div>Boil %</div>}
+            <div></div>
+          </div>
+          {mashSteps.map((s, i) => (
+            <div
+              key={s.id}
+              className={
+                "grid grid-cols-1 gap-2 items-end " +
+                (hasDecoctionStep
+                  ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.6fr)_min-content]"
+                  : "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]")
+              }
+            >
+              <label className="block">
+                <div className="text-xs text-muted mb-1 sm:hidden">Type</div>
+                <select
+                  className="w-full rounded-md border px-2 py-2.5"
+                  value={s.type}
+                  onChange={(e) => {
+                    const c = [...mashSteps];
+                    c[i] = { ...s, type: e.target.value as typeof s.type };
+                    setMashSteps(c);
+                  }}
+                >
+                  <option value="infusion">Infusion</option>
+                  <option value="ramp">Ramp</option>
+                  <option value="decoction">Decoction</option>
+                </select>
+              </label>
+              <label className="block">
+                <div className="text-xs text-muted mb-1 sm:hidden">Temp</div>
+                <InputWithSuffix
+                  value={s.tempC}
+                  onChange={(n) => {
+                    const c = [...mashSteps];
+                    c[i] = { ...s, tempC: n };
+                    setMashSteps(c);
+                  }}
+                  step={0.5}
+                  suffix="°C"
+                  suffixClassName="right-3 text-[10px]"
+                />
+              </label>
+              <label className="block">
+                <div className="text-xs text-muted mb-1 sm:hidden">Time</div>
+                <InputWithSuffix
+                  value={s.timeMin}
+                  onChange={(n) => {
+                    const c = [...mashSteps];
+                    c[i] = { ...s, timeMin: n };
+                    setMashSteps(c);
+                  }}
+                  step={1}
+                  suffix=" min"
+                  suffixClassName="right-3 text-[10px]"
+                />
+              </label>
+              {hasDecoctionStep &&
+                (s.type === "decoction" ? (
+                  <label className="block sm:col-span-1">
+                    <div className="text-xs text-muted mb-1 sm:hidden">
+                      Boil %
+                    </div>
+                    <InputWithSuffix
+                      value={s.decoctionPercent ?? 20}
+                      onChange={(n) => {
+                        const c = [...mashSteps];
+                        c[i] = { ...s, decoctionPercent: n };
+                        setMashSteps(c);
+                      }}
+                      step={1}
+                      suffix="%"
+                      suffixClassName="right-3 text-[10px]"
+                    />
+                  </label>
+                ) : (
+                  <div className="hidden sm:block" />
+                ))}
+              <div className="flex justify-end">
+                <button
+                  className="p-2 text-neutral-400 hover:text-red-500"
+                  onClick={() =>
+                    setMashSteps((xs) => xs.filter((x) => x.id !== s.id))
+                  }
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+          <button
+            className="block sm:hidden w-full btn-neon"
+            onClick={() =>
+              setMashSteps((xs) => [
+                ...xs,
+                {
+                  id: crypto.randomUUID(),
+                  type: "infusion" as const,
+                  tempC: 66,
+                  timeMin: 15,
+                },
+              ])
+            }
+          >
+            + Add Step
+          </button>
+        </div>
+      </section>
+
+      <section className="section-soft space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="font-semibold text-primary-strong">Hop Schedule</div>
           <button
             className="hidden sm:block btn-neon"
             onClick={() =>
@@ -1114,7 +1311,7 @@ export default function RecipeBuilder() {
         </div>
         <div
           className={
-            "hidden sm:grid gap-2 text-xs text-white/60 " +
+            "hidden sm:grid gap-2 text-xs text-muted " +
             (hasSecondTiming
               ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]"
               : "sm:grid-cols-[minmax(0,1fr)_minmax(0,.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content]")
@@ -1139,7 +1336,7 @@ export default function RecipeBuilder() {
             }
           >
             <label className="flex flex-col sm:order-1">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">Hop</div>
+              <div className="text-xs text-muted mb-1 sm:hidden">Hop</div>
               <select
                 className="w-full rounded-md border px-2 py-2.5"
                 onChange={(e) => {
@@ -1182,7 +1379,7 @@ export default function RecipeBuilder() {
               </select>
             </label>
             <label className="flex flex-col sm:order-3">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">Type</div>
+              <div className="text-xs text-muted mb-1 sm:hidden">Type</div>
               <select
                 className="w-full rounded-md border px-2 py-2.5"
                 value={h.type}
@@ -1201,7 +1398,7 @@ export default function RecipeBuilder() {
             </label>
             {/* Grams (moved up to match header order) */}
             <label className="flex flex-col sm:order-6">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">Grams</div>
+              <div className="text-xs text-muted mb-1 sm:hidden">Grams</div>
               <InputWithSuffix
                 value={h.grams}
                 onChange={(n) => {
@@ -1217,9 +1414,7 @@ export default function RecipeBuilder() {
             </label>
             {/* Alpha % (moved up to match header order) */}
             <label className="flex flex-col sm:order-2">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">
-                Alpha %
-              </div>
+              <div className="text-xs text-muted mb-1 sm:hidden">Alpha %</div>
               <InlineEditableNumber
                 value={h.alphaAcidPercent}
                 onChange={(n) => {
@@ -1235,9 +1430,7 @@ export default function RecipeBuilder() {
             </label>
             {/* Timing A column */}
             <label className="flex flex-col sm:order-4">
-              <div className="text-xs text-white/60 mb-1 sm:hidden">
-                Timing A
-              </div>
+              <div className="text-xs text-muted mb-1 sm:hidden">Timing A</div>
               {h.type === "dry hop" ? (
                 <select
                   className="w-full rounded-md border px-2 py-2.5"
@@ -1290,7 +1483,7 @@ export default function RecipeBuilder() {
             {/* Timing B column (only when grid includes it) */}
             {hasSecondTiming && (
               <label className="flex flex-col sm:order-5">
-                <div className="text-xs text-white/60 mb-1 sm:hidden">
+                <div className="text-xs text-muted mb-1 sm:hidden">
                   Timing B
                 </div>
                 {h.type === "dry hop" ? (
@@ -1416,9 +1609,9 @@ export default function RecipeBuilder() {
         />
       )}
 
-      <section className="space-y-3">
+      <section className="section-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="font-medium">Yeast</div>
+          <div className="font-semibold text-primary-strong">Yeast</div>
           <button
             className="p-1 text-neutral-400 hover:text-red-500 transition w-fit ml-auto self-end"
             onClick={() =>
@@ -1477,6 +1670,15 @@ export default function RecipeBuilder() {
             Est. Attenuation: {(yeast.attenuationPercent * 100).toFixed(0)}%
           </div>
         )}
+      </section>
+
+      <section className="section-soft space-y-3">
+        <div className="font-semibold text-primary-strong">Water Salts</div>
+        <WaterSaltsCalc
+          mashWaterL={finalMashL}
+          spargeWaterL={finalSpargeL}
+          variant="embedded"
+        />
       </section>
     </div>
   );

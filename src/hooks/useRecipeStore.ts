@@ -41,6 +41,14 @@ export type YeastItem = {
   attenuationPercent?: number;
 };
 
+export type MashStep = {
+  id: string;
+  type: "infusion" | "decoction" | "ramp";
+  tempC: number;
+  timeMin: number;
+  decoctionPercent?: number; // only for type 'decoction'
+};
+
 export type Recipe = {
   id: string;
   name: string;
@@ -51,6 +59,7 @@ export type Recipe = {
   grains: GrainItem[];
   hops: HopItem[];
   yeast?: YeastItem;
+  mash?: { tempC?: number; timeMin?: number; steps?: MashStep[] };
   notes?: string;
   water?: WaterParams & {
     // Cached computed values for convenience when viewing a saved recipe

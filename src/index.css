@@ -8,6 +8,23 @@
   --muted: 160 174 192;
   --accent: 251 146 60; /* orange-400 */
   --glow: 249 115 22; /* orange-500 */
+
+  /* Coral theme (OKLCH) */
+  --coral-50: oklch(96.75% 0.017 44.86);
+  --coral-100: oklch(93.36% 0.035 41.97);
+  --coral-200: oklch(87.71% 0.071 47);
+  --coral-300: oklch(81.06% 0.12 50.84);
+  --coral-400: oklch(75.22% 0.179 58.74);
+  --coral-500: oklch(64.96% 0.154 58.7);
+  --coral-600: oklch(54.28% 0.129 58.65);
+  --coral-700: oklch(44.82% 0.107 58.53);
+  --coral-800: oklch(34.32% 0.082 58.51);
+  --coral-900: oklch(24.44% 0.058 58.7);
+  --coral-950: oklch(19.22% 0.046 58.17);
+
+  /* Semantic text */
+  --fg-strong: oklch(96% 0.01 240);
+  --fg-muted: oklch(82% 0.01 240);
 }
 
 .dark {
@@ -18,6 +35,22 @@
   --muted: 148 163 184;
   --accent: 251 146 60;
   --glow: 234 88 12; /* orange-600 */
+
+  /* repeat coral theme for dark */
+  --coral-50: oklch(96.75% 0.017 44.86);
+  --coral-100: oklch(93.36% 0.035 41.97);
+  --coral-200: oklch(87.71% 0.071 47);
+  --coral-300: oklch(81.06% 0.12 50.84);
+  --coral-400: oklch(75.22% 0.179 58.74);
+  --coral-500: oklch(64.96% 0.154 58.7);
+  --coral-600: oklch(54.28% 0.129 58.65);
+  --coral-700: oklch(44.82% 0.107 58.53);
+  --coral-800: oklch(34.32% 0.082 58.51);
+  --coral-900: oklch(24.44% 0.058 58.7);
+  --coral-950: oklch(19.22% 0.046 58.17);
+
+  --fg-strong: oklch(97% 0.006 240);
+  --fg-muted: oklch(84% 0.008 240);
 }
 
 @layer utilities {
@@ -69,23 +102,139 @@
       );
   }
 
-  .btn-neon {
-    @apply items-center gap-2 rounded-xl px-4 py-2 font-medium text-white bg-[rgb(var(--glow))] transition;
-    box-shadow: 0 0 20px rgba(var(--glow) / 0.45);
+  .text-primary {
+    color: var(--coral-500);
   }
-  .btn-neon:hover {
-    box-shadow: 0 0 28px rgba(var(--glow) / 0.65);
+  .text-primary-strong {
+    color: var(--coral-600);
+  }
+  .text-muted {
+    color: var(--fg-muted);
+  }
+  .text-strong {
+    color: var(--fg-strong);
   }
 
-  .segmented {
-    @apply inline-flex items-center rounded-2xl bg-white/5 border border-white/10 p-1 backdrop-blur;
+  /* Soften CTA but keep glow */
+  .btn-neon {
+    @apply items-center gap-2 rounded-xl px-4 py-2 font-medium text-white transition;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.35)
+    );
+    border: 2px solid var(--coral-600);
+    box-shadow: 0 0 18px var(--coral-800);
   }
-  .segmented-item {
-    @apply px-3 py-1.5 rounded-xl text-sm text-white/80 hover:text-white transition;
+  .btn-neon:hover {
+    box-shadow: 0 0 26px var(--coral-600);
   }
-  .segmented-item--active {
-    @apply bg-white/10;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+
+  /* Coral outline/tonal buttons */
+  .btn-outline {
+    @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition;
+    color: var(--fg-strong);
+    border: 2px solid var(--coral-600);
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.35)
+    );
+  }
+  .btn-outline:hover {
+    box-shadow: 0 0 16px color-mix(in oklch, var(--coral-600) 35%, transparent);
+  }
+
+  .btn-tonal {
+    @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition;
+    color: var(--fg-strong);
+    background-color: color-mix(in oklch, var(--coral-50) 10%, transparent);
+    border: 1.5px solid color-mix(in oklch, var(--coral-600) 35%, transparent);
+  }
+  .btn-tonal:hover {
+    background-color: color-mix(in oklch, var(--coral-50) 16%, transparent);
+  }
+
+  /* Very light section grouping */
+  .section-soft {
+    @apply rounded-xl p-3 sm:p-4 border;
+    background-color: color-mix(in oklch, var(--fg-strong) 6%, transparent);
+    border-color: color-mix(in oklch, var(--fg-strong) 12%, transparent);
+  }
+
+  /* Theme-aware overrides for white utilities */
+  .text-white\/90 {
+    color: color-mix(in oklch, var(--fg-strong) 95%, black 5%) !important;
+  }
+  .text-white\/80 {
+    color: color-mix(in oklch, var(--fg-strong) 90%, black 10%) !important;
+  }
+  .text-white\/70 {
+    color: color-mix(in oklch, var(--fg-strong) 85%, black 15%) !important;
+  }
+  .text-white\/60 {
+    color: var(--fg-muted) !important;
+  }
+  .hover\:text-white\/90:hover {
+    color: color-mix(in oklch, var(--fg-strong) 95%, black 5%) !important;
+  }
+
+  .border-white\/10 {
+    border-color: color-mix(
+      in oklch,
+      var(--fg-strong) 10%,
+      transparent
+    ) !important;
+  }
+  .border-white\/20 {
+    border-color: color-mix(
+      in oklch,
+      var(--fg-strong) 20%,
+      transparent
+    ) !important;
+  }
+
+  .bg-white\/25 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 25%,
+      transparent
+    ) !important;
+  }
+  .bg-white\/40 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 40%,
+      transparent
+    ) !important;
+  }
+  .bg-white\/50 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 50%,
+      transparent
+    ) !important;
+  }
+  .bg-white\/90 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 90%,
+      transparent
+    ) !important;
+  }
+
+  .ring-white\/50 {
+    --tw-ring-color: color-mix(
+      in oklch,
+      var(--fg-strong) 50%,
+      transparent
+    ) !important;
+  }
+  .ring-white\/60 {
+    --tw-ring-color: color-mix(
+      in oklch,
+      var(--fg-strong) 60%,
+      transparent
+    ) !important;
   }
 }
