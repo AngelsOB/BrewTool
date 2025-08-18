@@ -742,6 +742,7 @@ export default function RecipeBuilder() {
             {name}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3">
+            {/* restore original chips; only hover popovers use inset style */}
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
               <span className="text-neutral-600">OG</span>
               <span className="font-semibold tracking-tight text-neutral-900">
@@ -824,7 +825,6 @@ export default function RecipeBuilder() {
                 className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft cursor-pointer select-none"
                 onClick={() => {
                   if (showBatchDetails) {
-                    // closing via click; disable hover reopen briefly
                     setShowBatchDetails(false);
                     setHoverAllowed(false);
                     if (hoverDisableTimerRef.current) {
@@ -891,13 +891,11 @@ export default function RecipeBuilder() {
                 }
               >
                 <div className="relative flex items-center justify-end gap-2">
-                  <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/90" />
+                  <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/20" />
                   <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
                     <span
                       className="text-neutral-600"
-                      style={{
-                        WebkitTextStroke: "0.6px rgba(0,0,0,0.9)",
-                      }}
+                      style={{ WebkitTextStroke: "0.6px rgba(0,0,0,0.9)" }}
                     >
                       Pre-boil
                     </span>
@@ -908,9 +906,7 @@ export default function RecipeBuilder() {
                   <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
                     <span
                       className="text-neutral-600"
-                      style={{
-                        WebkitTextStroke: "0.6px rgba(0,0,0,0.9)",
-                      }}
+                      style={{ WebkitTextStroke: "0.6px rgba(0,0,0,0.9)" }}
                     >
                       Mash / Sparge
                     </span>

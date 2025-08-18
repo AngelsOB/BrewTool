@@ -12,14 +12,85 @@ import {
   saveNewWaterProfile,
   updateSavedWaterProfile,
   type SavedWaterProfile,
+  ION_HINTS,
+  STYLE_TARGETS,
 } from "../utils/water";
 import InputWithSuffix from "./InputWithSuffix";
+
+// Display labels for salts
+const SALT_LABELS: Record<keyof SaltAdditions, string> = {
+  gypsum_g: "Gypsum (CaSO4)",
+  cacl2_g: "Calcium Chloride (CaCl2)",
+  epsom_g: "Epsom Salt (MgSO4)",
+  nacl_g: "Table Salt (NaCl)",
+  nahco3_g: "Baking Soda (NaHCO3)",
+};
+
+// Helper: prefix the first 'Target:' line with the ion symbol, e.g. 'Na Target:'
+function withIonPrefix(ion: keyof WaterProfile, text: string): string {
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i += 1) {
+    const t = lines[i];
+    const m = t.match(/^(\s*)Target:\s*/);
+    if (m) {
+      lines[i] = `${m[1]}${ion} Target: ${t.slice(m[0].length)}`;
+      break;
+    }
+  }
+  return lines.join("\n");
+}
+
+// Hover hints for salt inputs (from mineral guidance), with ion-prefixed targets
+const SALT_HINTS: Record<keyof SaltAdditions, string> = {
+  gypsum_g: `${withIonPrefix("Ca", ION_HINTS.Ca)}\n\n${withIonPrefix(
+    "SO4",
+    ION_HINTS.SO4
+  )}`,
+  cacl2_g: `${withIonPrefix("Ca", ION_HINTS.Ca)}\n\n${withIonPrefix(
+    "Cl",
+    ION_HINTS.Cl
+  )}`,
+  epsom_g: `${withIonPrefix("Mg", ION_HINTS.Mg)}\n\n${withIonPrefix(
+    "SO4",
+    ION_HINTS.SO4
+  )}`,
+  nacl_g: `${withIonPrefix("Na", ION_HINTS.Na)}\n\n${withIonPrefix(
+    "Cl",
+    ION_HINTS.Cl
+  )}`,
+  nahco3_g: `${withIonPrefix("Na", ION_HINTS.Na)}\n\n${withIonPrefix(
+    "HCO3",
+    ION_HINTS.HCO3
+  )}`,
+};
+
+// HoverHint component used for salt labels
+function HoverHint({
+  text,
+  children,
+}: {
+  text: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="relative group cursor-help inline-flex items-center">
+      {children}
+      <span className="pointer-events-none absolute left-0 top-full mt-2 z-20 hidden group-hover:block">
+        <span className="inline-block w-[44rem] max-w-[20vw] rounded-xl border border-white/10 bg-white/10 p-1 shadow-2xl shadow-black/30 backdrop-blur-sm supports-[backdrop-filter]:bg-white/5">
+          <span className="block w-full rounded-lg bg-neutral-900/90 p-2 text-xs whitespace-pre-wrap text-white/70">
+            {text}
+          </span>
+        </span>
+      </span>
+    </span>
+  );
+}
 
 function Field({
   label,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -124,10 +195,49 @@ export default function WaterSaltsCalc({
 
   const target: WaterProfile = useMemo(() => {
     if (targetProfileName === "Custom" && customTarget) return customTarget;
+    if (targetProfileName.startsWith("style:")) {
+      const styleName = targetProfileName.slice(6);
+      const style = STYLE_TARGETS[styleName as keyof typeof STYLE_TARGETS];
+      if (style) return style.profile;
+    }
     return (
       COMMON_WATER_PROFILES[targetProfileName] ?? COMMON_WATER_PROFILES.Burton
     );
   }, [targetProfileName, customTarget]);
+
+  const styleTips = useMemo(() => {
+    if (!targetProfileName.startsWith("style:")) return null;
+    const name = targetProfileName.slice(6);
+    const s = STYLE_TARGETS[name as keyof typeof STYLE_TARGETS];
+    return s ? { name, text: s.tips, profile: s.profile } : null;
+  }, [targetProfileName]);
+
+  // Style-aware salt hints
+  const saltHints = useMemo(() => {
+    const base = SALT_HINTS;
+    if (!styleTips) return base;
+    const style = STYLE_TARGETS[styleTips.name as keyof typeof STYLE_TARGETS];
+    const fmt = (ions: Array<keyof WaterProfile>) => {
+      if (style?.ranges) {
+        const parts = ions.map((k) => {
+          const r = style.ranges?.[k];
+          if (r) return `${k} ${r[0]}–${r[1]} ppm`;
+          return `${k} ${style.profile[k].toFixed(0)} ppm`;
+        });
+        return `Style targets: ${parts.join(", ")}`;
+      }
+      return `Style targets: ${ions
+        .map((k) => `${k} ${style.profile[k].toFixed(0)} ppm`)
+        .join(", ")}`;
+    };
+    return {
+      gypsum_g: `${fmt(["Ca", "SO4"])}` + `\n\n${base.gypsum_g}`,
+      cacl2_g: `${fmt(["Ca", "Cl"])}` + `\n\n${base.cacl2_g}`,
+      epsom_g: `${fmt(["Mg", "SO4"])}` + `\n\n${base.epsom_g}`,
+      nacl_g: `${fmt(["Na", "Cl"])}` + `\n\n${base.nacl_g}`,
+      nahco3_g: `${fmt(["Na", "HCO3"])}` + `\n\n${base.nahco3_g}`,
+    } as Record<keyof SaltAdditions, string>;
+  }, [styleTips]);
 
   const mashProfile = useMemo(() => {
     const delta = ionDeltaFromSalts(computedMashSalts, effectiveMashVol);
@@ -166,78 +276,109 @@ export default function WaterSaltsCalc({
 
   const content = (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Field label="Source Water">
-          <select
-            className="w-full rounded-md border px-2 py-2.5"
-            value={sourceProfileName}
-            onChange={(e) => setSourceProfileName(e.target.value)}
-          >
-            {[
-              ...Object.keys(COMMON_WATER_PROFILES),
-              ...savedProfiles.map((s) => `saved:${s.id}`),
-              "Custom",
-            ].map((k) => (
-              <option key={k} value={k}>
-                {k.startsWith("saved:")
-                  ? savedProfiles.find((s) => `saved:${s.id}` === k)?.name ?? k
-                  : k}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Target Water">
-          <select
-            className="w-full rounded-md border px-2 py-2.5"
-            value={targetProfileName}
-            onChange={(e) => setTargetProfileName(e.target.value)}
-          >
-            {[
-              ...Object.keys(COMMON_WATER_PROFILES),
-              ...savedProfiles.map((s) => `saved:${s.id}`),
-              "Custom",
-            ].map((k) => (
-              <option key={k} value={k}>
-                {k.startsWith("saved:")
-                  ? savedProfiles.find((s) => `saved:${s.id}` === k)?.name ?? k
-                  : k}
-              </option>
-            ))}
-          </select>
-        </Field>
-        {variant === "card" ? (
-          <>
-            <Field label="Mash Volume">
-              <InputWithSuffix
-                value={mashVol}
-                onChange={setMashVol}
-                step={0.1}
-                suffix=" L"
-                suffixClassName="right-3 text-[10px]"
-              />
-            </Field>
-            <Field label="Sparge Volume">
-              <InputWithSuffix
-                value={spargeVol}
-                onChange={setSpargeVol}
-                step={0.1}
-                suffix=" L"
-                suffixClassName="right-3 text-[10px]"
-              />
-            </Field>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col justify-center text-sm py-6 text-neutral-700">
-              <div>Mash: {effectiveMashVol.toFixed(1)} L</div>
-              <div>Sparge: {effectiveSpargeVol.toFixed(1)} L</div>
+      <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Field label="Source Water">
+            <select
+              className="w-full rounded-md border px-2 py-2.5"
+              value={sourceProfileName}
+              onChange={(e) => setSourceProfileName(e.target.value)}
+            >
+              {[
+                ...Object.keys(COMMON_WATER_PROFILES),
+                ...savedProfiles.map((s) => `saved:${s.id}`),
+                "Custom",
+              ].map((k) => (
+                <option key={k} value={k}>
+                  {k.startsWith("saved:")
+                    ? savedProfiles.find((s) => `saved:${s.id}` === k)?.name ??
+                      k
+                    : k}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Target Water">
+            <div className="relative group focus-within:z-10">
+              <select
+                className="w-full rounded-md border px-2 py-2.5"
+                value={targetProfileName}
+                onChange={(e) => setTargetProfileName(e.target.value)}
+              >
+                <optgroup label="Common">
+                  {Object.keys(COMMON_WATER_PROFILES).map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                </optgroup>
+                {savedProfiles.length > 0 && (
+                  <optgroup label="Saved">
+                    {savedProfiles.map((s) => (
+                      <option key={s.id} value={`saved:${s.id}`}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="Beer Styles">
+                  {Object.keys(STYLE_TARGETS).map((name) => (
+                    <option key={name} value={`style:${name}`}>
+                      {name}
+                    </option>
+                  ))}
+                </optgroup>
+                <option value="Custom">Custom</option>
+              </select>
+              {styleTips && (
+                <div className="pointer-events-none absolute right-0 top-full mt-2 hidden group-hover:block group-focus-within:block z-20">
+                  <div className="rounded-xl border border-white/10 bg-white/10 p-1 max-w-[28rem] shadow-2xl shadow-black/30 backdrop-blur-sm supports-[backdrop-filter]:bg-white/5">
+                    <div className="rounded-lg bg-neutral-900/90 p-2 text-xs">
+                      <div className="font-medium mb-1 text-white/85">
+                        Style Tips — {styleTips.name}
+                      </div>
+                      <pre className="whitespace-pre-wrap text-white/70">
+                        {styleTips.text}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div />
-          </>
-        )}
+          </Field>
+          {variant === "card" ? (
+            <>
+              <Field label="Mash Volume">
+                <InputWithSuffix
+                  value={mashVol}
+                  onChange={setMashVol}
+                  step={0.1}
+                  suffix=" L"
+                  suffixClassName="right-3 text-[10px]"
+                />
+              </Field>
+              <Field label="Sparge Volume">
+                <InputWithSuffix
+                  value={spargeVol}
+                  onChange={setSpargeVol}
+                  step={0.1}
+                  suffix=" L"
+                  suffixClassName="right-3 text-[10px]"
+                />
+              </Field>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col justify-center text-sm py-6 text-neutral-700">
+                <div>Mash: {effectiveMashVol.toFixed(1)} L</div>
+                <div>Sparge: {effectiveSpargeVol.toFixed(1)} L</div>
+              </div>
+              <div />
+            </>
+          )}
+        </div>
+        {/* tips now shown as hover/focus popover near Target select */}
       </div>
-
-      {/* Mode toggle moved inline with checkbox in single mode; also rendered in separate mode section */}
 
       {/* Inline custom editors when Custom is selected */}
       {(sourceProfileName === "Custom" || targetProfileName === "Custom") && (
@@ -313,7 +454,7 @@ export default function WaterSaltsCalc({
         <div className="mt-4">
           <div className="font-medium mb-2">Salt Additions (total)</div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {renderSaltInputs(singleSalts, setSingleSalts)}
+            {renderSaltInputs(singleSalts, setSingleSalts, saltHints)}
           </div>
           <div className="mt-2 text-xs text-neutral-600 flex items-center gap-3">
             <label className="inline-flex items-center gap-2">
@@ -365,13 +506,13 @@ export default function WaterSaltsCalc({
             <div>
               <div className="font-medium mb-2">Mash Additions</div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {renderSaltInputs(mashSalts, setMashSalts)}
+                {renderSaltInputs(mashSalts, setMashSalts, saltHints)}
               </div>
             </div>
             <div>
               <div className="font-medium mb-2">Sparge Additions</div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {renderSaltInputs(spargeSalts, setSpargeSalts)}
+                {renderSaltInputs(spargeSalts, setSpargeSalts, saltHints)}
               </div>
             </div>
           </div>
@@ -414,13 +555,20 @@ export default function WaterSaltsCalc({
 
 function renderSaltInputs(
   values: SaltAdditions,
-  setValues: (s: SaltAdditions) => void
+  setValues: (s: SaltAdditions) => void,
+  hints: Record<keyof SaltAdditions, string>
 ) {
   const update = (k: keyof SaltAdditions, v: number) =>
     setValues({ ...values, [k]: v });
   return (
     <>
-      <Field label="Gypsum (CaSO4)">
+      <Field
+        label={
+          <HoverHint text={hints.gypsum_g}>
+            <span>{SALT_LABELS.gypsum_g}</span>
+          </HoverHint>
+        }
+      >
         <InputWithSuffix
           value={values.gypsum_g ?? 0}
           onChange={(n) => update("gypsum_g", n)}
@@ -429,7 +577,13 @@ function renderSaltInputs(
           suffixClassName="right-3 text-[10px]"
         />
       </Field>
-      <Field label="Calcium Chloride (CaCl2)">
+      <Field
+        label={
+          <HoverHint text={hints.cacl2_g}>
+            <span>{SALT_LABELS.cacl2_g}</span>
+          </HoverHint>
+        }
+      >
         <InputWithSuffix
           value={values.cacl2_g ?? 0}
           onChange={(n) => update("cacl2_g", n)}
@@ -438,7 +592,13 @@ function renderSaltInputs(
           suffixClassName="right-3 text-[10px]"
         />
       </Field>
-      <Field label="Epsom Salt (MgSO4)">
+      <Field
+        label={
+          <HoverHint text={hints.epsom_g}>
+            <span>{SALT_LABELS.epsom_g}</span>
+          </HoverHint>
+        }
+      >
         <InputWithSuffix
           value={values.epsom_g ?? 0}
           onChange={(n) => update("epsom_g", n)}
@@ -447,7 +607,13 @@ function renderSaltInputs(
           suffixClassName="right-3 text-[10px]"
         />
       </Field>
-      <Field label="Table Salt (NaCl)">
+      <Field
+        label={
+          <HoverHint text={hints.nacl_g}>
+            <span>{SALT_LABELS.nacl_g}</span>
+          </HoverHint>
+        }
+      >
         <InputWithSuffix
           value={values.nacl_g ?? 0}
           onChange={(n) => update("nacl_g", n)}
@@ -456,7 +622,13 @@ function renderSaltInputs(
           suffixClassName="right-3 text-[10px]"
         />
       </Field>
-      <Field label="Baking Soda (NaHCO3)">
+      <Field
+        label={
+          <HoverHint text={hints.nahco3_g}>
+            <span>{SALT_LABELS.nahco3_g}</span>
+          </HoverHint>
+        }
+      >
         <InputWithSuffix
           value={values.nahco3_g ?? 0}
           onChange={(n) => update("nahco3_g", n)}

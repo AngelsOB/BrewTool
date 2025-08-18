@@ -179,6 +179,189 @@ export const ION_KEYS: Array<keyof WaterProfile> = [
 
 export const DEFAULT_TOLERANCE_PPM = 20;
 
+// Hover hints per ion, distilled from the quick reference guide
+export const ION_HINTS: Record<keyof WaterProfile, string> = {
+  Ca: [
+    "Target: 50–200 ppm",
+    "Function: pH control, enzymes, yeast health, hot break",
+    "Flavor: neutral; >200 ppm can taste minerally",
+    "Note: Critical for mash pH drop and clarity",
+  ].join("\n"),
+  Mg: [
+    "Target: 15–30 ppm (malt contributes ~70 ppm)",
+    "Function: yeast nutrient; pH control (half Ca)",
+    "Flavor: >86 ppm can be sour/bitter",
+    "Tip: Dark beers benefit from 30+ ppm",
+  ].join("\n"),
+  SO4: [
+    "Target: 0–500 ppm (style dependent)",
+    "Function: boosts hop expression and bitterness linger",
+    "Flavor: dry, crisp, assertive",
+    "Warn: Avoid high sulfate in delicate lagers",
+  ].join("\n"),
+  Cl: [
+    "Target: 50–200 ppm",
+    "Function: enhances malt body and mouthfeel",
+    "Flavor: rounder, fuller, sweeter",
+    "Warn: >300 ppm hurts clarity/stability",
+  ].join("\n"),
+  Na: [
+    "Target: <100 ppm (avg ~35 ppm)",
+    "Function: enhances flavor at low levels",
+    "Flavor: sweetens malt; >150 ppm salty/harsh",
+    "Tip: improves fullness in pale beers when <150 ppm",
+  ].join("\n"),
+  HCO3: [
+    "Alkalinity proxy (bicarbonate)",
+    "Function: pH buffering; higher for dark beers",
+    "Rule: low alkalinity for light beers; higher for dark",
+    "Critical: controls mash pH and flavor development",
+  ].join("\n"),
+};
+
+// Convert alkalinity (as CaCO3) range to HCO3 range (~×1.22)
+function alkRangeToHco3Range(min: number, max: number): [number, number] {
+  const f = 61.016 / 50.0; // ≈1.22
+  return [Math.round(min * f), Math.round(max * f)];
+}
+
+export type StyleTarget = {
+  profile: WaterProfile; // midpoint for calc
+  ranges?: Partial<Record<keyof WaterProfile, [number, number]>>; // display
+  tips: string;
+};
+
+// Style-driven target profiles with ranges (when known)
+export const STYLE_TARGETS: Record<string, StyleTarget> = {
+  Pilsner: {
+    profile: { Ca: 50, Mg: 8, Na: 8, Cl: 75, SO4: 25, HCO3: 24 },
+    ranges: {
+      Ca: [50, 50],
+      SO4: [0, 50],
+      Cl: [50, 100],
+      HCO3: alkRangeToHco3Range(0, 40),
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Avoid sulfate to preserve soft noble hop character",
+      "Soft water + small CaCl₂ is ideal",
+      "Keep alkalinity low (RA negative) for pale grists",
+    ].join("\n"),
+  },
+  "American Pale Ale": {
+    profile: { Ca: 75, Mg: 15, Na: 20, Cl: 50, SO4: 200, HCO3: 49 },
+    ranges: {
+      Ca: [50, 100],
+      SO4: [100, 400],
+      Cl: [0, 100],
+      HCO3: alkRangeToHco3Range(0, 80),
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Sulfate:Chloride ≈ 2:1–4:1 for crisp hop edge",
+      "Target RA about -30 to +30 ppm",
+      "Keep chloride moderate to avoid muting hops",
+    ].join("\n"),
+  },
+  "NEIPA / Hazy IPA": {
+    profile: { Ca: 100, Mg: 20, Na: 20, Cl: 200, SO4: 75, HCO3: 49 },
+    ranges: {
+      Ca: [75, 150],
+      SO4: [50, 150],
+      Cl: [100, 300],
+      HCO3: alkRangeToHco3Range(0, 80),
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Chloride:Sulfate ≈ 2:1–3:1 for juicy fullness",
+      "Higher chloride enhances mouthfeel",
+      "Keep sulfate modest to avoid astringency",
+    ].join("\n"),
+  },
+  "Stout / Porter": {
+    profile: { Ca: 60, Mg: 20, Na: 25, Cl: 100, SO4: 100, HCO3: 146 },
+    ranges: {
+      Ca: [50, 75],
+      SO4: [50, 150],
+      Cl: [50, 150],
+      HCO3: alkRangeToHco3Range(80, 150),
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Balanced Cl:SO₄; increase alkalinity for dark malts",
+      "Target RA ≈ 60–120 ppm",
+      "Mg ≳ 20 ppm can enhance dark malt flavor",
+    ].join("\n"),
+  },
+  "German Lager": {
+    profile: { Ca: 60, Mg: 10, Na: 10, Cl: 75, SO4: 25, HCO3: 98 },
+    ranges: {
+      Ca: [50, 75],
+      SO4: [0, 100],
+      Cl: [50, 100],
+      HCO3: alkRangeToHco3Range(40, 120),
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Low sulfate; emphasize malt smoothness",
+      "Balanced chloride for body without sweetness",
+      "Avoid high sulfate that competes with malt",
+    ].join("\n"),
+  },
+  "English Bitter / ESB": {
+    profile: { Ca: 100, Mg: 20, Na: 25, Cl: 75, SO4: 200, HCO3: 98 },
+    ranges: {
+      Ca: [50, 150],
+      SO4: [100, 400],
+      Cl: [50, 100],
+      HCO3: alkRangeToHco3Range(40, 120),
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Higher sulfate for traditional Burton character",
+      "Firm, dry hops with mineral complexity",
+      "Moderate chloride to keep finish crisp",
+    ].join("\n"),
+  },
+  "Wheat Beer": {
+    profile: { Ca: 60, Mg: 10, Na: 10, Cl: 50, SO4: 25, HCO3: 24 },
+    ranges: {
+      Ca: [50, 100],
+      SO4: [0, 50],
+      Cl: [0, 100],
+      HCO3: alkRangeToHco3Range(0, 80),
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Soft profile; keep minerals minimal",
+      "Low alkalinity (RA negative) for pale grists",
+      "Let yeast and wheat shine",
+    ].join("\n"),
+  },
+  "Strong Ale": {
+    profile: { Ca: 100, Mg: 20, Na: 25, Cl: 100, SO4: 100, HCO3: 98 },
+    ranges: {
+      Ca: [50, 150],
+      SO4: [50, 200],
+      Cl: [50, 150],
+      Mg: [15, 30],
+      Na: [0, 100],
+    },
+    tips: [
+      "Balance minerals to support rich malt",
+      "Higher gravity offers natural pH buffering",
+      "Tune Cl:SO₄ per malt vs hop emphasis",
+    ].join("\n"),
+  },
+};
+
 // ==========================
 // Saved custom water profiles (localStorage)
 // ==========================
