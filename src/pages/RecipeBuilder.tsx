@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import Collapsible from "../components/Collapsible";
 import {
   useRecipeStore,
   type GrainItem,
@@ -28,6 +29,7 @@ import HopFlavorMini from "../components/HopFlavorMini";
 import InputWithSuffix from "../components/InputWithSuffix";
 import InlineEditableNumber from "../components/InlineEditableNumber";
 import WaterSaltsCalc from "../components/WaterSaltsCalc";
+import FitToWidth from "../components/FitToWidth";
 import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
 import {
   addCustomGrain,
@@ -37,6 +39,37 @@ import {
   getYeastPresets,
 } from "../utils/presets";
 import type { Recipe } from "../hooks/useRecipeStore";
+
+function WaterSaltsSection({
+  mashWaterL,
+  spargeWaterL,
+}: {
+  mashWaterL: number;
+  spargeWaterL: number;
+}) {
+  const [compact, setCompact] = useState<boolean>(true);
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <div className="font-semibold text-primary-strong">Water Chemistry</div>
+        <button
+          type="button"
+          className="text-xs rounded-md border px-2 py-1 text-white/40 shadow-lg shadow-black/30 hover:shadow-sm hover:bg-white/10"
+          onClick={() => setCompact((c) => !c)}
+        >
+          {compact ? "Show Calculator" : "Collapse Calculator"}
+        </button>
+      </div>
+      <WaterSaltsCalc
+        mashWaterL={mashWaterL}
+        spargeWaterL={spargeWaterL}
+        variant="embedded"
+        compact={compact}
+        onCompactChange={setCompact}
+      />
+    </>
+  );
+}
 
 export default function RecipeBuilder() {
   const upsert = useRecipeStore((s) => s.upsert);
@@ -69,6 +102,7 @@ export default function RecipeBuilder() {
   });
   const [showCustomGrainInput, setShowCustomGrainInput] = useState(false);
   const [showCustomHopInput, setShowCustomHopInput] = useState(false);
+  const [showFlavorVisualizer, setShowFlavorVisualizer] = useState(false);
 
   // Water profile/volumes inputs
   const [mashThicknessLPerKg, setMashThicknessLPerKg] = useState(3);
@@ -460,7 +494,7 @@ export default function RecipeBuilder() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="page-recipe max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -738,112 +772,95 @@ export default function RecipeBuilder() {
       {/* Sticky summary bar (glass + warm accent) */}
       <div className="sticky top-14 z-10 mx-auto max-w-6xl py-2 backdrop-blur-md">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/40 px-3 py-2 shadow-soft ring-1 ring-neutral-900/5 supports-[backdrop-filter]:bg-white/25">
-          <div className="text-sm font-medium tracking-tight text-white/50">
+          <div className="text-sm font-medium tracking-tight text-white/50 shrink-0">
             {name}
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            {/* restore original chips; only hover popovers use inset style */}
-            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
-              <span className="text-neutral-600">OG</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
-                {ogUsed.toFixed(3)}
-              </span>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
-              <span className="text-neutral-600">ABV</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
-                {abv.toFixed(2)}%
-              </span>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft">
-              <span className="text-neutral-600">SRM</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
-                {srm.toFixed(1)}
-              </span>
-              <span
-                className="h-4 w-8 shrink-0 rounded-md border border-white/20"
-                style={{ backgroundColor: color }}
-              />
-            </div>
-            <div className="relative group" ref={ibuRef}>
-              <div
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 pr-8 py-1.5 text-sm shadow-soft relative cursor-pointer select-none"
-                onClick={() => setShowIbuDetails((v) => !v)}
-                aria-expanded={showIbuDetails}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setShowIbuDetails((v) => !v);
-                  }
-                }}
-              >
-                <span className="text-neutral-600">IBU</span>
+          <FitToWidth className="min-w-0 flex-1" align="right" minScale={0.75}>
+            <div className="inline-flex flex-wrap items-center justify-end gap-3">
+              <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
+                <span className="text-neutral-600">OG</span>
                 <span className="font-semibold tracking-tight text-neutral-900">
-                  {ibu.toFixed(0)}
+                  {ogUsed.toFixed(3)}
                 </span>
-                <HopFlavorMini
-                  flavor={estimatedTotalFlavor}
-                  size={40}
-                  maxValue={5}
-                  className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2"
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
+                <span className="text-neutral-600">ABV</span>
+                <span className="font-semibold tracking-tight text-neutral-900">
+                  {abv.toFixed(2)}%
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
+                <span className="text-neutral-600">SRM</span>
+                <span className="font-semibold tracking-tight text-neutral-900">
+                  {srm.toFixed(1)}
+                </span>
+                <span
+                  className="h-4 w-8 shrink-0 rounded-md border border-white/20"
+                  style={{ backgroundColor: color }}
                 />
               </div>
-              <div
-                className={
-                  "absolute right-0 mt-2 z-20 " +
-                  (showIbuDetails ? "block" : "hidden") +
-                  " group-hover:block"
-                }
-              >
-                <div className="relative rounded-xl border border-white/10 ring-1 ring-white/60 bg-white/90 p-2 shadow-2xl shadow-black/30 backdrop-blur-3xl supports-[backdrop-filter]:bg-white/70">
-                  <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/90" />
-                  <div className="rounded-lg bg-neutral-900 p-2">
-                    <HopFlavorRadar
-                      series={[
-                        { name: "Total (est.)", flavor: estimatedTotalFlavor },
-                      ]}
-                      colorStrategy="dominant"
-                      labelColorize={true}
-                      showLegend={false}
-                      ringRadius={100}
-                      outerPadding={80}
-                    />
+              <div className="relative group" ref={ibuRef}>
+                <div
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 pr-8 py-1.5 text-sm shadow-soft relative cursor-pointer select-none shadow-lg shadow-black/30 hover:shadow-sm"
+                  onClick={() => setShowIbuDetails((v) => !v)}
+                  aria-expanded={showIbuDetails}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setShowIbuDetails((v) => !v);
+                    }
+                  }}
+                >
+                  <span className="text-neutral-600">IBU</span>
+                  <span className="font-semibold tracking-tight text-neutral-900">
+                    {ibu.toFixed(0)}
+                  </span>
+                  <HopFlavorMini
+                    flavor={estimatedTotalFlavor}
+                    size={40}
+                    maxValue={5}
+                    className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2"
+                  />
+                </div>
+                <div
+                  className={
+                    "absolute right-0 mt-2 z-20 " +
+                    (showIbuDetails ? "block" : "hidden") +
+                    " group-hover:block"
+                  }
+                >
+                  <div className="relative rounded-xl border border-white/10 ring-1 ring-white/60 bg-white/90 p-2 shadow-2xl shadow-black/30 backdrop-blur-3xl supports-[backdrop-filter]:bg-white/70">
+                    <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/90" />
+                    <div className="rounded-lg bg-neutral-900 p-2">
+                      <HopFlavorRadar
+                        series={[
+                          {
+                            name: "Total (est.)",
+                            flavor: estimatedTotalFlavor,
+                          },
+                        ]}
+                        colorStrategy="dominant"
+                        labelColorize={true}
+                        showLegend={false}
+                        ringRadius={100}
+                        outerPadding={80}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            {/* Batch volume with click-to-toggle details */}
-            <div
-              className="relative"
-              ref={batchRef}
-              onMouseEnter={() => hoverAllowed && _setHoverOpen(true)}
-              onMouseLeave={() => _setHoverOpen(false)}
-            >
+              {/* Batch volume with click-to-toggle details */}
               <div
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft cursor-pointer select-none"
-                onClick={() => {
-                  if (showBatchDetails) {
-                    setShowBatchDetails(false);
-                    setHoverAllowed(false);
-                    if (hoverDisableTimerRef.current) {
-                      window.clearTimeout(hoverDisableTimerRef.current);
-                    }
-                    hoverDisableTimerRef.current = window.setTimeout(() => {
-                      setHoverAllowed(true);
-                      hoverDisableTimerRef.current = null;
-                    }, 600);
-                  } else {
-                    setShowBatchDetails(true);
-                  }
-                }}
-                aria-expanded={showBatchDetails}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+                className="relative"
+                ref={batchRef}
+                onMouseEnter={() => hoverAllowed && _setHoverOpen(true)}
+                onMouseLeave={() => _setHoverOpen(false)}
+              >
+                <div
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft cursor-pointer select-none shadow-lg shadow-black/30 hover:shadow-sm"
+                  onClick={() => {
                     if (showBatchDetails) {
                       setShowBatchDetails(false);
                       setHoverAllowed(false);
@@ -857,71 +874,92 @@ export default function RecipeBuilder() {
                     } else {
                       setShowBatchDetails(true);
                     }
-                  }
-                }}
-              >
-                <span className="text-neutral-600">Batch</span>
-                <span className="font-semibold tracking-tight text-neutral-900">
-                  {batchVolumeL.toFixed(1)} L
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  }}
+                  aria-expanded={showBatchDetails}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      if (showBatchDetails) {
+                        setShowBatchDetails(false);
+                        setHoverAllowed(false);
+                        if (hoverDisableTimerRef.current) {
+                          window.clearTimeout(hoverDisableTimerRef.current);
+                        }
+                        hoverDisableTimerRef.current = window.setTimeout(() => {
+                          setHoverAllowed(true);
+                          hoverDisableTimerRef.current = null;
+                        }, 600);
+                      } else {
+                        setShowBatchDetails(true);
+                      }
+                    }
+                  }}
+                >
+                  <span className="text-neutral-600">Batch</span>
+                  <span className="font-semibold tracking-tight text-neutral-900">
+                    {batchVolumeL.toFixed(1)} L
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={
+                      "h-3 w-3 text-neutral-600 transition-transform duration-200 " +
+                      (showBatchDetails ? "rotate-180" : "")
+                    }
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 9l6 6 6-6"
+                    />
+                  </svg>
+                </div>
+                <div
                   className={
-                    "h-3 w-3 text-neutral-600 transition-transform duration-200 " +
-                    (showBatchDetails ? "rotate-180" : "")
+                    "absolute right-0 mt-2 z-20 " +
+                    (showBatchDetails || (hoverAllowed && hoverOpen)
+                      ? "block"
+                      : "hidden")
                   }
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 9l6 6 6-6"
-                  />
-                </svg>
-              </div>
-              <div
-                className={
-                  "absolute right-0 mt-2 z-20 " +
-                  (showBatchDetails || (hoverAllowed && hoverOpen)
-                    ? "block"
-                    : "hidden")
-                }
-              >
-                <div className="relative flex items-center justify-end gap-2">
-                  <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/20" />
-                  <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
-                    <span
-                      className="text-neutral-600"
-                      style={{ WebkitTextStroke: "0.6px rgba(0,0,0,0.9)" }}
-                    >
-                      Pre-boil
-                    </span>
-                    <span className="font-semibold tracking-tight text-neutral-900">
-                      {preBoilVolumeL.toFixed(1)} L
-                    </span>
-                  </div>
-                  <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
-                    <span
-                      className="text-neutral-600"
-                      style={{ WebkitTextStroke: "0.6px rgba(0,0,0,0.9)" }}
-                    >
-                      Mash / Sparge
-                    </span>
-                    <span className="font-semibold tracking-tight text-neutral-900">
-                      {finalMashL.toFixed(1)} / {finalSpargeL.toFixed(1)} L
-                    </span>
+                  <div className="relative flex items-center justify-end gap-2">
+                    <div className="absolute right-6 -top-2 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white/20" />
+                    <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
+                      <span
+                        className="text-neutral-600"
+                        style={{ WebkitTextStroke: "0.6px rgba(0,0,0,0.9)" }}
+                      >
+                        Pre-boil
+                      </span>
+                      <span className="font-semibold tracking-tight text-neutral-900">
+                        {preBoilVolumeL.toFixed(1)} L
+                      </span>
+                    </div>
+                    <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 ring-1 ring-white/50 bg-white/90 px-3 py-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/70">
+                      <span
+                        className="text-neutral-600"
+                        style={{ WebkitTextStroke: "0.6px rgba(0,0,0,0.9)" }}
+                      >
+                        Mash / Sparge
+                      </span>
+                      <span className="font-semibold tracking-tight text-neutral-900">
+                        {finalMashL.toFixed(1)} / {finalSpargeL.toFixed(1)} L
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </FitToWidth>
         </div>
       </div>
 
-      <section className="section-soft space-y-3">
+      <section className="section-soft space-y-3 pb-1 sm:pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="font-semibold text-primary-strong">Grain Bill</div>
           <button
@@ -1596,14 +1634,34 @@ export default function RecipeBuilder() {
         >
           + Add Hop
         </button>
+        <div className="flex justify-end mt-3 sm:mt-4">
+          <div className="inline-flex items-center gap-2">
+            {/* {estimatedTotalFlavor && (
+              <HopFlavorMini
+                flavor={estimatedTotalFlavor}
+                size={40}
+                maxValue={5}
+                className="hidden sm:block"
+              />
+            )} */}
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/40 hover:bg-white/20 shadow-lg shadow-black/30 hover:shadow-sm"
+              onClick={() => setShowFlavorVisualizer((v) => !v)}
+            >
+              {showFlavorVisualizer ? "Hide Visualizer" : "Show Visualizer"}
+            </button>
+          </div>
+        </div>
+        <Collapsible open={showFlavorVisualizer}>
+          {hopFlavorSeries.length > 0 && (
+            <FlavorGraphs
+              baseSeries={hopFlavorSeries}
+              estFlavor={estimatedTotalFlavor}
+            />
+          )}
+        </Collapsible>
       </section>
-
-      {hopFlavorSeries.length > 0 && (
-        <FlavorGraphs
-          baseSeries={hopFlavorSeries}
-          estFlavor={estimatedTotalFlavor}
-        />
-      )}
 
       <section className="section-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1669,11 +1727,9 @@ export default function RecipeBuilder() {
       </section>
 
       <section className="section-soft space-y-3">
-        <div className="font-semibold text-primary-strong">Water Salts</div>
-        <WaterSaltsCalc
+        <WaterSaltsSection
           mashWaterL={finalMashL}
           spargeWaterL={finalSpargeL}
-          variant="embedded"
         />
       </section>
     </div>

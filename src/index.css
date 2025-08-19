@@ -55,25 +55,26 @@
 
 @layer utilities {
   .bg-dashboard {
+    /* Lighter, gentle gradient */
     background: radial-gradient(
         1000px 360px at 15% -10%,
-        rgba(255 230 200 / 0.4),
+        rgba(255 235 210 / 0.35),
         transparent 55%
       ),
       radial-gradient(
         900px 300px at 85% -10%,
-        rgba(var(--accent) / 0.28),
+        rgba(var(--accent) / 0.22),
         transparent 50%
       ),
       radial-gradient(
-        1500px 520px at 50% 120%,
-        rgba(255 230 200 / 0.4),
-        transparent 47%
+        1400px 600px at 50% 120%,
+        rgba(255 238 220 / 0.28),
+        transparent 50%
       ),
       linear-gradient(
         180deg,
-        rgb(10 12 16) 0%,
-        rgb(6 8 12) 35%,
+        rgb(20 22 28) 0%,
+        rgb(16 18 24) 35%,
         rgb(var(--bg)) 100%
       );
     background-attachment: fixed, fixed, fixed, fixed;
@@ -160,6 +161,24 @@
     @apply rounded-xl p-3 sm:p-4 border;
     background-color: color-mix(in oklch, var(--fg-strong) 6%, transparent);
     border-color: color-mix(in oklch, var(--fg-strong) 12%, transparent);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+      0 4px 6px -4px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 160ms ease;
+  }
+
+  /* Elevated inputs on RecipeBuilder page */
+  .page-recipe .section-soft input,
+  .page-recipe .section-soft select {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+      0 4px 6px -4px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 150ms ease, background-color 150ms ease;
+  }
+  .page-recipe .section-soft input:hover,
+  .page-recipe .section-soft select:hover,
+  .page-recipe .section-soft input:focus,
+  .page-recipe .section-soft select:focus {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.15);
+    outline: none;
   }
 
   /* Theme-aware overrides for white utilities */

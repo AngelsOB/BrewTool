@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Collapsible from "./Collapsible";
 import CalculatorCard from "./CalculatorCard";
 import {
   type SaltAdditions,
@@ -105,11 +106,16 @@ export default function WaterSaltsCalc({
   mashWaterL = 15,
   spargeWaterL = 10,
   variant = "card",
+  compact: compactProp,
+  onCompactChange,
 }: {
   mashWaterL?: number;
   spargeWaterL?: number;
   variant?: "card" | "embedded";
+  compact?: boolean;
+  onCompactChange?: (value: boolean) => void;
 }) {
+  const [localCompact, setLocalCompact] = useState<boolean>(false);
   const [sourceProfileName, setSourceProfileName] = useState<string>("RO");
   const [targetProfileName, setTargetProfileName] = useState<string>("Burton");
   const [customSource, setCustomSource] = useState<WaterProfile | null>(null);
@@ -274,183 +280,224 @@ export default function WaterSaltsCalc({
 
   // const ratio = useMemo(() => chlorideToSulfateRatio(totalProfile), [totalProfile]);
 
+  const compact = compactProp ?? localCompact;
+  const toggleCompact = () => {
+    const next = !compact;
+    if (next) setAdditionsMode("single");
+    if (onCompactChange) onCompactChange(next);
+    else setLocalCompact(next);
+  };
+  useEffect(() => {
+    if (compact) setAdditionsMode("single");
+  }, [compact]);
+
   const content = (
     <>
-      <div className="relative">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Field label="Source Water">
-            <select
-              className="w-full rounded-md border px-2 py-2.5"
-              value={sourceProfileName}
-              onChange={(e) => setSourceProfileName(e.target.value)}
-            >
-              {[
-                ...Object.keys(COMMON_WATER_PROFILES),
-                ...savedProfiles.map((s) => `saved:${s.id}`),
-                "Custom",
-              ].map((k) => (
-                <option key={k} value={k}>
-                  {k.startsWith("saved:")
-                    ? savedProfiles.find((s) => `saved:${s.id}` === k)?.name ??
-                      k
-                    : k}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Target Water">
-            <div className="relative group focus-within:z-10">
+      <Collapsible open={!compact}>
+        <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Field label="Source Water">
               <select
                 className="w-full rounded-md border px-2 py-2.5"
-                value={targetProfileName}
-                onChange={(e) => setTargetProfileName(e.target.value)}
+                value={sourceProfileName}
+                onChange={(e) => setSourceProfileName(e.target.value)}
               >
-                <optgroup label="Common">
-                  {Object.keys(COMMON_WATER_PROFILES).map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </optgroup>
-                {savedProfiles.length > 0 && (
-                  <optgroup label="Saved">
-                    {savedProfiles.map((s) => (
-                      <option key={s.id} value={`saved:${s.id}`}>
-                        {s.name}
+                {[
+                  ...Object.keys(COMMON_WATER_PROFILES),
+                  ...savedProfiles.map((s) => `saved:${s.id}`),
+                  "Custom",
+                ].map((k) => (
+                  <option key={k} value={k}>
+                    {k.startsWith("saved:")
+                      ? savedProfiles.find((s) => `saved:${s.id}` === k)
+                          ?.name ?? k
+                      : k}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Target Water">
+              <div className="relative group focus-within:z-10">
+                <select
+                  className="w-full rounded-md border px-2 py-2.5"
+                  value={targetProfileName}
+                  onChange={(e) => setTargetProfileName(e.target.value)}
+                >
+                  <optgroup label="Common">
+                    {Object.keys(COMMON_WATER_PROFILES).map((k) => (
+                      <option key={k} value={k}>
+                        {k}
                       </option>
                     ))}
                   </optgroup>
-                )}
-                <optgroup label="Beer Styles">
-                  {Object.keys(STYLE_TARGETS).map((name) => (
-                    <option key={name} value={`style:${name}`}>
-                      {name}
-                    </option>
-                  ))}
-                </optgroup>
-                <option value="Custom">Custom</option>
-              </select>
-              {styleTips && (
-                <div className="pointer-events-none absolute right-0 top-full mt-2 hidden group-hover:block group-focus-within:block z-20">
-                  <div className="rounded-xl border border-white/10 bg-white/10 p-1 max-w-[28rem] shadow-2xl shadow-black/30 backdrop-blur-sm supports-[backdrop-filter]:bg-white/5">
-                    <div className="rounded-lg bg-neutral-900/90 p-2 text-xs">
-                      <div className="font-medium mb-1 text-white/85">
-                        Style Tips — {styleTips.name}
+                  {savedProfiles.length > 0 && (
+                    <optgroup label="Saved">
+                      {savedProfiles.map((s) => (
+                        <option key={s.id} value={`saved:${s.id}`}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label="Beer Styles">
+                    {Object.keys(STYLE_TARGETS).map((name) => (
+                      <option key={name} value={`style:${name}`}>
+                        {name}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="Custom">Custom</option>
+                </select>
+                {styleTips && (
+                  <div className="pointer-events-none absolute right-0 top-full mt-2 hidden group-hover:block group-focus-within:block z-20">
+                    <div className="rounded-xl border border-white/10 bg-white/10 p-1 max-w-[28rem] shadow-2xl shadow-black/30 backdrop-blur-sm supports-[backdrop-filter]:bg-white/5">
+                      <div className="rounded-lg bg-neutral-900/90 p-2 text-xs">
+                        <div className="font-medium mb-1 text-white/85">
+                          Style Tips — {styleTips.name}
+                        </div>
+                        <pre className="whitespace-pre-wrap text-white/70">
+                          {styleTips.text}
+                        </pre>
                       </div>
-                      <pre className="whitespace-pre-wrap text-white/70">
-                        {styleTips.text}
-                      </pre>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </Field>
-          {variant === "card" ? (
-            <>
-              <Field label="Mash Volume">
-                <InputWithSuffix
-                  value={mashVol}
-                  onChange={setMashVol}
-                  step={0.1}
-                  suffix=" L"
-                  suffixClassName="right-3 text-[10px]"
-                />
-              </Field>
-              <Field label="Sparge Volume">
-                <InputWithSuffix
-                  value={spargeVol}
-                  onChange={setSpargeVol}
-                  step={0.1}
-                  suffix=" L"
-                  suffixClassName="right-3 text-[10px]"
-                />
-              </Field>
-            </>
-          ) : (
-            <>
-              <div className="flex flex-col justify-center text-sm py-6 text-neutral-700">
-                <div>Mash: {effectiveMashVol.toFixed(1)} L</div>
-                <div>Sparge: {effectiveSpargeVol.toFixed(1)} L</div>
+                )}
               </div>
-              <div />
-            </>
+            </Field>
+            {variant === "card" ? (
+              <>
+                <Field label="Mash Volume">
+                  <InputWithSuffix
+                    value={mashVol}
+                    onChange={setMashVol}
+                    step={0.1}
+                    suffix=" L"
+                    suffixClassName="right-3 text-[10px]"
+                  />
+                </Field>
+                <Field label="Sparge Volume">
+                  <InputWithSuffix
+                    value={spargeVol}
+                    onChange={setSpargeVol}
+                    step={0.1}
+                    suffix=" L"
+                    suffixClassName="right-3 text-[10px]"
+                  />
+                </Field>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col justify-center text-sm py-6 text-neutral-700">
+                  <div>Mash: {effectiveMashVol.toFixed(1)} L</div>
+                  <div>Sparge: {effectiveSpargeVol.toFixed(1)} L</div>
+                </div>
+                <div />
+              </>
+            )}
+          </div>
+          {/* tips now shown as hover/focus popover near Target select */}
+        </div>
+
+        {/* Inline custom editors when Custom is selected */}
+        {(sourceProfileName === "Custom" || targetProfileName === "Custom") && (
+          <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sourceProfileName === "Custom" && (
+              <CustomProfileEditor
+                title="Custom Source"
+                value={customSource}
+                onChange={(p) => setCustomSource(p)}
+                variant={variant}
+                name={customSourceName}
+                onNameChange={setCustomSourceName}
+                onSave={() => {
+                  if (!customSource) return;
+                  if (editingSourceId) {
+                    const updated = updateSavedWaterProfile(
+                      editingSourceId,
+                      customSourceName,
+                      customSource
+                    );
+                    if (updated) setSavedProfiles(loadSavedWaterProfiles());
+                  } else {
+                    const saved = saveNewWaterProfile(
+                      customSourceName,
+                      customSource
+                    );
+                    setSavedProfiles(loadSavedWaterProfiles());
+                    setEditingSourceId(saved.id);
+                  }
+                }}
+              />
+            )}
+            {targetProfileName === "Custom" && (
+              <CustomProfileEditor
+                title="Custom Target"
+                value={customTarget}
+                onChange={(p) => setCustomTarget(p)}
+                variant={variant}
+                name={customTargetName}
+                onNameChange={setCustomTargetName}
+                onSave={() => {
+                  if (!customTarget) return;
+                  if (editingTargetId) {
+                    const updated = updateSavedWaterProfile(
+                      editingTargetId,
+                      customTargetName,
+                      customTarget
+                    );
+                    if (updated) setSavedProfiles(loadSavedWaterProfiles());
+                  } else {
+                    const saved = saveNewWaterProfile(
+                      customTargetName,
+                      customTarget
+                    );
+                    setSavedProfiles(loadSavedWaterProfiles());
+                    setEditingTargetId(saved.id);
+                  }
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Profile comparison above additions */}
+        <ProfileDiff
+          source={source}
+          target={target}
+          adjusted={totalProfile}
+          variant={variant}
+        />
+      </Collapsible>
+
+      {compact ? (
+        <div className="mt-4">
+          <div className="font-medium mb-2">Salt Additions (total)</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {renderSaltInputs(singleSalts, setSingleSalts, saltHints)}
+          </div>
+          <div className="mt-2 text-xs text-neutral-600 flex items-center gap-3">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={autoSplitByVolume}
+                onChange={(e) => setAutoSplitByVolume(e.target.checked)}
+              />
+              Auto split by volume
+            </label>
+            {autoSplitByVolume && (
+              <span>
+                Mash {effectiveMashVol.toFixed(1)} L • Sparge{" "}
+                {effectiveSpargeVol.toFixed(1)} L
+              </span>
+            )}
+          </div>
+          {autoSplitByVolume && (
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              {renderSplitPreview(computedMashSalts, computedSpargeSalts)}
+            </div>
           )}
         </div>
-        {/* tips now shown as hover/focus popover near Target select */}
-      </div>
-
-      {/* Inline custom editors when Custom is selected */}
-      {(sourceProfileName === "Custom" || targetProfileName === "Custom") && (
-        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sourceProfileName === "Custom" && (
-            <CustomProfileEditor
-              title="Custom Source"
-              value={customSource}
-              onChange={(p) => setCustomSource(p)}
-              variant={variant}
-              name={customSourceName}
-              onNameChange={setCustomSourceName}
-              onSave={() => {
-                if (!customSource) return;
-                if (editingSourceId) {
-                  const updated = updateSavedWaterProfile(
-                    editingSourceId,
-                    customSourceName,
-                    customSource
-                  );
-                  if (updated) setSavedProfiles(loadSavedWaterProfiles());
-                } else {
-                  const saved = saveNewWaterProfile(
-                    customSourceName,
-                    customSource
-                  );
-                  setSavedProfiles(loadSavedWaterProfiles());
-                  setEditingSourceId(saved.id);
-                }
-              }}
-            />
-          )}
-          {targetProfileName === "Custom" && (
-            <CustomProfileEditor
-              title="Custom Target"
-              value={customTarget}
-              onChange={(p) => setCustomTarget(p)}
-              variant={variant}
-              name={customTargetName}
-              onNameChange={setCustomTargetName}
-              onSave={() => {
-                if (!customTarget) return;
-                if (editingTargetId) {
-                  const updated = updateSavedWaterProfile(
-                    editingTargetId,
-                    customTargetName,
-                    customTarget
-                  );
-                  if (updated) setSavedProfiles(loadSavedWaterProfiles());
-                } else {
-                  const saved = saveNewWaterProfile(
-                    customTargetName,
-                    customTarget
-                  );
-                  setSavedProfiles(loadSavedWaterProfiles());
-                  setEditingTargetId(saved.id);
-                }
-              }}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Profile comparison above additions */}
-      <ProfileDiff
-        source={source}
-        target={target}
-        adjusted={totalProfile}
-        variant={variant}
-      />
-
-      {additionsMode === "single" ? (
+      ) : additionsMode === "single" ? (
         <div className="mt-4">
           <div className="font-medium mb-2">Salt Additions (total)</div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -550,7 +597,22 @@ export default function WaterSaltsCalc({
   if (variant === "embedded") {
     return <div className="space-y-3">{content}</div>;
   }
-  return <CalculatorCard title="Water Salts">{content}</CalculatorCard>;
+  return (
+    <CalculatorCard
+      title="Water Salts"
+      right={
+        <button
+          type="button"
+          className="text-xs rounded-md border px-2 py-1 hover:bg-white/20"
+          onClick={toggleCompact}
+        >
+          {compact ? "Expand" : "Collapse"}
+        </button>
+      }
+    >
+      {content}
+    </CalculatorCard>
+  );
 }
 
 function renderSaltInputs(
@@ -851,3 +913,5 @@ function Row({
     </div>
   );
 }
+
+// Collapsible moved to shared component
