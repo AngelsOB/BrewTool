@@ -32,7 +32,6 @@ import WaterSaltsCalc from "../components/WaterSaltsCalc";
 import FitToWidth from "../components/FitToWidth";
 import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
 import {
-  addCustomGrain,
   addCustomHop,
   getGrainPresets,
   getHopPresets,
@@ -83,7 +82,8 @@ export default function RecipeBuilder() {
       name: "Pale Malt",
       weightKg: 4,
       colorLovibond: 2,
-      yield: 0.75,
+      potentialGu: 34.5,
+      type: "grain",
     },
   ]);
   const [hops, setHops] = useState<HopItem[]>([
@@ -100,7 +100,7 @@ export default function RecipeBuilder() {
     name: "SafAle US-05",
     attenuationPercent: 0.78,
   });
-  const [showCustomGrainInput, setShowCustomGrainInput] = useState(false);
+  // const [showCustomGrainInput, setShowCustomGrainInput] = useState(false);
   const [showCustomHopInput, setShowCustomHopInput] = useState(false);
   const [showFlavorVisualizer, setShowFlavorVisualizer] = useState(false);
 
@@ -256,7 +256,11 @@ export default function RecipeBuilder() {
     () =>
       ogFromPoints(
         pointsFromGrainBill(
-          grains.map((g) => ({ weightKg: g.weightKg, yield: g.yield })),
+          grains.map((g) => ({
+            weightKg: g.weightKg,
+            potentialGu: g.potentialGu,
+            type: g.type,
+          })),
           batchVolumeL,
           efficiencyPct / 100
         )
@@ -972,7 +976,8 @@ export default function RecipeBuilder() {
                   name: "",
                   weightKg: 0,
                   colorLovibond: 2,
-                  yield: 0.75,
+                  potentialGu: 34,
+                  type: "grain",
                 },
               ])
             }
@@ -980,110 +985,64 @@ export default function RecipeBuilder() {
             + Add Grain
           </button>
         </div>
-        <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-muted">
+        <div className="hidden sm:grid gap-2 text-xs text-muted sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,.5fr)_min-content]">
           <div>Grain</div>
           <div>Weight</div>
-          <div>Color</div>
-          <div>Yield</div>
+          <div>Grain %</div>
           <div></div> {/* For the remove button */}
         </div>
         {grains.map((g, i) => (
           <div
             key={g.id}
-            className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_min-content] gap-2"
+            className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,.5fr)_min-content] gap-2"
           >
             <label className="flex flex-col">
               <div className="text-xs text-muted mb-1 sm:hidden">Grain</div>
-              <select
-                className="w-full rounded-md border px-2 py-2.5"
-                onChange={(e) => {
-                  if (e.target.value === "__add_custom__") {
-                    setShowCustomGrainInput(true);
-                    // Optionally reset the current grain item or set a placeholder
-                  } else {
-                    const preset = getGrainPresets().find(
-                      (p) => p.name === e.target.value
-                    );
-                    if (!preset) return;
-                    const c = [...grains];
-                    c[i] = {
-                      ...g,
-                      name: preset.name,
-                      colorLovibond: preset.colorLovibond,
-                      yield: preset.yield,
-                    };
-                    setGrains(c);
-                    setShowCustomGrainInput(false);
-                  }
-                }}
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Grains...
-                </option>
-                {getGrainPresets().map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {p.name}
-                  </option>
-                ))}
-                <option value="__add_custom__">+ Add Custom Grain</option>
-              </select>
-            </label>
-            {showCustomGrainInput && (
-              <form
-                className="grid grid-cols-1 sm:grid-cols-3 gap-2 col-span-full"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const form = e.currentTarget as HTMLFormElement & {
-                    gname: HTMLInputElement;
-                    glov: HTMLInputElement;
-                    gyield: HTMLInputElement;
-                  };
-                  const name = form.gname.value.trim();
-                  const lov = Number(form.glov.value);
-                  const grainYield = Number(form.gyield.value);
-                  if (
-                    !name ||
-                    !Number.isFinite(lov) ||
-                    !Number.isFinite(grainYield)
-                  )
-                    return;
-                  addCustomGrain({
-                    name,
-                    colorLovibond: lov,
-                    yield: grainYield,
-                  });
-                  form.reset();
-                  setShowCustomGrainInput(false);
-                }}
-              >
-                <input
-                  name="gname"
-                  className="rounded-md border px-3 py-2"
-                  placeholder="Grain name"
-                />
-                <input
-                  name="glov"
-                  type="number"
-                  step="0.1"
-                  className="rounded-md border px-3 py-2"
-                  placeholder="Color °L"
-                />
-                <input
-                  name="gyield"
-                  type="number"
-                  step="0.01"
-                  className="rounded-md border px-3 py-2"
-                  placeholder="Yield %"
-                />
-                <button
-                  className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-50"
-                  type="submit"
+              <div className="relative">
+                <select
+                  className="w-full rounded-md border py-2.5 pl-2 pr-12"
+                  onChange={(e) => {
+                    if (e.target.value === "__add_custom__") {
+                      return;
+                      // Optionally reset the current grain item or set a placeholder
+                    } else {
+                      const preset = getGrainPresets().find(
+                        (p) => p.name === e.target.value
+                      );
+                      if (!preset) return;
+                      const c = [...grains];
+                      c[i] = {
+                        ...g,
+                        name: preset.name,
+                        colorLovibond: (preset as { colorLovibond: number })
+                          .colorLovibond,
+                        potentialGu: (preset as { potentialGu: number })
+                          .potentialGu,
+                        type: "grain",
+                      } as GrainItem;
+                      setGrains(c);
+                    }
+                  }}
+                  defaultValue=""
                 >
-                  + Add Grain Preset
-                </button>
-              </form>
-            )}
+                  <option value="" disabled>
+                    Grains...
+                  </option>
+                  {getGrainPresets().map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                  <option value="__add_custom__">+ Add Custom Grain</option>
+                </select>
+                <div
+                  className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 text-xs text-neutral-600 px-2 py-0.5"
+                  aria-hidden="true"
+                >
+                  {g.colorLovibond}°L
+                </div>
+              </div>
+            </label>
             <label className="flex flex-col">
               <div className="text-xs text-muted mb-1 sm:hidden">
                 Weight (kg)
@@ -1103,35 +1062,14 @@ export default function RecipeBuilder() {
             </label>
             <label className="flex flex-col">
               <div className="text-xs text-muted mb-1 sm:hidden">
-                Color (°L)
+                Grain Bill (%)
               </div>
-              <InlineEditableNumber
-                value={g.colorLovibond}
-                onChange={(n) => {
-                  const c = [...grains];
-                  c[i] = { ...g, colorLovibond: n };
-                  setGrains(c);
-                }}
-                suffix="°L"
-                suffixClassName="left-9 right-0.5 text-[10px]"
-                step={0.1}
-                placeholder="2.0"
-              />
-            </label>
-            <label className="flex flex-col">
-              <div className="text-xs text-muted mb-1 sm:hidden">Yield (%)</div>
-              <InlineEditableNumber
-                value={g.yield}
-                onChange={(n) => {
-                  const c = [...grains];
-                  c[i] = { ...g, yield: n };
-                  setGrains(c);
-                }}
-                suffix="%"
-                suffixClassName="left-9 right-0.5 text-[10px]"
-                step={0.01}
-                placeholder="75"
-              />
+              <div className="rounded-md border px-3 py-2 bg-white/40 text-sm">
+                {totalGrainKg > 0
+                  ? ((g.weightKg / totalGrainKg) * 100).toFixed(1)
+                  : "0.0"}
+                %
+              </div>
             </label>
             <div className="flex justify-end items-center">
               <button
@@ -1170,7 +1108,8 @@ export default function RecipeBuilder() {
                 name: "",
                 weightKg: 0,
                 colorLovibond: 2,
-                yield: 0.75,
+                potentialGu: 34,
+                type: "grain",
               },
             ])
           }
@@ -1666,30 +1605,6 @@ export default function RecipeBuilder() {
       <section className="section-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="font-semibold text-primary-strong">Yeast</div>
-          <button
-            className="p-1 text-neutral-400 hover:text-red-500 transition w-fit ml-auto self-end"
-            onClick={() =>
-              setYeast({
-                name: "",
-                attenuationPercent: undefined,
-              })
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
         </div>
         <label className="flex flex-col">
           <select

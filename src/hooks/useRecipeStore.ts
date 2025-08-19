@@ -8,7 +8,9 @@ export type GrainItem = {
   name: string;
   weightKg: number; // kilograms
   colorLovibond: number; // °L
-  yield: number; // as a decimal, e.g., 0.75 for 75%
+  potentialGu: number; // GU/PPG at 100% conversion (as-is)
+  type: "grain" | "adjunct_mashable" | "extract" | "sugar";
+  fermentability?: number; // 0..1 optional override
 };
 
 export type HopTimingType =

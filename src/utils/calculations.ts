@@ -6,7 +6,11 @@ export function ogFromPoints(points: number): number {
 }
 
 export function pointsFromGrainBill(
-  grains: Array<{ weightKg: number; yield: number }>,
+  grains: Array<{
+    weightKg: number;
+    potentialGu: number;
+    type?: "grain" | "adjunct_mashable" | "extract" | "sugar";
+  }>,
   batchVolumeL: number,
   efficiencyDecimal = 0.72
 ): number {
@@ -19,8 +23,11 @@ export function pointsFromGrainBill(
 
   const totalGU = grains.reduce((sum, g) => {
     const weightLb = g.weightKg * lbsPerKg;
-    const ppg = ppgFromYieldDecimal(g.yield);
-    return sum + weightLb * ppg * efficiencyDecimal;
+    const ppg = g.potentialGu;
+    const isMashable =
+      g.type === "grain" || g.type === "adjunct_mashable" || g.type == null;
+    const eff = isMashable ? efficiencyDecimal : 1;
+    return sum + weightLb * ppg * eff;
   }, 0);
 
   return totalGU / volumeGal;
@@ -118,7 +125,11 @@ export function ppgFromYieldDecimal(yieldDecimal: number): number {
 }
 
 export function ogFromGrainBill(
-  grains: Array<{ weightKg: number; yield: number }>,
+  grains: Array<{
+    weightKg: number;
+    potentialGu: number;
+    type?: "grain" | "adjunct_mashable" | "extract" | "sugar";
+  }>,
   volumeL: number,
   efficiencyDecimal: number
 ): number {
@@ -129,8 +140,11 @@ export function ogFromGrainBill(
 
   const totalGU = grains.reduce((sum, g) => {
     const weightLb = g.weightKg * lbsPerKg;
-    const ppg = ppgFromYieldDecimal(g.yield);
-    return sum + weightLb * ppg * efficiencyDecimal;
+    const ppg = g.potentialGu;
+    const isMashable =
+      g.type === "grain" || g.type === "adjunct_mashable" || g.type == null;
+    const eff = isMashable ? efficiencyDecimal : 1;
+    return sum + weightLb * ppg * eff;
   }, 0);
 
   const points = totalGU / volumeGal; // gravity points per gallon

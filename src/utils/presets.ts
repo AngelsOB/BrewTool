@@ -2,8 +2,8 @@ import { loadJson, saveJson } from "./storage";
 
 export type GrainPreset = {
   name: string;
-  colorLovibond: number;
-  yield: number; // as a decimal, e.g., 0.75 for 75%
+  colorLovibond: number; // °L
+  potentialGu: number; // GU/PPG at 100% conversion (as-is)
 };
 
 export type HopPreset = {
@@ -58,45 +58,47 @@ export const EMPTY_HOP_FLAVOR: HopFlavorProfile = {
   resinPine: 0,
 };
 
+// Convert prior yield% heuristics to GU using 46 * yield
+const gu = (yieldDecimal: number) => Math.round(46 * yieldDecimal * 10) / 10;
 export const GRAIN_PRESETS: GrainPreset[] = [
-  { name: "Pilsner Malt", colorLovibond: 1.5, yield: 0.8 },
-  { name: "Pale Malt (2-Row)", colorLovibond: 2, yield: 0.78 },
-  { name: "Maris Otter", colorLovibond: 3, yield: 0.81 },
-  { name: "Vienna Malt", colorLovibond: 4, yield: 0.78 },
-  { name: "Munich Malt", colorLovibond: 10, yield: 0.75 },
-  { name: "Wheat Malt", colorLovibond: 2, yield: 0.8 },
-  { name: "Crystal 20L", colorLovibond: 20, yield: 0.75 },
-  { name: "Crystal 40L", colorLovibond: 40, yield: 0.72 },
-  { name: "Crystal 60L", colorLovibond: 60, yield: 0.7 },
-  { name: "Chocolate Malt", colorLovibond: 350, yield: 0.6 },
-  { name: "Roasted Barley", colorLovibond: 500, yield: 0.55 },
-  { name: "Acid Malt", colorLovibond: 3, yield: 0.75 },
-  { name: "Amber Malt", colorLovibond: 25, yield: 0.7 },
-  { name: "Biscuit Malt", colorLovibond: 25, yield: 0.75 },
-  { name: "Black (Patent) Malt", colorLovibond: 500, yield: 0.55 },
-  { name: "Brown Malt", colorLovibond: 65, yield: 0.65 },
-  { name: "Cara-Pils/Dextrine", colorLovibond: 2, yield: 0.78 },
-  { name: "Caramunich Malt", colorLovibond: 56, yield: 0.75 },
-  { name: "Caravienne Malt", colorLovibond: 22, yield: 0.75 },
-  { name: "Chocolate Malt (Darker)", colorLovibond: 400, yield: 0.6 },
-  { name: "Crystal 10L", colorLovibond: 10, yield: 0.75 },
-  { name: "Crystal 80L", colorLovibond: 80, yield: 0.68 },
-  { name: "Crystal 120L", colorLovibond: 120, yield: 0.65 },
-  { name: "Dark Munich Malt", colorLovibond: 18, yield: 0.72 },
-  { name: "Flaked Barley", colorLovibond: 2, yield: 0.68 },
-  { name: "Flaked Oats", colorLovibond: 1, yield: 0.6 },
-  { name: "Flaked Wheat", colorLovibond: 2, yield: 0.7 },
-  { name: "Honey Malt", colorLovibond: 25, yield: 0.75 },
-  { name: "Lactose (Milk Sugar)", colorLovibond: 0, yield: 1.0 },
-  { name: "Melanoidin Malt", colorLovibond: 20, yield: 0.75 },
-  { name: "Oats, Malted", colorLovibond: 2, yield: 0.7 },
-  { name: "Pale Chocolate Malt", colorLovibond: 220, yield: 0.65 },
-  { name: "Smoked Malt", colorLovibond: 9, yield: 0.75 },
-  { name: "Special B Malt", colorLovibond: 180, yield: 0.68 },
-  { name: "Victory Malt", colorLovibond: 25, yield: 0.73 },
-  { name: "White Wheat Malt", colorLovibond: 2, yield: 0.8 },
-  { name: "Torrefied Wheat", colorLovibond: 2, yield: 0.78 },
-  { name: "Rice Hulls", colorLovibond: 0, yield: 0 },
+  { name: "Pilsner Malt", colorLovibond: 1.5, potentialGu: gu(0.8) },
+  { name: "Pale Malt (2-Row)", colorLovibond: 2, potentialGu: gu(0.78) },
+  { name: "Maris Otter", colorLovibond: 3, potentialGu: gu(0.81) },
+  { name: "Vienna Malt", colorLovibond: 4, potentialGu: gu(0.78) },
+  { name: "Munich Malt", colorLovibond: 10, potentialGu: gu(0.75) },
+  { name: "Wheat Malt", colorLovibond: 2, potentialGu: gu(0.8) },
+  { name: "Crystal 20L", colorLovibond: 20, potentialGu: gu(0.75) },
+  { name: "Crystal 40L", colorLovibond: 40, potentialGu: gu(0.72) },
+  { name: "Crystal 60L", colorLovibond: 60, potentialGu: gu(0.7) },
+  { name: "Chocolate Malt", colorLovibond: 350, potentialGu: gu(0.6) },
+  { name: "Roasted Barley", colorLovibond: 500, potentialGu: gu(0.55) },
+  { name: "Acid Malt", colorLovibond: 3, potentialGu: gu(0.75) },
+  { name: "Amber Malt", colorLovibond: 25, potentialGu: gu(0.7) },
+  { name: "Biscuit Malt", colorLovibond: 25, potentialGu: gu(0.75) },
+  { name: "Black (Patent) Malt", colorLovibond: 500, potentialGu: gu(0.55) },
+  { name: "Brown Malt", colorLovibond: 65, potentialGu: gu(0.65) },
+  { name: "Cara-Pils/Dextrine", colorLovibond: 2, potentialGu: gu(0.78) },
+  { name: "Caramunich Malt", colorLovibond: 56, potentialGu: gu(0.75) },
+  { name: "Caravienne Malt", colorLovibond: 22, potentialGu: gu(0.75) },
+  { name: "Chocolate Malt (Darker)", colorLovibond: 400, potentialGu: gu(0.6) },
+  { name: "Crystal 10L", colorLovibond: 10, potentialGu: gu(0.75) },
+  { name: "Crystal 80L", colorLovibond: 80, potentialGu: gu(0.68) },
+  { name: "Crystal 120L", colorLovibond: 120, potentialGu: gu(0.65) },
+  { name: "Dark Munich Malt", colorLovibond: 18, potentialGu: gu(0.72) },
+  { name: "Flaked Barley", colorLovibond: 2, potentialGu: gu(0.68) },
+  { name: "Flaked Oats", colorLovibond: 1, potentialGu: gu(0.6) },
+  { name: "Flaked Wheat", colorLovibond: 2, potentialGu: gu(0.7) },
+  { name: "Honey Malt", colorLovibond: 25, potentialGu: gu(0.75) },
+  { name: "Lactose (Milk Sugar)", colorLovibond: 0, potentialGu: gu(1.0) },
+  { name: "Melanoidin Malt", colorLovibond: 20, potentialGu: gu(0.75) },
+  { name: "Oats, Malted", colorLovibond: 2, potentialGu: gu(0.7) },
+  { name: "Pale Chocolate Malt", colorLovibond: 220, potentialGu: gu(0.65) },
+  { name: "Smoked Malt", colorLovibond: 9, potentialGu: gu(0.75) },
+  { name: "Special B Malt", colorLovibond: 180, potentialGu: gu(0.68) },
+  { name: "Victory Malt", colorLovibond: 25, potentialGu: gu(0.73) },
+  { name: "White Wheat Malt", colorLovibond: 2, potentialGu: gu(0.8) },
+  { name: "Torrefied Wheat", colorLovibond: 2, potentialGu: gu(0.78) },
+  { name: "Rice Hulls", colorLovibond: 0, potentialGu: 0 },
 ];
 
 export const HOP_PRESETS: HopPreset[] = [
