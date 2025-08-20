@@ -39,6 +39,8 @@ import {
   getYeastPresets,
 } from "../utils/presets";
 import type { Recipe } from "../hooks/useRecipeStore";
+import { getBjcpCategories, findBjcpStyleByCode } from "../utils/bjcp";
+import { getBjcpStyleSpec } from "../utils/bjcpSpecs";
 
 function WaterSaltsSection({
   mashWaterL,
@@ -74,6 +76,12 @@ function WaterSaltsSection({
 export default function RecipeBuilder() {
   const upsert = useRecipeStore((s) => s.upsert);
   const [name, setName] = useState("New Recipe");
+  const [bjcpStyleCode, setBjcpStyleCode] = useState<string>("");
+  const bjcpStyle = useMemo(
+    () => findBjcpStyleByCode(bjcpStyleCode || ""),
+    [bjcpStyleCode]
+  );
+  const [showStyleInfo, setShowStyleInfo] = useState(false);
   const [batchVolumeL, setBatchVolumeL] = useState(20);
   // Legacy fg state removed; we use fgUsed/fgEstimated for display and saving
   const [efficiencyPct, setEfficiencyPct] = useState(72); // brewhouse efficiency percentage
@@ -135,7 +143,7 @@ export default function RecipeBuilder() {
       type: "infusion" | "decoction" | "ramp";
       tempC: number;
       timeMin: number;
-      decoctionPercent?: number;
+      decoctionPercent?: number; // only for type 'decoction'
     }[]
   >([
     {
@@ -518,6 +526,7 @@ export default function RecipeBuilder() {
               id: crypto.randomUUID(),
               name,
               createdAt: new Date().toISOString(),
+              bjcpStyleCode: bjcpStyleCode || undefined,
               batchVolumeL,
               targetOG: ogUsed,
               targetFG: fgUsed,
@@ -540,14 +549,16 @@ export default function RecipeBuilder() {
       </div>
 
       <section className="section-soft grid grid-cols-1 sm:grid-cols-4 gap-4 ">
-        <label className="block">
-          <div className="text-sm text-white/50 mb-1">Name</div>
-          <input
-            className="w-full rounded-md border px-3 py-2"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:col-span-2">
+          <label className="block">
+            <div className="text-sm text-white/50 mb-1">Name</div>
+            <input
+              className="w-full rounded-md border px-3 py-2"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+        </div>
         <label className="block">
           <div className="text-sm  text-white/50 mb-1">
             Target Batch Volume (L)
@@ -574,8 +585,48 @@ export default function RecipeBuilder() {
             onChange={(e) => setEfficiencyPct(Number(e.target.value))}
           />
         </label>
-        <label className="block">
-          <div className="text-sm  text-white/50 mb-1 flex items-center gap-2">
+        {/* Row with Style toggle + OG + FG */}
+        <div className="sm:col-span-2">
+          <div className="relative">
+            <div className="w-full rounded-md border border-transparent px-1 py-1 text-left hover:bg-white/5">
+              <span className="text-sm text-white/60">
+                Style:{" "}
+                <span className="italic">
+                  {bjcpStyle ? `${bjcpStyle.code}. ${bjcpStyle.name}` : "None"}
+                </span>
+              </span>
+            </div>
+            <select
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              value={bjcpStyleCode}
+              onChange={(e) => setBjcpStyleCode(e.target.value)}
+              aria-label="Select BJCP style"
+            >
+              <option value="">None</option>
+              {getBjcpCategories().map((cat) => (
+                <optgroup key={cat.code} label={`${cat.code}. ${cat.name}`}>
+                  {cat.styles.map((s) => (
+                    <option
+                      key={s.code}
+                      value={s.code}
+                    >{`${s.code}. ${s.name}`}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+          <div className="mt-1">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/40 hover:bg-white/20 shadow-lg shadow-black/30 hover:shadow-sm"
+              onClick={() => setShowStyleInfo((v) => !v)}
+            >
+              {showStyleInfo ? "Hide Style Info" : "Open Style Info"}
+            </button>
+          </div>
+        </div>
+        <label className="block sm:col-start-3">
+          <div className="text-sm  text-white/50 mb-1">
             <button
               type="button"
               className="underline underline-offset-2"
@@ -583,7 +634,21 @@ export default function RecipeBuilder() {
             >
               {ogAuto ? "Target OG (auto)" : "Actual OG"}
             </button>
-            <span className="text-neutral-400">/</span>
+          </div>
+          <input
+            type="number"
+            step="0.001"
+            min="1.000"
+            max="1.2"
+            className="w-full rounded-md border px-3 py-2"
+            value={(ogAuto ? ogAutoCalc : actualOg ?? ogAutoCalc).toFixed(3)}
+            onChange={(e) => !ogAuto && setActualOg(Number(e.target.value))}
+            placeholder="1.050"
+            readOnly={ogAuto}
+          />
+        </label>
+        <label className="block sm:col-start-4">
+          <div className="text-sm  text-white/50 mb-1">
             <button
               type="button"
               className="underline underline-offset-2"
@@ -592,39 +657,30 @@ export default function RecipeBuilder() {
               {fgAuto ? "Target FG (auto)" : "Actual FG"}
             </button>
           </div>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <input
-                type="number"
-                step="0.001"
-                min="1.000"
-                max="1.2"
-                className="w-full rounded-md border px-3 py-2"
-                value={(ogAuto ? ogAutoCalc : actualOg ?? ogAutoCalc).toFixed(
-                  3
-                )}
-                onChange={(e) => !ogAuto && setActualOg(Number(e.target.value))}
-                placeholder="1.050"
-                readOnly={ogAuto}
-              />
-            </div>
-            <div className="flex-1">
-              <input
-                type="number"
-                step="0.001"
-                min="0.990"
-                max="1.2"
-                className="w-full rounded-md border px-3 py-2"
-                value={(fgAuto ? fgEstimated : actualFg ?? fgEstimated).toFixed(
-                  3
-                )}
-                onChange={(e) => !fgAuto && setActualFg(Number(e.target.value))}
-                placeholder="1.010"
-                readOnly={fgAuto}
-              />
-            </div>
-          </div>
+          <input
+            type="number"
+            step="0.001"
+            min="0.990"
+            max="1.2"
+            className="w-full rounded-md border px-3 py-2"
+            value={(fgAuto ? fgEstimated : actualFg ?? fgEstimated).toFixed(3)}
+            onChange={(e) => !fgAuto && setActualFg(Number(e.target.value))}
+            placeholder="1.010"
+            readOnly={fgAuto}
+          />
         </label>
+        <div className="sm:col-span-4">
+          <Collapsible open={showStyleInfo}>
+            <StyleRangeBars
+              styleCode={bjcpStyle?.code}
+              abv={abv}
+              og={ogUsed}
+              fg={fgUsed}
+              ibu={ibu}
+              srm={srm}
+            />
+          </Collapsible>
+        </div>
       </section>
 
       {/* Water settings (hidden by default) */}
@@ -781,8 +837,16 @@ export default function RecipeBuilder() {
       {/* Sticky summary bar (glass + warm accent) */}
       <div className="sticky top-14 z-10 mx-auto max-w-6xl py-2 backdrop-blur-md">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/40 px-3 py-2 shadow-soft ring-1 ring-neutral-900/5 supports-[backdrop-filter]:bg-white/25">
-          <div className="text-sm font-medium tracking-tight text-white/50 shrink-0">
-            {name}
+          <div className="flex items-center gap-2 text-sm font-medium tracking-tight text-white/50 shrink-0">
+            <span>{name}</span>
+            {/* {bjcpStyle && (
+              <span
+                className="rounded-md border border-white/10 bg-white/30 px-2 py-0.5 text-xs text-neutral-800 shadow-soft"
+                title={`${bjcpStyle.code}. ${bjcpStyle.name}`}
+              >
+                {bjcpStyle.code}
+              </span>
+            )} */}
           </div>
           <FitToWidth className="min-w-0 flex-1" align="right" minScale={0.75}>
             <div className="inline-flex flex-wrap items-center justify-end gap-3">
@@ -1610,7 +1674,7 @@ export default function RecipeBuilder() {
             )} */}
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/40 hover:bg-white/20 shadow-lg shadow-black/30 hover:shadow-sm"
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/40 hover:bg_WHITE/20 shadow-lg shadow-black/30 hover:shadow-sm"
               onClick={() => setShowFlavorVisualizer((v) => !v)}
             >
               {showFlavorVisualizer ? "Hide Visualizer" : "Show Visualizer"}
@@ -1629,7 +1693,7 @@ export default function RecipeBuilder() {
 
       <section className="section-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="font-semibold text-primary-strong">Yeast</div>
+          <div className="font-semibold text_PRIMARY-strong">Yeast</div>
         </div>
         <label className="flex flex-col">
           <select
@@ -1735,5 +1799,191 @@ function FlavorGraphs({
         )}
       </div>
     </section>
+  );
+}
+
+function StyleRangeBars({
+  styleCode,
+  abv,
+  og,
+  fg,
+  ibu,
+  srm,
+}: {
+  styleCode?: string;
+  abv: number;
+  og: number;
+  fg: number;
+  ibu: number;
+  srm: number;
+}) {
+  const spec = getBjcpStyleSpec(styleCode);
+  if (!spec) {
+    return (
+      <div className="rounded-md border border-white/10 bg-white/10 p-3 text-sm text-white/70">
+        No BJCP ranges available for the selected style.
+      </div>
+    );
+  }
+
+  // SRM is computed elsewhere; we display SRM directly in the style info
+
+  function Row({
+    label,
+    range,
+    value,
+    format = (n: number) => n.toString(),
+    maxFallback,
+  }: {
+    label: string;
+    range?: [number, number];
+    value: number;
+    format?: (n: number) => string;
+    maxFallback?: number;
+  }) {
+    const min = range?.[0] ?? 0;
+    const max = range?.[1] ?? maxFallback ?? Math.max(min + 1, value * 1.5);
+    // Build a domain that extends beyond the BJCP range to show how far out-of-range we are
+    const span = Math.max(
+      0.0001,
+      (range ? max - min : Math.abs(value - min)) || 0.0001
+    );
+    const pad = span * 0.15;
+    const domMin = range ? Math.min(min, value) - pad : value - pad;
+    const domMax = range ? Math.max(max, value) + pad : value + pad;
+    const clampPct = (n: number) => Math.max(0, Math.min(100, n));
+    const toPct = (n: number) =>
+      ((n - domMin) / Math.max(0.00001, domMax - domMin)) * 100;
+
+    const minPct = range ? clampPct(toPct(min)) : 0;
+    const maxPct = range ? clampPct(toPct(max)) : 100;
+    const valPct = clampPct(toPct(value));
+
+    return (
+      <div className="grid grid-cols-[5rem_1fr] items-center gap-2 py-1">
+        <div className="text-xs font-semibold tracking-tight text-white/80">
+          {label}
+        </div>
+        <div className="relative h-6 rounded-sm bg-neutral-800/90 ring-1 ring-black/50 overflow-hidden">
+          {/* left out-of-range pad */}
+          {range && minPct > 0 && (
+            <div
+              className="absolute inset-y-0 left-0 bg-red-900/50"
+              style={{ width: `${minPct}%` }}
+            />
+          )}
+          {/* style range fill */}
+          {range && (
+            <div
+              className="absolute inset-y-0 bg-green-700/85"
+              style={{
+                left: `${minPct}%`,
+                width: `${Math.max(0, maxPct - minPct)}%`,
+              }}
+            />
+          )}
+          {/* right out-of-range pad */}
+          {range && maxPct < 100 && (
+            <div
+              className="absolute inset-y-0 right-0 bg-red-900/50"
+              style={{ width: `${Math.max(0, 100 - maxPct)}%` }}
+            />
+          )}
+          {/* current marker */}
+          <div
+            className="absolute top-0 bottom-0 w-1.5 bg-sky-400 shadow-[0_0_4px_rgba(56,189,248,0.8)]"
+            style={{ left: `${valPct}%` }}
+            title={format(value)}
+          />
+          {/* end labels at exact min/max positions (if range present) */}
+          {range && (
+            <>
+              <div
+                className="absolute -translate-x-1/2 top-0 text-[10px] text-white/80"
+                style={{ left: `${minPct}%` }}
+              >
+                {format(min)}
+              </div>
+              <div
+                className="absolute -translate-x-1/2 top-0 text-[10px] text-white/80"
+                style={{ left: `${maxPct}%` }}
+              >
+                {format(max)}
+              </div>
+            </>
+          )}
+          {/* current value label near marker */}
+          <div
+            className="absolute -translate-x-1/2 top-0 text-[10px] font-semibold text-white"
+            style={{ left: `${valPct}%` }}
+          >
+            {format(value)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // BU/GU uses OG points
+  const ogPoints = Math.max(0, Math.round((og - 1) * 1000));
+  const buGu = ogPoints > 0 ? ibu / ogPoints : 0;
+  // Derive a style BU/GU band when both IBU and OG ranges exist
+  let buGuRange: [number, number] | undefined = undefined;
+  if (spec?.ibu && spec?.og) {
+    const ogMinPts = Math.max(1, Math.round((spec.og[0] - 1) * 1000));
+    const ogMaxPts = Math.max(1, Math.round((spec.og[1] - 1) * 1000));
+    const derivedMin = spec.ibu[0] / ogMaxPts; // lightest bitterness vs highest OG
+    const derivedMax = spec.ibu[1] / ogMinPts; // highest bitterness vs lowest OG
+    const lo = Math.min(derivedMin, derivedMax);
+    const hi = Math.max(derivedMin, derivedMax);
+    buGuRange = [Number(lo.toFixed(2)), Number(hi.toFixed(2))];
+  }
+
+  return (
+    <div className="rounded-md border border-white/10 bg-neutral-900/40 p-3">
+      <div className="space-y-1">
+        <Row
+          label="ABV"
+          range={spec.abv}
+          value={abv}
+          format={(n) => `${n.toFixed(1)}%`}
+        />
+        <Row
+          label="OG"
+          range={spec.og}
+          value={og}
+          format={(n) => n.toFixed(3)}
+        />
+        <Row
+          label="FG"
+          range={spec.fg}
+          value={fg}
+          format={(n) => n.toFixed(3)}
+        />
+        <Row
+          label="SRM"
+          range={
+            spec.srm ??
+            (spec.ebc ? [spec.ebc[0] / 1.97, spec.ebc[1] / 1.97] : undefined)
+          }
+          value={srm}
+          format={(n) => n.toFixed(1)}
+        />
+        <Row
+          label="IBU"
+          range={spec.ibu}
+          value={ibu}
+          format={(n) => n.toFixed(0)}
+          maxFallback={100}
+        />
+        <Row
+          label="BU/GU"
+          range={buGuRange}
+          value={buGu}
+          format={(n) => n.toFixed(2)}
+          maxFallback={1.2}
+        />
+      </div>
+    </div>
   );
 }

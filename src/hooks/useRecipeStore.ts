@@ -55,6 +55,8 @@ export type Recipe = {
   id: string;
   name: string;
   createdAt: string;
+  // Optional BJCP style selection
+  bjcpStyleCode?: string; // e.g., "21A", "X5"
   batchVolumeL: number;
   targetOG?: number;
   targetFG?: number;
