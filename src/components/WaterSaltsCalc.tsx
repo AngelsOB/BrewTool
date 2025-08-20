@@ -74,7 +74,7 @@ function HoverHint({
   children: React.ReactNode;
 }) {
   return (
-    <span className="relative group cursor-help inline-flex items-center">
+    <span className="relative group cursor-help inline-flex items-center text-white/40 hover:text-primary-strong transition-colors">
       {children}
       <span className="pointer-events-none absolute left-0 top-full mt-2 z-20 hidden group-hover:block">
         <span className="inline-block w-[44rem] max-w-[20vw] rounded-xl border border-white/10 bg-white/10 p-1 shadow-2xl shadow-black/30 backdrop-blur-sm supports-[backdrop-filter]:bg-white/5">
@@ -471,7 +471,7 @@ export default function WaterSaltsCalc({
 
       {compact ? (
         <div className="mt-4">
-          <div className="font-medium mb-2">Salt Additions (total)</div>
+          <div className="font-medium mb-2">Salt Additions</div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {renderSaltInputs(singleSalts, setSingleSalts, saltHints)}
           </div>
@@ -706,7 +706,7 @@ function renderSaltInputs(
 function renderSplitPreview(mash: SaltAdditions, sparge: SaltAdditions) {
   const Row = ({ label, m, s }: { label: string; m?: number; s?: number }) => (
     <div className="flex items-center justify-between rounded border px-2 py-1 bg-white/40">
-      <span className="text-neutral-700">{label}</span>
+      <span className="text-white-400">{label}</span>
       <span className="text-neutral-900 font-medium">
         M {m ? m.toFixed(1) : "0.0"} g • S {s ? s.toFixed(1) : "0.0"} g
       </span>

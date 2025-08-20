@@ -29,6 +29,7 @@ import HopFlavorMini from "../components/HopFlavorMini";
 import InputWithSuffix from "../components/InputWithSuffix";
 import InlineEditableNumber from "../components/InlineEditableNumber";
 import WaterSaltsCalc from "../components/WaterSaltsCalc";
+import YeastPitchCalc from "../components/YeastPitchCalc";
 import FitToWidth from "../components/FitToWidth";
 import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
 import {
@@ -536,9 +537,9 @@ export default function RecipeBuilder() {
         </button>
       </div>
 
-      <section className="section-soft grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <section className="section-soft grid grid-cols-1 sm:grid-cols-4 gap-4 ">
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">Name</div>
+          <div className="text-sm text-white/50 mb-1">Name</div>
           <input
             className="w-full rounded-md border px-3 py-2"
             value={name}
@@ -546,7 +547,7 @@ export default function RecipeBuilder() {
           />
         </label>
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">
+          <div className="text-sm  text-white/50 mb-1">
             Target Batch Volume (L)
           </div>
           <input
@@ -558,7 +559,9 @@ export default function RecipeBuilder() {
           />
         </label>
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">Efficiency (%)</div>
+          <div className="text-sm  text-white/50  mb-1">
+            Brewhouse Efficiency (%)
+          </div>
           <input
             type="number"
             step="1"
@@ -570,7 +573,7 @@ export default function RecipeBuilder() {
           />
         </label>
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1 flex items-center gap-2">
+          <div className="text-sm  text-white/50 mb-1 flex items-center gap-2">
             <button
               type="button"
               className="underline underline-offset-2"
@@ -1639,6 +1642,9 @@ export default function RecipeBuilder() {
             Est. Attenuation: {(yeast.attenuationPercent * 100).toFixed(0)}%
           </div>
         )}
+        <div className="pt-1">
+          <YeastPitchCalc og={ogUsed} volumeL={batchVolumeL} />
+        </div>
       </section>
 
       <section className="section-soft space-y-3">
