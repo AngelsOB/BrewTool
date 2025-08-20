@@ -134,7 +134,7 @@ export default function HopFlavorRadar({
   return (
     <div className="flex flex-col gap-3">
       {title && (
-        <div className="text-center text-sm font-medium text-neutral-700">
+        <div className="text-center text-sm font-medium text-white/40">
           {title}
         </div>
       )}

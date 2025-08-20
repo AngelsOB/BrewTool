@@ -24,7 +24,7 @@ export default function InputWithSuffix({
   return (
     <div className={`relative ${className ?? ""}`}>
       <input
-        className="rounded-md border px-3 py-2 pr-3 w-full"
+        className="rounded-md border px-3 py-2 pr-6 w-full sm:text-right text-left"
         type="number"
         step={step}
         min={min}

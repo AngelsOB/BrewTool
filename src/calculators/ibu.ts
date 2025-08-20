@@ -12,6 +12,9 @@ export type HopAddition = {
   alphaAcidPercent: number; // e.g. 10 means 10%
   boilTimeMinutes: number; // only relevant for 'boil' type
   type: HopTimingType;
+  // Whirlpool-specific (optional)
+  whirlpoolTimeMinutes?: number;
+  whirlpoolTempC?: number; // typical 65–99°C
 };
 
 export function tinsethGravityFactor(wortGravity: number): number {
@@ -31,6 +34,23 @@ export function tinsethUtilization(
   return tinsethGravityFactor(wortGravity) * tinsethTimeFactor(minutes);
 }
 
+// Simplified whirlpool utilization model:
+// - Scale Tinseth time factor by a temperature coefficient in [0,1]
+// - 60°C -> ~0, 80°C -> ~0.5, 100°C -> 1.0
+// This is a pragmatic approximation for hop stand isomerization.
+export function whirlpoolUtilization(
+  minutes: number,
+  tempC: number,
+  wortGravity: number
+): number {
+  const clampedTemp = Math.max(60, Math.min(100, tempC));
+  // Exponential temperature factor: 0 at 60°C, 1 at 100°C
+  const tempFactor = tempC <= 60 ? 0 : Math.pow((clampedTemp - 60) / 40, 1.8);
+  return (
+    tinsethGravityFactor(wortGravity) * tinsethTimeFactor(minutes) * tempFactor
+  );
+}
+
 export function ibuSingleAddition(
   addition: HopAddition,
   postBoilVolumeLiters: number,
@@ -39,21 +59,29 @@ export function ibuSingleAddition(
   let utilization = 0;
   switch (addition.type) {
     case "boil":
-    case "first wort": // For simplicity, treating first wort as boil for IBU for now.
       utilization = tinsethUtilization(addition.boilTimeMinutes, wortGravity);
       break;
+    case "first wort":
+      // ~10% boost for FWH due to pH and pre-boil contact time
+      utilization =
+        tinsethUtilization(addition.boilTimeMinutes, wortGravity) * 1.1;
+      break;
     case "whirlpool":
-      // Whirlpool additions contribute some IBU, but it's complex. For simplicity,
-      // we'll assign a fixed, small utilization, or assume it's negligible for now.
-      // A common simplification is to treat it as a short boil, e.g., 10-15 min.
-      // Let's use a fixed small value, or 0 if we want to be conservative about calculated IBU.
-      // For now, let's treat it as a 10 min boil for IBU calculation.
-      utilization = tinsethUtilization(10, wortGravity); // Simplified assumption
+      {
+        const wpMin = addition.whirlpoolTimeMinutes ?? 0;
+        const wpTemp = addition.whirlpoolTempC ?? 80;
+        utilization = whirlpoolUtilization(wpMin, wpTemp, wortGravity);
+      }
       break;
     case "dry hop":
+      // Dry hops contribute ~2-8% of their potential IBU through non-isomerized compounds
+      // Higher for aged hops (more oxidation products), longer contact time, higher temps
+      const dryHopFactor = 0.05; // Conservative 5% contribution
+      utilization = tinsethUtilization(60, wortGravity) * dryHopFactor;
+      break;
     case "mash":
-      // Dry hops and mash hops contribute negligible to no IBU in typical calculations
-      utilization = 0;
+      // Minimal contribution from carryover into the boil
+      utilization = tinsethUtilization(60, wortGravity) * 0.15;
       break;
     default:
       utilization = 0;
