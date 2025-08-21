@@ -181,6 +181,20 @@
     outline: none;
   }
 
+  /* Normalize inner vertical rhythm so top/bottom feel even */
+  .page-recipe .section-soft > *:first-child {
+    margin-top: 0 !important;
+  }
+  .page-recipe .section-soft > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* When a section has only a header row, reduce vertical padding */
+  .page-recipe .section-soft.py-2 {
+    padding-top: 1rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
   /* Theme-aware overrides for white utilities */
   .text-white\/90 {
     color: color-mix(in oklch, var(--fg-strong) 95%, black 5%) !important;

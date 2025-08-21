@@ -1677,3 +1677,114 @@ export function addCustomYeast(p: YeastPreset): YeastPreset[] {
   saveJson(CUSTOM_YEASTS_KEY, next);
   return [...YEAST_PRESETS, ...next];
 }
+
+// Additional Ingredients presets (grouped)
+export type OtherIngredientCategory =
+  | "water-agent"
+  | "fining"
+  | "spice"
+  | "flavor"
+  | "herb"
+  | "other";
+
+export const OTHER_INGREDIENT_PRESETS: Record<
+  OtherIngredientCategory,
+  readonly string[]
+> = {
+  "water-agent": [
+    "Acetic acid",
+    "Acid blend",
+    "Ascorbic Acid",
+    "Baking Soda",
+    "Calcium Chloride (anhydrous)",
+    "Calcium Chloride (dihydrate)",
+    "Campden Tablets",
+    "Canning Salt",
+    "Chalk",
+    "Citric acid",
+    "CRS/AMS",
+    "Epsom Salt",
+    "Gypsum",
+    "Hydrochloric acid",
+    "Lactic acid",
+    "Lye",
+    "Magnesium Chloride",
+    "Phosphoric acid",
+    "Potassium Metabisulfite",
+    "Slaked Lime",
+    "Sodium Ascorbate",
+    "Sodium Bicarbonate",
+    "Sulfuric acid",
+    "Table Salt",
+    "Tartaric acid",
+    "Five Star 5.2 pH Stabilizer",
+  ],
+  fining: [
+    "Biofine Clear",
+    "Brewers Clarex",
+    "Fermcap",
+    "Gelatin",
+    "Irish Moss",
+    "Koppafloc",
+    "Koppakleer",
+    "Magicol",
+    "Protafloc",
+    "Whirlfloc",
+    "White Labs Clarity Ferm",
+    "White Labs Ultra-Ferm",
+    "White Labs Crystalzyme",
+    "White Labs Rapidase",
+  ],
+  spice: [
+    "Allspice",
+    "Cinnamon",
+    "Cinnamon stick",
+    "Clove",
+    "Coriander Seed",
+    "Ginger",
+    "Grains of paradise",
+    "Lemon Zest",
+    "Lemongrass",
+    "Lime Zest",
+    "Mulling Spices",
+    "Nutmeg",
+    "Orange Zest",
+    "Pumpkin pie spice",
+    "Sea salt",
+    "Vanilla Bean",
+    "Vanilla extract",
+  ],
+  flavor: [
+    "Bitter Orange Peel",
+    "Cocao Nibs",
+    "Cocoa powder",
+    "Coffee",
+    "Grapefruit Peel",
+    "Hungarian Oak Cubes",
+    "Lemon peel",
+    "Lime Zest",
+    "Oak Cubes Medium Toast",
+    "Sweet Orange Peel",
+    "Toasted Coconut",
+  ],
+  herb: ["Hibiscus"],
+  other: [
+    "Brewtan B",
+    "Diammonium Phosphate (DAP)",
+    "Diatomaceous Earth",
+    "Fermaid K",
+    "Fermaid O",
+    "Go-Ferm",
+    "Phantasm Powder",
+    "Servomyces",
+    "Yeast Energizer",
+    "Yeast Nutrient",
+  ],
+};
+
+export function getOtherIngredientPresets(): Record<
+  OtherIngredientCategory,
+  readonly string[]
+> {
+  return OTHER_INGREDIENT_PRESETS;
+}

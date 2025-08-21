@@ -51,6 +51,47 @@ export type MashStep = {
   decoctionPercent?: number; // only for type 'decoction'
 };
 
+export type FermentationStep = {
+  id: string;
+  stage:
+    | "primary"
+    | "secondary"
+    | "diacetyl-rest"
+    | "conditioning"
+    | "cold-crash"
+    | "lagering"
+    | "keg-conditioning"
+    | "bottle-conditioning"
+    | "spunding";
+  tempC: number;
+  days: number;
+  pressurePsi?: number;
+  notes?: string;
+  dryHopReminder?: boolean;
+};
+
+export type OtherIngredientCategory =
+  | "water-agent"
+  | "fining"
+  | "spice"
+  | "flavor"
+  | "herb"
+  | "other";
+
+export type OtherIngredient = {
+  id: string;
+  name: string;
+  category: OtherIngredientCategory;
+  amount: number;
+  unit: string; // g, tsp, tbsp, oz, ml, etc.
+  timing: "mash" | "boil" | "whirlpool" | "secondary" | "kegging" | "bottling";
+  notes?: string;
+  // When true, permanently use custom name input and hide preset dropdown for this row
+  customNameLocked?: boolean;
+  // When true, user selected the Custom option, show editable input until locked
+  customNameSelected?: boolean;
+};
+
 export type Recipe = {
   id: string;
   name: string;
@@ -64,6 +105,8 @@ export type Recipe = {
   hops: HopItem[];
   yeast?: YeastItem;
   mash?: { tempC?: number; timeMin?: number; steps?: MashStep[] };
+  fermentation?: { steps: FermentationStep[] };
+  others?: OtherIngredient[];
   notes?: string;
   water?: WaterParams & {
     // Cached computed values for convenience when viewing a saved recipe

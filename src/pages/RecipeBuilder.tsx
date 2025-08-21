@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import Collapsible from "../components/Collapsible";
 import {
   useRecipeStore,
@@ -6,6 +6,9 @@ import {
   type HopItem,
   type HopTimingType,
   type YeastItem,
+  type FermentationStep,
+  type OtherIngredient,
+  type OtherIngredientCategory,
 } from "../hooks/useRecipeStore";
 import {
   abvSimple,
@@ -32,11 +35,13 @@ import WaterSaltsCalc from "../components/WaterSaltsCalc";
 import YeastPitchCalc from "../components/YeastPitchCalc";
 import FitToWidth from "../components/FitToWidth";
 import { estimateRecipeHopFlavor } from "../utils/hopsFlavor";
+import FermentationPlan from "../components/FermentationPlan";
 import {
   addCustomHop,
   getGrainPresets,
   getHopPresets,
   getYeastPresets,
+  getOtherIngredientPresets,
 } from "../utils/presets";
 import type { Recipe } from "../hooks/useRecipeStore";
 import { getBjcpCategories, findBjcpStyleByCode } from "../utils/bjcp";
@@ -70,6 +75,63 @@ function WaterSaltsSection({
         onCompactChange={setCompact}
       />
     </>
+  );
+}
+
+function AutoWidthUnitSelect({
+  value,
+  options,
+  onChange,
+  className,
+  minPx = 40,
+}: {
+  value: string;
+  options: string[];
+  onChange: (val: string) => void;
+  className?: string;
+  minPx?: number;
+}) {
+  const selectRef = useRef<HTMLSelectElement | null>(null);
+  const measureRef = useRef<HTMLSpanElement | null>(null);
+
+  const updateWidth = () => {
+    const span = measureRef.current;
+    const sel = selectRef.current;
+    if (!span || !sel) return;
+    span.textContent = value || "";
+    const width = Math.ceil(span.getBoundingClientRect().width) + 32; // +px padding
+    sel.style.width = `${Math.max(minPx, width)}px`;
+  };
+
+  useLayoutEffect(() => {
+    updateWidth();
+  }, [value]);
+
+  useEffect(() => {
+    const onResize = () => updateWidth();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  return (
+    <div className="relative inline-block align-middle">
+      <span
+        ref={measureRef}
+        className="absolute invisible -z-10 whitespace-pre px-2 py-2.5"
+      />
+      <select
+        ref={selectRef}
+        className={className}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -112,6 +174,19 @@ export default function RecipeBuilder() {
   // const [showCustomGrainInput, setShowCustomGrainInput] = useState(false);
   const [showCustomHopInput, setShowCustomHopInput] = useState(false);
   const [showFlavorVisualizer, setShowFlavorVisualizer] = useState(false);
+  const [otherIngredients, setOtherIngredients] = useState<OtherIngredient[]>(
+    []
+  );
+  const [fermentationSteps, setFermentationSteps] = useState<
+    FermentationStep[]
+  >([
+    {
+      id: crypto.randomUUID(),
+      stage: "primary",
+      tempC: 20,
+      days: 10,
+    },
+  ]);
 
   // Water profile/volumes inputs
   const [mashThicknessLPerKg, setMashThicknessLPerKg] = useState(3);
@@ -159,8 +234,24 @@ export default function RecipeBuilder() {
   const [fgAuto, setFgAuto] = useState(true);
   const [actualFg, setActualFg] = useState<number | undefined>(undefined);
   // Fermentation parameters for FG estimation
-  const [fermentTempC] = useState(20);
-  const [fermentDays] = useState(14);
+  const fermentDays = useMemo(
+    () =>
+      fermentationSteps.reduce((acc, s) => acc + Math.max(0, s.days || 0), 0) ||
+      14,
+    [fermentationSteps]
+  );
+  const fermentTempC = useMemo(() => {
+    const totalDays = fermentationSteps.reduce(
+      (acc, s) => acc + Math.max(0, s.days || 0),
+      0
+    );
+    if (totalDays <= 0) return 20;
+    const weighted = fermentationSteps.reduce(
+      (acc, s) => acc + Math.max(0, s.days || 0) * (s.tempC ?? 20),
+      0
+    );
+    return weighted / totalDays;
+  }, [fermentationSteps]);
 
   // Handlers to toggle auto/manual and capture current values when switching to manual
   const onToggleOgAuto = (e?: React.MouseEvent<HTMLButtonElement>) => {
@@ -470,6 +561,10 @@ export default function RecipeBuilder() {
     () => hops.some((x) => x.type === "dry hop" || x.type === "whirlpool"),
     [hops]
   );
+  const hasDryHopAdditions = useMemo(
+    () => hops.some((x) => x.type === "dry hop"),
+    [hops]
+  );
   const hasDecoctionStep = useMemo(
     () => mashSteps.some((s) => s.type === "decoction"),
     [mashSteps]
@@ -532,8 +627,10 @@ export default function RecipeBuilder() {
               targetFG: fgUsed,
               grains,
               hops,
+              others: otherIngredients,
               yeast,
               mash: { steps: mashSteps },
+              fermentation: { steps: fermentationSteps },
               water: {
                 ...waterParams,
                 mashWaterL,
@@ -1691,6 +1788,383 @@ export default function RecipeBuilder() {
         </Collapsible>
       </section>
 
+      {/* Additional Ingredients */}
+      <section
+        className={
+          "section-soft space-y-3 " +
+          (otherIngredients.length === 0 ? "py-2" : "")
+        }
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="font-semibold text-primary-strong">
+            Additional Ingredients
+          </div>
+          <button
+            className="hidden sm:block btn-neon"
+            onClick={() =>
+              setOtherIngredients((xs) => [
+                ...xs,
+                {
+                  id: crypto.randomUUID(),
+                  name: "",
+                  category: "other",
+                  amount: 0,
+                  unit: "g",
+                  timing: "boil",
+                  customNameLocked: false,
+                  customNameSelected: false,
+                },
+              ])
+            }
+          >
+            + Add Ingredient
+          </button>
+        </div>
+
+        {(() => {
+          const presetByCategory = getOtherIngredientPresets() as Record<
+            OtherIngredientCategory,
+            string[]
+          >;
+
+          const units = [
+            "g",
+            "kg",
+            "tsp",
+            "tbsp",
+            "oz",
+            "lb",
+            "ml",
+            "l",
+            "drops",
+            "capsule",
+            "tablet",
+            "packet",
+          ];
+
+          const timings: OtherIngredient["timing"][] = [
+            "mash",
+            "boil",
+            "whirlpool",
+            "secondary",
+            "kegging",
+            "bottling",
+          ];
+
+          return (
+            <>
+              {otherIngredients.length > 0 && (
+                <div className="hidden sm:grid gap-2 text-xs text-muted sm:grid-cols-[minmax(0,1fr)_minmax(0,.7fr)_minmax(0,.6fr)_minmax(0,1fr)_min-content]">
+                  <div>Name</div>
+                  <div>Timing</div>
+                  <div>Amount</div>
+                  <div>Notes</div>
+                  <div></div>
+                </div>
+              )}
+              {otherIngredients.map((ing, i) => (
+                <div
+                  key={ing.id}
+                  className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,.7fr)_minmax(0,.6fr)_minmax(0,1fr)_min-content] gap-2"
+                >
+                  {/* Name (depends on category presets) */}
+                  <label className="flex flex-col">
+                    <div className="text-xs text-muted mb-1 sm:hidden">
+                      Name
+                    </div>
+                    {ing.customNameLocked ? (
+                      <input
+                        className="rounded-md border px-3 py-2"
+                        placeholder="Custom name"
+                        value={ing.name}
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          setOtherIngredients((xs) => {
+                            const c = [...xs];
+                            c[i] = { ...ing, name };
+                            return c;
+                          });
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <select
+                          className="w-full rounded-md border px-2 py-2.5"
+                          value={(() => {
+                            if (
+                              ing.customNameSelected &&
+                              !ing.customNameLocked
+                            ) {
+                              return "__custom__";
+                            }
+                            const allNames =
+                              Object.values(presetByCategory).flat();
+                            if (!ing.name) return "";
+                            return allNames.includes(ing.name)
+                              ? ing.name
+                              : "__custom__";
+                          })()}
+                          onChange={(e) => {
+                            const sel = e.target.value;
+                            setOtherIngredients((xs) => {
+                              const c = [...xs];
+                              if (sel === "__custom__") {
+                                c[i] = {
+                                  ...ing,
+                                  name: "",
+                                  category: "other",
+                                  customNameSelected: true,
+                                  customNameLocked: false,
+                                };
+                              } else {
+                                // find category by selected name
+                                let cat: OtherIngredientCategory = "other";
+                                for (const [k, arr] of Object.entries(
+                                  presetByCategory
+                                )) {
+                                  if (arr.includes(sel)) {
+                                    cat = k as OtherIngredientCategory;
+                                    break;
+                                  }
+                                }
+                                c[i] = {
+                                  ...ing,
+                                  name: sel,
+                                  category: cat,
+                                  customNameSelected: false,
+                                };
+                              }
+                              return c;
+                            });
+                          }}
+                        >
+                          <option value="" disabled>
+                            Select...
+                          </option>
+                          {Object.entries(presetByCategory).map(
+                            ([cat, items]) => (
+                              <optgroup
+                                key={cat}
+                                label={cat
+                                  .replace("-", " ")
+                                  .replace(/\b\w/g, (m) => m.toUpperCase())}
+                              >
+                                {items.map((n) => (
+                                  <option key={n} value={n}>
+                                    {n}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )
+                          )}
+                          <option value="__custom__">
+                            Custom (type below)
+                          </option>
+                        </select>
+                        {(ing.customNameSelected && !ing.customNameLocked) ||
+                        (() => {
+                          const allNames =
+                            Object.values(presetByCategory).flat();
+                          return (
+                            ing.name !== "" && !allNames.includes(ing.name)
+                          );
+                        })() ? (
+                          <input
+                            className="mt-2 rounded-md border px-3 py-2"
+                            placeholder="Custom name"
+                            value={ing.name}
+                            onChange={(e) => {
+                              const name = e.target.value;
+                              setOtherIngredients((xs) => {
+                                const c = [...xs];
+                                c[i] = {
+                                  ...ing,
+                                  name,
+                                  customNameSelected: true,
+                                };
+                                return c;
+                              });
+                            }}
+                            onBlur={(e) => {
+                              const value = e.target.value.trim();
+                              if (value) {
+                                setOtherIngredients((xs) => {
+                                  const c = [...xs];
+                                  c[i] = {
+                                    ...ing,
+                                    name: value,
+                                    customNameLocked: true,
+                                    customNameSelected: false,
+                                  };
+                                  return c;
+                                });
+                              }
+                            }}
+                          />
+                        ) : null}
+                      </>
+                    )}
+                  </label>
+
+                  {/* Category column removed: category is implicit via selection grouping */}
+
+                  {/* Timing */}
+                  <label className="flex flex-col">
+                    <div className="text-xs text-muted mb-1 sm:hidden">
+                      Timing
+                    </div>
+                    <select
+                      className="w-full rounded-md border px-2 py-2.5"
+                      value={ing.timing}
+                      onChange={(e) => {
+                        const timing = e.target
+                          .value as OtherIngredient["timing"];
+                        setOtherIngredients((xs) => {
+                          const c = [...xs];
+                          c[i] = { ...ing, timing };
+                          return c;
+                        });
+                      }}
+                    >
+                      {timings.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {/* Amount + Unit */}
+                  <div className="grid grid-cols-[minmax(0,1fr)_max-content] gap-3 items-stretch">
+                    <label className="flex flex-col">
+                      <div className="text-xs text-muted mb-1 sm:hidden">
+                        Amount
+                      </div>
+                      <InputWithSuffix
+                        value={ing.amount}
+                        onChange={(n) => {
+                          const isDiscrete = [
+                            "tablet",
+                            "packet",
+                            "capsule",
+                          ].includes(ing.unit);
+                          const nextVal = isDiscrete ? Math.round(n) : n;
+                          setOtherIngredients((xs) => {
+                            const c = [...xs];
+                            c[i] = { ...ing, amount: nextVal };
+                            return c;
+                          });
+                        }}
+                        step={
+                          ["tablet", "packet", "capsule"].includes(ing.unit)
+                            ? 1
+                            : 0.1
+                        }
+                        suffix=""
+                        suffixClassName="right-3 text-[10px]"
+                        placeholder="0.0"
+                      />
+                    </label>
+                    <label className="flex flex-col">
+                      <div className="text-xs text-muted mb-1 sm:hidden">
+                        Unit
+                      </div>
+                      <AutoWidthUnitSelect
+                        className="rounded-md border px-2 py-2.5 w-auto text-center shrink-0"
+                        value={ing.unit}
+                        options={units}
+                        onChange={(unit) => {
+                          setOtherIngredients((xs) => {
+                            const c = [...xs];
+                            const isDiscrete = [
+                              "tablet",
+                              "packet",
+                              "capsule",
+                            ].includes(unit);
+                            const adjustedAmount = isDiscrete
+                              ? Math.round(ing.amount || 0)
+                              : ing.amount || 0;
+                            c[i] = { ...ing, unit, amount: adjustedAmount };
+                            return c;
+                          });
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Notes */}
+                  <label className="flex flex-col">
+                    <div className="text-xs text-muted mb-1 sm:hidden">
+                      Notes
+                    </div>
+                    <input
+                      className="w-full rounded-md border px-3 py-2"
+                      value={ing.notes ?? ""}
+                      placeholder="Optional notes"
+                      onChange={(e) => {
+                        const notes = e.target.value;
+                        setOtherIngredients((xs) => {
+                          const c = [...xs];
+                          c[i] = { ...ing, notes };
+                          return c;
+                        });
+                      }}
+                    />
+                  </label>
+
+                  {/* Remove */}
+                  <div className="flex justify-end items-center">
+                    <button
+                      className="p-1 text-neutral-400 hover:text-red-500 transition w-fit"
+                      onClick={() =>
+                        setOtherIngredients((xs) =>
+                          xs.filter((x) => x.id !== ing.id)
+                        )
+                      }
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-6 h-6"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button
+                className="block sm:hidden w-full btn-neon"
+                onClick={() =>
+                  setOtherIngredients((xs) => [
+                    ...xs,
+                    {
+                      id: crypto.randomUUID(),
+                      name: "",
+                      category: "other",
+                      amount: 0,
+                      unit: "g",
+                      timing: "boil",
+                      customNameLocked: false,
+                      customNameSelected: false,
+                    },
+                  ])
+                }
+              >
+                + Add Ingredient
+              </button>
+            </>
+          );
+        })()}
+      </section>
+
       <section className="section-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="font-semibold text_PRIMARY-strong">Yeast</div>
@@ -1731,6 +2205,14 @@ export default function RecipeBuilder() {
         <div className="pt-1">
           <YeastPitchCalc og={ogUsed} volumeL={batchVolumeL} />
         </div>
+      </section>
+
+      <section className="section-soft space-y-3">
+        <FermentationPlan
+          steps={fermentationSteps}
+          onChange={setFermentationSteps}
+          showDryHopColumn={hasDryHopAdditions}
+        />
       </section>
 
       <section className="section-soft space-y-3">
