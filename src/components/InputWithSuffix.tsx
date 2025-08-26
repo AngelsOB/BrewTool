@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
+
 type Props = {
-  value: number | undefined;
+  value: number | undefined | null;
   onChange: (next: number) => void;
   suffix: string; // e.g. " g", " %", "°C", " min", " days"
   step?: number;
@@ -8,6 +10,7 @@ type Props = {
   placeholder?: string;
   className?: string;
   suffixClassName?: string; // optional override for position/size
+  readOnly?: boolean;
 };
 
 export default function InputWithSuffix({
@@ -20,7 +23,16 @@ export default function InputWithSuffix({
   placeholder,
   className,
   suffixClassName,
+  readOnly,
 }: Props) {
+  const toText = (v: number | undefined | null): string =>
+    Number.isFinite(v as number) ? String(v) : "";
+  const [text, setText] = useState<string>(toText(value));
+
+  useEffect(() => {
+    setText(toText(value));
+  }, [value]);
+
   return (
     <div className={`relative ${className ?? ""}`}>
       <input
@@ -30,10 +42,27 @@ export default function InputWithSuffix({
         min={min}
         max={max}
         placeholder={placeholder}
-        value={Number.isFinite(value as number) ? (value as number) : 0}
+        value={text}
+        readOnly={readOnly}
         onChange={(e) => {
+          const v = e.currentTarget.value;
+          setText(v);
           const n = e.currentTarget.valueAsNumber;
-          onChange(Number.isFinite(n) ? n : 0);
+          if (Number.isFinite(n)) onChange(n);
+        }}
+        onBlur={(e) => {
+          // Normalize on blur: if empty, keep empty display but do not force zero
+          // Parent state remains last valid number until a new valid value is entered
+          const v = e.currentTarget.value;
+          if (v === "") {
+            // keep as empty; parent remains unchanged
+            return;
+          }
+          const n = e.currentTarget.valueAsNumber;
+          if (Number.isFinite(n)) {
+            // ensure text normalized
+            setText(String(n));
+          }
         }}
       />
       <span
