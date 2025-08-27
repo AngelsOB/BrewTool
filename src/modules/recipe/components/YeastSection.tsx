@@ -7,11 +7,34 @@ export default function YeastSection({
   onChangeYeast,
   ogUsed,
   batchVolumeL,
+  onStarterChange,
 }: {
   yeast: YeastItem;
   onChangeYeast: (next: YeastItem) => void;
   ogUsed: number;
   batchVolumeL: number;
+  onStarterChange?: (state: {
+    yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
+    packs: number;
+    mfgDate: string;
+    slurryLiters: number;
+    slurryBillionPerMl: number;
+    steps: Array<{
+      id: string;
+      liters: number;
+      gravity: number;
+      model:
+        | { kind: "white"; aeration: "none" | "shaking" }
+        | { kind: "braukaiser" };
+      dmeGrams: number;
+      endBillion: number;
+    }>;
+    requiredCellsB: number;
+    cellsAvailableB: number;
+    finalEndB: number;
+    totalStarterL: number;
+    totalDmeG: number;
+  }) => void;
 }) {
   return (
     <section className="section-soft space-y-3">
@@ -49,7 +72,11 @@ export default function YeastSection({
         </div>
       )}
       <div className="pt-1">
-        <YeastPitchCalc og={ogUsed} volumeL={batchVolumeL} />
+        <YeastPitchCalc
+          og={ogUsed}
+          volumeL={batchVolumeL}
+          onChange={onStarterChange}
+        />
       </div>
     </section>
   );

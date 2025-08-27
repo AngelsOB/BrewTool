@@ -9,6 +9,7 @@ export type BjcpStyleSpec = {
   ibu?: RangeTuple; // bitterness units
   srm?: RangeTuple; // SRM color
   ebc?: RangeTuple; // if provided, otherwise derived from SRM (ebc ≈ srm * 1.97)
+  co2?: RangeTuple; // volumes of CO2
 };
 
 // Seed specs. Source: BJCP 2021 Beer Style Guidelines PDF.
@@ -1021,6 +1022,209 @@ const SEEDED_SPECS: Record<string, BjcpStyleSpec> = {
   }, // New Zealand Pilsner
 };
 
+// CO2 volumes to add to specs
+const CO2_SPECS: Record<string, { co2: RangeTuple }> = {
+  // 1. Standard American Beer
+  "1A": { co2: [2.6, 2.7] },
+  "1B": { co2: [2.5, 2.7] },
+  "1C": { co2: [2.6, 2.7] },
+  "1D": { co2: [2.5, 3.0] },
+
+  // 2. International Lager
+  "2A": { co2: [2.5, 2.7] },
+  "2B": { co2: [2.5, 2.6] },
+  "2C": { co2: [2.4, 2.6] },
+
+  // 3. Czech Lager
+  "3A": { co2: [2.3, 2.6] },
+  "3B": { co2: [2.3, 2.6] },
+  "3C": { co2: [2.3, 2.6] },
+  "3D": { co2: [2.3, 2.6] },
+
+  // 4. Pale Malty European Lager
+  "4A": { co2: [2.3, 2.5] },
+  "4B": { co2: [2.5, 2.7] },
+  "4C": { co2: [2.2, 2.5] },
+
+  // 5. Pale Bitter European Beer
+  "5A": { co2: [2.5, 2.8] },
+  "5B": { co2: [2.4, 2.6] },
+  "5C": { co2: [2.4, 2.6] },
+  "5D": { co2: [2.5, 2.7] },
+
+  // 6. Amber Malty European Lager
+  "6A": { co2: [2.3, 2.5] },
+  "6B": { co2: [2.3, 2.5] },
+  "6C": { co2: [2.2, 2.4] },
+
+  // 7. Amber Bitter European Beer
+  "7A": { co2: [2.3, 2.6] },
+  "7B": { co2: [2.4, 2.6] },
+
+  // 8. Dark European Lager
+  "8A": { co2: [2.2, 2.5] },
+  "8B": { co2: [2.3, 2.6] },
+
+  // 9. Strong European Beer
+  "9A": { co2: [2.2, 2.4] },
+  "9B": { co2: [2.0, 2.4] },
+  "9C": { co2: [2.2, 2.5] },
+
+  // 10. German Wheat Beer
+  "10A": { co2: [3.3, 4.5] },
+  "10B": { co2: [3.3, 4.5] },
+  "10C": { co2: [3.0, 4.0] },
+
+  // 11. British Bitter
+  "11A": { co2: [1.5, 2.0] },
+  "11B": { co2: [1.5, 2.0] },
+  "11C": { co2: [1.5, 2.2] },
+
+  // 12. Pale Commonwealth Beer
+  "12A": { co2: [2.2, 2.5] },
+  "12B": { co2: [2.6, 3.0] },
+  "12C": { co2: [2.0, 2.3] },
+
+  // 13. Brown British Beer
+  "13A": { co2: [1.5, 2.0] },
+  "13B": { co2: [1.8, 2.2] },
+  "13C": { co2: [1.7, 2.3] },
+
+  // 14. Scottish Ale
+  "14A": { co2: [1.5, 2.0] },
+  "14B": { co2: [1.5, 2.0] },
+  "14C": { co2: [1.5, 2.2] },
+
+  // 15. Irish Beer
+  "15A": { co2: [2.0, 2.4] },
+  "15B": { co2: [1.7, 2.3] },
+  "15C": { co2: [1.8, 2.3] },
+
+  // 16. Dark British Beer
+  "16A": { co2: [1.8, 2.3] },
+  "16B": { co2: [1.8, 2.3] },
+  "16C": { co2: [2.2, 2.5] },
+  "16D": { co2: [2.0, 2.4] },
+
+  // 17. Strong British Ale
+  "17A": { co2: [1.5, 2.2] },
+  "17B": { co2: [1.5, 2.2] },
+  "17C": { co2: [1.5, 2.0] },
+  "17D": { co2: [1.5, 2.2] },
+
+  // 18. Pale American Ale
+  "18A": { co2: [2.4, 2.7] },
+  "18B": { co2: [2.3, 2.7] },
+
+  // 19. Amber and Brown American Beer
+  "19A": { co2: [2.3, 2.6] },
+  "19B": { co2: [2.4, 2.7] },
+  "19C": { co2: [2.3, 2.6] },
+
+  // 20. American Porter and Stout
+  "20A": { co2: [2.2, 2.5] },
+  "20B": { co2: [2.3, 2.6] },
+  "20C": { co2: [1.8, 2.4] },
+
+  // 21. IPA
+  "21A": { co2: [2.2, 2.7] },
+  "21B": { co2: [2.2, 2.7] },
+  "21B-Belgian IPA": { co2: [2.4, 3.0] },
+  "21B-Black IPA": { co2: [2.2, 2.6] },
+  "21B-Brown IPA": { co2: [2.2, 2.6] },
+  "21B-Red IPA": { co2: [2.2, 2.6] },
+  "21B-Rye IPA": { co2: [2.2, 2.7] },
+  "21B-White IPA": { co2: [2.4, 2.8] },
+  "21B-Brut IPA": { co2: [3.5, 4.5] },
+  "21C": { co2: [2.2, 2.5] },
+
+  // 22. Strong American Ale
+  "22A": { co2: [2.2, 2.6] },
+  "22B": { co2: [2.2, 2.5] },
+  "22C": { co2: [1.8, 2.4] },
+  "22D": { co2: [2.3, 2.6] },
+
+  // 23. European Sour Ale
+  "23A": { co2: [3.0, 3.5] },
+  "23B": { co2: [2.2, 2.5] },
+  "23C": { co2: [2.0, 2.5] },
+  "23D": { co2: [2.4, 2.8] },
+  "23E": { co2: [3.0, 4.5] },
+  "23F": { co2: [3.0, 4.5] },
+  "23G": { co2: [2.8, 3.2] },
+
+  // 24. Belgian Ale
+  "24A": { co2: [2.5, 3.0] },
+  "24B": { co2: [2.0, 2.4] },
+  "24C": { co2: [2.3, 2.6] },
+
+  // 25. Strong Belgian Ale
+  "25A": { co2: [2.1, 2.6] },
+  "25B": { co2: [2.5, 3.5] },
+  "25C": { co2: [2.4, 3.0] },
+
+  // 26. Monastic Ale
+  "26A": { co2: [2.2, 2.8] },
+  "26B": { co2: [2.0, 2.4] },
+  "26C": { co2: [2.4, 3.0] },
+  "26D": { co2: [2.0, 2.4] },
+
+  // 27. Historical Beer
+  "27": { co2: [2.0, 3.0] },
+  "27-Kellerbier": { co2: [2.2, 2.5] },
+  "27-Kentucky Common": { co2: [2.4, 2.6] },
+  "27-Lichtenhainer": { co2: [2.5, 2.8] },
+  "27-London Brown Ale": { co2: [1.5, 2.0] },
+  "27-Piwo Grodziskie": { co2: [2.8, 3.2] },
+  "27-Pre-Prohibition Lager": { co2: [2.5, 2.7] },
+  "27-Pre-Prohibition Porter": { co2: [2.2, 2.5] },
+  "27-Roggenbier": { co2: [3.3, 4.0] },
+  "27-Sahti": { co2: [1.5, 2.2] },
+
+  // 28. American Wild Ale
+  "28A": { co2: [2.5, 3.0] },
+  "28B": { co2: [2.5, 3.0] },
+  "28C": { co2: [2.5, 3.0] },
+  "28D": { co2: [3.0, 3.5] },
+  "28-Catharina Sour": { co2: [3.0, 3.5] },
+
+  // 29. Fruit Beer
+  "29A": { co2: [2.3, 2.8] },
+  "29B": { co2: [2.3, 2.8] },
+  "29C": { co2: [2.3, 2.8] },
+  "29D": { co2: [2.5, 3.0] },
+
+  // 30. Spiced Beer
+  "30A": { co2: [2.3, 2.7] },
+  "30B": { co2: [2.3, 2.7] },
+  "30C": { co2: [2.2, 2.6] },
+  "30D": { co2: [2.3, 2.7] },
+
+  // 31. Alternative Fermentables Beer
+  "31A": { co2: [2.3, 2.7] },
+  "31B": { co2: [2.3, 2.7] },
+
+  // 32. Smoked Beer
+  "32A": { co2: [2.3, 2.7] },
+  "32B": { co2: [2.3, 2.7] },
+
+  // 33. Wood Beer
+  "33A": { co2: [2.0, 2.5] },
+  "33B": { co2: [2.0, 2.5] },
+
+  // 34. Specialty Beer
+  "34A": { co2: [2.3, 2.7] },
+  "34B": { co2: [2.3, 2.7] },
+  "34C": { co2: [2.3, 2.7] },
+
+  // Local Styles (Appendix B)
+  X1: { co2: [2.5, 2.7] },
+  X2: { co2: [2.3, 2.7] },
+  X3: { co2: [2.5, 3.0] },
+  X4: { co2: [3.0, 3.5] },
+  X5: { co2: [2.4, 2.7] },
+};
+
 // Build a full spec map with defaults for every style present in bjcp.ts
 const ALL_CODES: string[] = getBjcpCategories().flatMap((c) =>
   c.styles.map((s) => s.code)
@@ -1029,6 +1233,10 @@ const DEFAULT_EMPTY: BjcpStyleSpec = {};
 const SPEC_MAP: Record<string, BjcpStyleSpec> = {};
 for (const code of ALL_CODES) {
   SPEC_MAP[code] = SEEDED_SPECS[code] ?? DEFAULT_EMPTY;
+  const co2 = (CO2_SPECS as Record<string, { co2: RangeTuple } | undefined>)[
+    code
+  ]?.co2;
+  if (co2) SPEC_MAP[code] = { ...SPEC_MAP[code], co2 };
 }
 
 function hasAnyRange(spec: BjcpStyleSpec | undefined): boolean {

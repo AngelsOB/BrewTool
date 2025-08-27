@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import AutoWidthUnitSelect from "../../../components/AutoWidthUnitSelect";
 import InputWithSuffix from "../../../components/InputWithSuffix";
 import type {
@@ -40,6 +41,18 @@ export default function OtherIngredients({
     "kegging",
     "bottling",
   ];
+
+  // Autofocus for custom name input when selecting Custom
+  const customNameRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const focusCustomName = (id: string) => {
+    window.setTimeout(() => {
+      const el = customNameRefs.current[id];
+      if (el) {
+        el.focus();
+        el.select?.();
+      }
+    }, 0);
+  };
 
   return (
     <section
@@ -102,6 +115,7 @@ export default function OtherIngredients({
                         customNameSelected: true,
                         customNameLocked: false,
                       });
+                      focusCustomName(ing.id);
                     } else {
                       let cat: OtherIngredientCategory = "other";
                       for (const [k, arr] of Object.entries(presetByCategory)) {
@@ -147,6 +161,9 @@ export default function OtherIngredients({
                     className="mt-2 rounded-md border px-3 py-2"
                     placeholder="Custom name"
                     value={ing.name}
+                    ref={(el) => {
+                      customNameRefs.current[ing.id] = el;
+                    }}
                     onChange={(e) =>
                       onUpdate(i, {
                         ...ing,

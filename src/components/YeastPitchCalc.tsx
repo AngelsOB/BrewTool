@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Collapsible from "./Collapsible";
 
 type YeastType = "liquid-100" | "liquid-200" | "dry" | "slurry";
@@ -62,9 +62,30 @@ function braukaiserGrowth(
 export default function YeastPitchCalc({
   og,
   volumeL,
+  onChange,
 }: {
   og: number;
   volumeL: number;
+  onChange?: (state: {
+    yeastType: YeastType;
+    packs: number;
+    mfgDate: string;
+    slurryLiters: number;
+    slurryBillionPerMl: number;
+    steps: Array<{
+      id: string;
+      liters: number;
+      gravity: number;
+      model: GrowthModel;
+      dmeGrams: number;
+      endBillion: number;
+    }>;
+    requiredCellsB: number;
+    cellsAvailableB: number;
+    finalEndB: number;
+    totalStarterL: number;
+    totalDmeG: number;
+  }) => void;
 }) {
   const [open, setOpen] = useState<boolean>(false);
 
@@ -207,13 +228,53 @@ export default function YeastPitchCalc({
   }, [
     open,
     steps,
-    totalDmeG,
     totalStarterL,
     yeastType,
     packs,
     slurryLiters,
     slurryBillionPerMl,
     mfgDate,
+  ]);
+
+  // Emit snapshot for parent consumers of starter state
+  useEffect(() => {
+    if (!onChange) return;
+    const combined = steps.map((s, i) => ({
+      id: s.id,
+      liters: s.liters,
+      gravity: s.gravity,
+      model: s.model,
+      dmeGrams:
+        stepResults[i]?.dmeGrams ?? dmeGramsForGravity(s.liters, s.gravity, 45),
+      endBillion: stepResults[i]?.endBillion ?? Number.NaN,
+    }));
+    onChange({
+      yeastType,
+      packs,
+      mfgDate,
+      slurryLiters,
+      slurryBillionPerMl,
+      steps: combined,
+      requiredCellsB,
+      cellsAvailableB,
+      finalEndB,
+      totalStarterL,
+      totalDmeG,
+    });
+  }, [
+    onChange,
+    yeastType,
+    packs,
+    mfgDate,
+    slurryLiters,
+    slurryBillionPerMl,
+    steps,
+    stepResults,
+    requiredCellsB,
+    cellsAvailableB,
+    finalEndB,
+    totalStarterL,
+    totalDmeG,
   ]);
 
   return (

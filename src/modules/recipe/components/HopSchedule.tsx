@@ -1,9 +1,10 @@
+import { useRef, useState } from "react";
 import InputWithSuffix from "../../../components/InputWithSuffix";
 import InlineEditableNumber from "../../../components/InlineEditableNumber";
 import Collapsible from "../../../components/Collapsible";
 import FlavorGraphs from "../../../components/FlavorGraphs";
 import type { HopItem, HopTimingType } from "../../../hooks/useRecipeStore";
-import { getHopPresets } from "../../../utils/presets";
+import { addCustomHop, getHopPresets } from "../../../utils/presets";
 import { ibuSingleAddition } from "../../../calculators/ibu";
 
 export function HopSchedule({
@@ -14,7 +15,6 @@ export function HopSchedule({
   onAdd,
   onUpdate,
   onRemove,
-  onAddCustomHopRequested,
   showVisualizer,
   onToggleVisualizer,
   hopFlavorSeries,
@@ -27,12 +27,24 @@ export function HopSchedule({
   onAdd: () => void;
   onUpdate: (index: number, next: HopItem) => void;
   onRemove: (id: string) => void;
-  onAddCustomHopRequested: () => void;
   showVisualizer: boolean;
   onToggleVisualizer: () => void;
   hopFlavorSeries: { name: string; flavor: NonNullable<HopItem["flavor"]> }[];
   estimatedTotalFlavor: NonNullable<HopItem["flavor"]>;
 }) {
+  const [savedCustomHop, setSavedCustomHop] = useState<
+    Record<string, "idle" | "saved" | "done">
+  >({});
+  const customHopNameRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const focusCustomHopName = (id: string) => {
+    window.setTimeout(() => {
+      const el = customHopNameRefs.current[id];
+      if (el) {
+        el.focus();
+        el.select?.();
+      }
+    }, 0);
+  };
   return (
     <section className="section-soft space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -84,37 +96,175 @@ export function HopSchedule({
           >
             <label className="flex flex-col sm:order-1">
               <div className="text-xs text-muted mb-1 sm:hidden">Hop</div>
-              <select
-                className="w-full rounded-md border px-2 py-2.5"
-                onChange={(e) => {
-                  if (e.target.value === "__add_custom__") {
-                    onAddCustomHopRequested();
-                  } else {
+              {h.customNameLocked ? (
+                <>
+                  <input
+                    className="w-full rounded-md border px-3 py-2"
+                    placeholder="Custom hop name"
+                    value={h.name}
+                    onChange={(e) =>
+                      onUpdate(i, { ...h, name: e.target.value })
+                    }
+                  />
+                  <div className="mt-1">
+                    {savedCustomHop[h.id] === "saved" ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-600">
+                        <span className="relative inline-flex">
+                          <span className="absolute inline-flex h-3 w-3 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="relative w-3 h-3"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.28a.75.75 0 10-1.22-.9l-3.236 4.386-1.49-1.49a.75.75 0 10-1.06 1.06l2.1 2.1a.75.75 0 001.14-.094l3.766-5.062z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </span>
+                        <span className="text-[11px]">Saved</span>
+                      </span>
+                    ) : null}
+                    {savedCustomHop[h.id] !== "done" &&
+                      savedCustomHop[h.id] !== "saved" && (
+                        <button
+                          type="button"
+                          title="Save preset"
+                          className="rounded border px-2 py-1 text-[10px] text-neutral-700 hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
+                          onClick={() => {
+                            const name = (h.name || "").trim();
+                            if (!name) return;
+                            addCustomHop({
+                              name,
+                              alphaAcidPercent: Number(h.alphaAcidPercent) || 0,
+                              category: h.category,
+                            });
+                            setSavedCustomHop((prev) => ({
+                              ...prev,
+                              [h.id]: "saved",
+                            }));
+                            onUpdate(i, {
+                              ...h,
+                              name,
+                              customNameLocked: false,
+                              customNameSelected: false,
+                            });
+                            window.setTimeout(() => {
+                              setSavedCustomHop((prev) => ({
+                                ...prev,
+                                [h.id]: "done",
+                              }));
+                            }, 1000);
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-3 h-3"
+                          >
+                            <path d="M4.5 3.75A2.25 2.25 0 016.75 1.5h8.69a2.25 2.25 0 011.59.66l3.81 3.81a2.25 2.25 0 01.66 1.59v11.34a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 18.9V3.75z" />
+                            <path
+                              fillRule="evenodd"
+                              d="M7.5 8.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM8.47 12.22a.75.75 0 011.06 0l1.72 1.72 4.22-4.22a.75.75 0 111.06 1.06l-4.75 4.75a.75.75 0 01-1.06 0l-2.25-2.25a.75.75 0 010-1.06z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span>Save</span>
+                        </button>
+                      )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <select
+                    className="w-full rounded-md border px-2 py-2.5"
+                    onChange={(e) => {
+                      if (e.target.value === "__add_custom__") {
+                        onUpdate(i, {
+                          ...h,
+                          name: "",
+                          customNameSelected: true,
+                          customNameLocked: false,
+                          category: undefined,
+                          flavor: undefined,
+                        });
+                        focusCustomHopName(h.id);
+                      } else {
+                        const preset = getHopPresets().find(
+                          (p) => p.name === e.target.value
+                        );
+                        if (!preset) return;
+                        onUpdate(i, {
+                          ...h,
+                          name: preset.name,
+                          alphaAcidPercent: preset.alphaAcidPercent,
+                          category: preset.category,
+                          flavor: preset.flavor,
+                          customNameSelected: false,
+                          customNameLocked: false,
+                        } as HopItem);
+                      }
+                    }}
+                    value={(() => {
+                      if (h.customNameSelected && !h.customNameLocked) {
+                        return "__add_custom__";
+                      }
+                      const preset = getHopPresets().find(
+                        (p) => p.name === h.name
+                      );
+                      if (!h.name) return "";
+                      return preset ? h.name : "__add_custom__";
+                    })()}
+                  >
+                    <option value="" disabled>
+                      Hops...
+                    </option>
+                    {getHopPresets().map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                    <option value="__add_custom__">Custom (type below)</option>
+                  </select>
+                  {(h.customNameSelected && !h.customNameLocked) ||
+                  (() => {
                     const preset = getHopPresets().find(
-                      (p) => p.name === e.target.value
+                      (p) => p.name === h.name
                     );
-                    if (!preset) return;
-                    onUpdate(i, {
-                      ...h,
-                      name: preset.name,
-                      alphaAcidPercent: preset.alphaAcidPercent,
-                      category: preset.category,
-                      flavor: preset.flavor,
-                    } as HopItem);
-                  }
-                }}
-                defaultValue={h.name}
-              >
-                <option value="" disabled>
-                  Hops...
-                </option>
-                {getHopPresets().map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {p.name}
-                  </option>
-                ))}
-                <option value="__add_custom__">+ Add Custom Hop</option>
-              </select>
+                    return h.name !== "" && !preset;
+                  })() ? (
+                    <input
+                      className="mt-2 w-full rounded-md border px-3 py-2"
+                      placeholder="Custom hop name"
+                      value={h.name}
+                      ref={(el) => {
+                        customHopNameRefs.current[h.id] = el;
+                      }}
+                      onChange={(e) =>
+                        onUpdate(i, {
+                          ...h,
+                          name: e.target.value,
+                          customNameSelected: true,
+                        })
+                      }
+                      onBlur={(e) => {
+                        const value = e.target.value.trim();
+                        if (value) {
+                          onUpdate(i, {
+                            ...h,
+                            name: value,
+                            customNameLocked: true,
+                            customNameSelected: false,
+                          });
+                        }
+                      }}
+                    />
+                  ) : null}
+                </>
+              )}
               <div className="mt-1 text-[11px] text-white/50 translate-x-2">
                 {perHopIbu.toFixed(1)} IBU • {gramsPerLiter.toFixed(2)} g/L
               </div>

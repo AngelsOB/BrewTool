@@ -11,6 +11,9 @@ export type GrainItem = {
   potentialGu: number; // GU/PPG at 100% conversion (as-is)
   type: "grain" | "adjunct_mashable" | "extract" | "sugar";
   fermentability?: number; // 0..1 optional override
+  // Custom name flow mirrors OtherIngredient custom UX
+  customNameLocked?: boolean;
+  customNameSelected?: boolean;
 };
 
 export type HopTimingType =
@@ -29,6 +32,9 @@ export type HopItem = {
   category?: string; // Optional category, e.g., "US Hops", "Noble Hops", "New Zealand Hops"
   type: HopTimingType;
   flavor?: HopFlavorProfile; // optional sensory profile copied from preset
+  // Custom name flow mirrors OtherIngredient custom UX
+  customNameLocked?: boolean;
+  customNameSelected?: boolean;
   // Extra timing metadata per addition type
   // Dry hop specifics
   dryHopStage?: "primary" | "post-fermentation" | "keg";
@@ -99,6 +105,7 @@ export type Recipe = {
   // Optional BJCP style selection
   bjcpStyleCode?: string; // e.g., "21A", "X5"
   batchVolumeL: number;
+  efficiencyPct?: number;
   targetOG?: number;
   targetFG?: number;
   grains: GrainItem[];
@@ -114,6 +121,7 @@ export type Recipe = {
     spargeWaterL?: number;
     preBoilVolumeL?: number;
   };
+  brewMethod?: "three-vessel" | "biab-full" | "biab-sparge";
 };
 
 type State = {

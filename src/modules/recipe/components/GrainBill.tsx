@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import InputWithSuffix from "../../../components/InputWithSuffix";
 import type { GrainItem } from "../../../hooks/useRecipeStore";
-import { getGrainPresets } from "../../../utils/presets";
+import { addCustomGrain, getGrainPresets } from "../../../utils/presets";
 
 export function GrainBill({
   grains,
@@ -32,6 +32,22 @@ export function GrainBill({
   );
   // Per-row percent values (by weight). Keyed by GrainItem.id
   const [percentById, setPercentById] = useState<Record<string, number>>({});
+  // Track per-row saved state for custom preset save UI
+  const [savedCustomGrain, setSavedCustomGrain] = useState<
+    Record<string, "idle" | "saved" | "done">
+  >({});
+  // Refs to custom name inputs per row for autofocus on select
+  const customNameRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const focusCustomName = (id: string) => {
+    // defer to next tick to ensure input is mounted
+    window.setTimeout(() => {
+      const el = customNameRefs.current[id];
+      if (el) {
+        el.focus();
+        el.select?.();
+      }
+    }, 0);
+  };
 
   // When switching to percent mode, seed percents from current weights
   useEffect(() => {
@@ -166,38 +182,194 @@ export function GrainBill({
           <label className="flex flex-col">
             <div className="text-xs text-muted mb-1 sm:hidden">Grain</div>
             <div className="relative">
-              <select
-                className="w-full rounded-md border py-2.5 pl-2 pr-12"
-                onChange={(e) => {
-                  if (e.target.value === "__add_custom__") {
-                    return;
-                  }
-                  const preset = getGrainPresets().find(
-                    (p) => p.name === e.target.value
-                  );
-                  if (!preset) return;
-                  onUpdate(i, {
-                    ...g,
-                    name: preset.name,
-                    colorLovibond: (preset as { colorLovibond: number })
-                      .colorLovibond,
-                    potentialGu: (preset as { potentialGu: number })
-                      .potentialGu,
-                    type: "grain",
-                  } as GrainItem);
-                }}
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Grains...
-                </option>
-                {getGrainPresets().map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {p.name}
-                  </option>
-                ))}
-                <option value="__add_custom__">+ Add Custom Grain</option>
-              </select>
+              {g.customNameLocked ? (
+                <>
+                  <input
+                    className="w-full rounded-md border px-3 py-2"
+                    placeholder="Custom grain name"
+                    value={g.name}
+                    onChange={(e) =>
+                      onUpdate(i, { ...g, name: e.target.value })
+                    }
+                  />
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <InputWithSuffix
+                      value={g.colorLovibond}
+                      onChange={(n) => onUpdate(i, { ...g, colorLovibond: n })}
+                      suffix=" °L"
+                      suffixClassName="right-2 text-[10px]"
+                      step={1}
+                      placeholder="10"
+                    />
+                    <InputWithSuffix
+                      value={g.potentialGu}
+                      onChange={(n) => onUpdate(i, { ...g, potentialGu: n })}
+                      suffix=" GU"
+                      suffixClassName="right-2 text-[10px]"
+                      step={0.1}
+                      placeholder="34.0"
+                    />
+                  </div>
+                  <div className="mt-1">
+                    {savedCustomGrain[g.id] === "saved" ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-600">
+                        <span className="relative inline-flex">
+                          <span className="absolute inline-flex h-3 w-3 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="relative w-3 h-3"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.28a.75.75 0 10-1.22-.9l-3.236 4.386-1.49-1.49a.75.75 0 10-1.06 1.06l2.1 2.1a.75.75 0 001.14-.094l3.766-5.062z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </span>
+                        <span className="text-[11px]">Saved</span>
+                      </span>
+                    ) : null}
+                    {savedCustomGrain[g.id] !== "done" &&
+                      savedCustomGrain[g.id] !== "saved" && (
+                        <button
+                          type="button"
+                          title="Save preset"
+                          className="rounded border px-2 py-1 text-[10px] text-neutral-700 hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
+                          onClick={() => {
+                            const name = (g.name || "").trim();
+                            if (!name) return;
+                            addCustomGrain({
+                              name,
+                              colorLovibond: Number(g.colorLovibond) || 0,
+                              potentialGu: Number(g.potentialGu) || 0,
+                            });
+                            // Switch to preset selection and hide the save button after 1s
+                            setSavedCustomGrain((prev) => ({
+                              ...prev,
+                              [g.id]: "saved",
+                            }));
+                            onUpdate(i, {
+                              ...g,
+                              name,
+                              customNameLocked: false,
+                              customNameSelected: false,
+                            });
+                            window.setTimeout(() => {
+                              setSavedCustomGrain((prev) => ({
+                                ...prev,
+                                [g.id]: "done",
+                              }));
+                            }, 1000);
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-3 h-3"
+                          >
+                            <path d="M4.5 3.75A2.25 2.25 0 016.75 1.5h8.69a2.25 2.25 0 011.59.66l3.81 3.81a2.25 2.25 0 01.66 1.59v11.34a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 18.9V3.75z" />
+                            <path
+                              fillRule="evenodd"
+                              d="M7.5 8.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM8.47 12.22a.75.75 0 011.06 0l1.72 1.72 4.22-4.22a.75.75 0 111.06 1.06l-4.75 4.75a.75.75 0 01-1.06 0l-2.25-2.25a.75.75 0 010-1.06z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span>Save</span>
+                        </button>
+                      )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <select
+                    className="w-full rounded-md border py-2.5 pl-2 pr-12"
+                    onChange={(e) => {
+                      if (e.target.value === "__add_custom__") {
+                        onUpdate(i, {
+                          ...g,
+                          name: "",
+                          customNameSelected: true,
+                          customNameLocked: false,
+                        });
+                        focusCustomName(g.id);
+                        return;
+                      }
+                      const preset = getGrainPresets().find(
+                        (p) => p.name === e.target.value
+                      );
+                      if (!preset) return;
+                      onUpdate(i, {
+                        ...g,
+                        name: preset.name,
+                        colorLovibond: (preset as { colorLovibond: number })
+                          .colorLovibond,
+                        potentialGu: (preset as { potentialGu: number })
+                          .potentialGu,
+                        type: "grain",
+                        customNameSelected: false,
+                        customNameLocked: false,
+                      } as GrainItem);
+                    }}
+                    value={(() => {
+                      if (g.customNameSelected && !g.customNameLocked) {
+                        return "__add_custom__";
+                      }
+                      const preset = getGrainPresets().find(
+                        (p) => p.name === g.name
+                      );
+                      if (!g.name) return "";
+                      return preset ? g.name : "__add_custom__";
+                    })()}
+                  >
+                    <option value="" disabled>
+                      Grains...
+                    </option>
+                    {getGrainPresets().map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                    <option value="__add_custom__">Custom (type below)</option>
+                  </select>
+                  {(g.customNameSelected && !g.customNameLocked) ||
+                  (() => {
+                    const preset = getGrainPresets().find(
+                      (p) => p.name === g.name
+                    );
+                    return g.name !== "" && !preset;
+                  })() ? (
+                    <input
+                      className="mt-2 w-full rounded-md border px-3 py-2"
+                      placeholder="Custom grain name"
+                      value={g.name}
+                      ref={(el) => {
+                        customNameRefs.current[g.id] = el;
+                      }}
+                      onChange={(e) =>
+                        onUpdate(i, {
+                          ...g,
+                          name: e.target.value,
+                          customNameSelected: true,
+                        })
+                      }
+                      onBlur={(e) => {
+                        const value = e.target.value.trim();
+                        if (value) {
+                          onUpdate(i, {
+                            ...g,
+                            name: value,
+                            customNameLocked: true,
+                            customNameSelected: false,
+                          });
+                        }
+                      }}
+                    />
+                  ) : null}
+                </>
+              )}
               <div
                 className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 text-xs text-neutral-600 px-2 py-0.5"
                 aria-hidden="true"

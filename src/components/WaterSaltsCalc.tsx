@@ -196,11 +196,21 @@ export default function WaterSaltsCalc({
 
   const source: WaterProfile = useMemo(() => {
     if (sourceProfileName === "Custom" && customSource) return customSource;
+    if (sourceProfileName.startsWith("saved:")) {
+      const id = sourceProfileName.slice(6);
+      const found = savedProfiles.find((s) => s.id === id);
+      if (found) return found.profile;
+    }
     return COMMON_WATER_PROFILES[sourceProfileName] ?? COMMON_WATER_PROFILES.RO;
-  }, [sourceProfileName, customSource]);
+  }, [sourceProfileName, customSource, savedProfiles]);
 
   const target: WaterProfile = useMemo(() => {
     if (targetProfileName === "Custom" && customTarget) return customTarget;
+    if (targetProfileName.startsWith("saved:")) {
+      const id = targetProfileName.slice(6);
+      const found = savedProfiles.find((s) => s.id === id);
+      if (found) return found.profile;
+    }
     if (targetProfileName.startsWith("style:")) {
       const styleName = targetProfileName.slice(6);
       const style = STYLE_TARGETS[styleName as keyof typeof STYLE_TARGETS];
@@ -209,7 +219,7 @@ export default function WaterSaltsCalc({
     return (
       COMMON_WATER_PROFILES[targetProfileName] ?? COMMON_WATER_PROFILES.Burton
     );
-  }, [targetProfileName, customTarget]);
+  }, [targetProfileName, customTarget, savedProfiles]);
 
   const styleTips = useMemo(() => {
     if (!targetProfileName.startsWith("style:")) return null;
@@ -756,6 +766,21 @@ function CustomProfileEditor({
   };
   const set = (k: keyof WaterProfile, v: number) =>
     onChange({ ...current, [k]: Math.max(0, v) });
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "success">(
+    "idle"
+  );
+  const onClickSave = async () => {
+    if (!onSave || saveState !== "idle") return;
+    try {
+      setSaveState("saving");
+      // Allow for sync or async onSave
+      await Promise.resolve(onSave());
+      setSaveState("success");
+      window.setTimeout(() => setSaveState("idle"), 1000);
+    } catch {
+      setSaveState("idle");
+    }
+  };
   return (
     <div
       className={
@@ -773,11 +798,56 @@ function CustomProfileEditor({
           onChange={(e) => onNameChange?.(e.target.value)}
         />
         <button
-          className="rounded-md border px-2 py-1 text-xs hover:bg-white/30"
-          onClick={onSave}
+          className={`rounded-md border px-2 py-1 text-xs hover:bg-white/30 inline-flex items-center gap-2 ${
+            saveState === "saving" ? "opacity-70" : ""
+          }`}
+          onClick={onClickSave}
           type="button"
+          disabled={saveState !== "idle"}
         >
-          Save
+          {saveState === "saving" ? (
+            <>
+              <svg
+                className="h-3 w-3 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+              Saving
+            </>
+          ) : saveState === "success" ? (
+            <>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-3 h-3 text-emerald-500"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.28a.75.75 0 10-1.22-.9l-3.236 4.386-1.49-1.49a.75.75 0 10-1.06 1.06l2.1 2.1a.75.75 0 001.14-.094l3.766-5.062z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Saved
+            </>
+          ) : (
+            <>Save</>
+          )}
         </button>
       </div>
       <div className="grid grid-cols-3 gap-2">
