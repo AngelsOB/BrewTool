@@ -122,6 +122,34 @@ export type Recipe = {
     preBoilVolumeL?: number;
   };
   brewMethod?: "three-vessel" | "biab-full" | "biab-sparge";
+  yeastStarter?: {
+    yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
+    packs: number;
+    mfgDate: string;
+    slurryLiters: number;
+    slurryBillionPerMl: number;
+    steps: Array<{
+      id: string;
+      liters: number;
+      gravity: number;
+      model:
+        | { kind: "white"; aeration: "none" | "shaking" }
+        | { kind: "braukaiser" };
+      dmeGrams: number;
+      endBillion: number;
+    }>;
+    requiredCellsB: number;
+    cellsAvailableB: number;
+    finalEndB: number;
+    totalStarterL: number;
+    totalDmeG: number;
+  };
+  carbonation?: {
+    unit: "metric" | "us";
+    volumes: number;
+    tempC: number;
+    tempF: number;
+  };
 };
 
 type State = {

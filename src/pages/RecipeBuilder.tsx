@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Collapsible from "../components/Collapsible";
 import {
   useRecipeStore,
@@ -32,6 +33,7 @@ import InputWithSuffix from "../components/InputWithSuffix";
 import CarbonationCalculator from "../components/CarbonationCalculator";
 
 export default function RecipeBuilder() {
+  const navigate = useNavigate();
   const upsert = useRecipeStore((s) => s.upsert);
   const removeRecipe = useRecipeStore((s) => s.remove);
   const recipes = useRecipeStore((s) => s.recipes);
@@ -143,6 +145,31 @@ export default function RecipeBuilder() {
     totalStarterL: number;
     totalDmeG: number;
   } | null>(null);
+  const handleStarterChange = useCallback(
+    (state: {
+      yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
+      packs: number;
+      mfgDate: string;
+      slurryLiters: number;
+      slurryBillionPerMl: number;
+      steps: Array<{
+        id: string;
+        liters: number;
+        gravity: number;
+        model:
+          | { kind: "white"; aeration: "none" | "shaking" }
+          | { kind: "braukaiser" };
+        dmeGrams: number;
+        endBillion: number;
+      }>;
+      requiredCellsB: number;
+      cellsAvailableB: number;
+      finalEndB: number;
+      totalStarterL: number;
+      totalDmeG: number;
+    }) => setYeastStarterExport(state),
+    []
+  );
   // Mash schedule (affects fermentability)
   const [mashSteps, setMashSteps] = useState<
     {
@@ -1076,6 +1103,7 @@ export default function RecipeBuilder() {
                     hops,
                     others: otherIngredients,
                     yeast,
+                    yeastStarter: yeastStarterExport || undefined,
                     mash: { steps: mashSteps },
                     fermentation: { steps: fermentationSteps },
                     water: {
@@ -1114,6 +1142,13 @@ export default function RecipeBuilder() {
                       hops,
                       others: otherIngredients,
                       yeast,
+                      yeastStarter: yeastStarterExport || undefined,
+                      carbonation: {
+                        unit: carbUnit,
+                        volumes: carbVolumes,
+                        tempC: carbTempC,
+                        tempF: carbTempF,
+                      },
                       mash: { steps: mashSteps },
                       fermentation: { steps: fermentationSteps },
                       water: {
@@ -1147,6 +1182,13 @@ export default function RecipeBuilder() {
                       hops,
                       others: otherIngredients,
                       yeast,
+                      yeastStarter: yeastStarterExport || undefined,
+                      carbonation: {
+                        unit: carbUnit,
+                        volumes: carbVolumes,
+                        tempC: carbTempC,
+                        tempF: carbTempF,
+                      },
                       mash: { steps: mashSteps },
                       fermentation: { steps: fermentationSteps },
                       water: {
@@ -1235,6 +1277,53 @@ export default function RecipeBuilder() {
                 </div>
               </div>
             )}
+          </div>
+          <div>
+            <button
+              className={`btn-neon ${!name ? "opacity-50" : ""}`}
+              onClick={() => {
+                // Always save latest state, create ID if needed, then navigate
+                const id = currentRecipeId ?? crypto.randomUUID();
+                const existing = currentRecipeId
+                  ? recipes.find((x) => x.id === currentRecipeId)
+                  : undefined;
+                const recipe: Recipe = {
+                  id,
+                  name: currentRecipeId ? name : getUniqueRecipeName(name),
+                  createdAt: existing?.createdAt ?? new Date().toISOString(),
+                  bjcpStyleCode: bjcpStyleCode || undefined,
+                  batchVolumeL,
+                  efficiencyPct,
+                  targetOG: ogAuto ? undefined : actualOg ?? ogUsed,
+                  targetFG: fgAuto ? undefined : actualFg ?? fgUsed,
+                  grains,
+                  hops,
+                  others: otherIngredients,
+                  yeast,
+                  yeastStarter: yeastStarterExport || undefined,
+                  carbonation: {
+                    unit: carbUnit,
+                    volumes: carbVolumes,
+                    tempC: carbTempC,
+                    tempF: carbTempF,
+                  },
+                  mash: { steps: mashSteps },
+                  fermentation: { steps: fermentationSteps },
+                  water: {
+                    ...waterParams,
+                    mashWaterL: finalMashL,
+                    spargeWaterL: finalSpargeL,
+                    preBoilVolumeL,
+                  },
+                  brewMethod,
+                };
+                upsert(recipe);
+                if (!currentRecipeId) setCurrentRecipeId(id);
+                navigate(`/brew/${id}`);
+              }}
+            >
+              Brew
+            </button>
           </div>
         </div>
       </div>
@@ -1516,7 +1605,7 @@ export default function RecipeBuilder() {
           onChangeYeast={setYeast}
           ogUsed={ogUsed}
           batchVolumeL={batchVolumeL}
-          onStarterChange={(state) => setYeastStarterExport(state)}
+          onStarterChange={handleStarterChange}
         />
       </section>
 
