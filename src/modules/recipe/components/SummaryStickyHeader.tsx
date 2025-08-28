@@ -1,4 +1,5 @@
 import FitToWidth from "../../../components/FitToWidth";
+import { useEffect, useRef, useState } from "react";
 
 export default function BatchSummary({
   name,
@@ -23,8 +24,67 @@ export default function BatchSummary({
   finalSpargeL: number;
   batchVolumeL: number;
 }) {
+  const [isHidden, setIsHidden] = useState(false);
+  const lastScrollYRef = useRef(0);
+  const tickingRef = useRef(false);
+  const stickyStartYRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const measureStickyStart = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const topStyle = window.getComputedStyle(el).top;
+      const topOffsetPx = Number.parseFloat(topStyle) || 0;
+      const rect = el.getBoundingClientRect();
+      stickyStartYRef.current =
+        (window.scrollY || window.pageYOffset || 0) + rect.top - topOffsetPx;
+    };
+    measureStickyStart();
+    window.addEventListener("resize", measureStickyStart);
+    return () => window.removeEventListener("resize", measureStickyStart);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (tickingRef.current) return;
+      tickingRef.current = true;
+
+      window.requestAnimationFrame(() => {
+        const currentY = window.scrollY || window.pageYOffset || 0;
+        const delta = currentY - lastScrollYRef.current;
+        const absDelta = Math.abs(delta);
+        const thresholdY = stickyStartYRef.current;
+
+        // Always visible when above sticky activation point
+        if (currentY <= thresholdY + 1) {
+          setIsHidden(false);
+        } else if (absDelta > 3) {
+          if (delta > 0) {
+            // Scrolling down -> hide
+            setIsHidden(true);
+          } else if (delta < 0) {
+            // Scrolling up -> show only after passing threshold
+            setIsHidden(false);
+          }
+        }
+
+        lastScrollYRef.current = currentY;
+        tickingRef.current = false;
+      });
+    };
+
+    lastScrollYRef.current = window.scrollY || 0;
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   return (
-    <div className="sticky top-14 z-10 mx-auto max-w-6xl py-2 backdrop-blur-md">
+    <div
+      ref={containerRef}
+      className={`sticky top-0 z-10 mx-auto max-w-6xl py-2 backdrop-blur-md transition-transform duration-300 will-change-transform ${
+        isHidden ? "-translate-y-10/5" : "translate-y-0"
+      }`}
+    >
       <div className="flex flex-wrap items-center justify_between gap-3 rounded-xl border border-white/10 bg-white/40 px-3 py-2 shadow-soft ring-1 ring-neutral-900/5 supports-[backdrop-filter]:bg-white/25">
         <div className="flex items-center gap-2 text-sm font-medium tracking-tight text-white/50 shrink-0">
           <span>{name}</span>

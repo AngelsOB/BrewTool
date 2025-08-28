@@ -63,6 +63,7 @@ export default function YeastPitchCalc({
   og,
   volumeL,
   onChange,
+  initial,
 }: {
   og: number;
   volumeL: number;
@@ -86,6 +87,26 @@ export default function YeastPitchCalc({
     totalStarterL: number;
     totalDmeG: number;
   }) => void;
+  initial?: {
+    yeastType: YeastType;
+    packs: number;
+    mfgDate: string;
+    slurryLiters: number;
+    slurryBillionPerMl: number;
+    steps: Array<{
+      id: string;
+      liters: number;
+      gravity: number;
+      model: GrowthModel;
+      dmeGrams: number;
+      endBillion: number;
+    }>;
+    requiredCellsB: number;
+    cellsAvailableB: number;
+    finalEndB: number;
+    totalStarterL: number;
+    totalDmeG: number;
+  } | null;
 }) {
   const [open, setOpen] = useState<boolean>(false);
 
@@ -142,6 +163,32 @@ export default function YeastPitchCalc({
   };
   const startingCellsB = cellsAvailableB;
   const [steps, setSteps] = useState<StarterStep[]>([]);
+
+  // Hydrate from initial snapshot when provided (or reset to defaults when cleared)
+  useEffect(() => {
+    if (!initial) {
+      setYeastType("liquid-100");
+      setPacks(1);
+      setMfgDate("");
+      setSlurryLiters(0);
+      setSlurryBillionPerMl(1);
+      setSteps([]);
+      return;
+    }
+    setYeastType(initial.yeastType);
+    setPacks(initial.packs);
+    setMfgDate(initial.mfgDate || "");
+    setSlurryLiters(initial.slurryLiters || 0);
+    setSlurryBillionPerMl(initial.slurryBillionPerMl || 1);
+    setSteps(
+      (initial.steps || []).map((s) => ({
+        id: s.id || crypto.randomUUID(),
+        liters: s.liters,
+        gravity: s.gravity,
+        model: s.model,
+      }))
+    );
+  }, [initial]);
 
   const stepResults = useMemo(() => {
     const out: Array<{

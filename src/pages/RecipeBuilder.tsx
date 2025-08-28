@@ -27,7 +27,7 @@ import MashSchedule from "../modules/recipe/components/MashSchedule";
 import OtherIngredients from "../modules/recipe/components/OtherIngredients";
 import StyleSelector from "../modules/recipe/components/StyleSelector";
 import YeastSection from "../modules/recipe/components/YeastSection";
-import BatchSummary from "../modules/recipe/components/BatchSummary";
+import BatchSummary from "../modules/recipe/components/SummaryStickyHeader";
 import WaterSettings from "../modules/recipe/components/WaterSettings";
 import InputWithSuffix from "../components/InputWithSuffix";
 import CarbonationCalculator from "../components/CarbonationCalculator";
@@ -124,6 +124,29 @@ export default function RecipeBuilder() {
   const [carbTempF, setCarbTempF] = useState<number>(38);
   // Yeast starter export snapshot
   const [yeastStarterExport, setYeastStarterExport] = useState<{
+    yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
+    packs: number;
+    mfgDate: string;
+    slurryLiters: number;
+    slurryBillionPerMl: number;
+    steps: Array<{
+      id: string;
+      liters: number;
+      gravity: number;
+      model:
+        | { kind: "white"; aeration: "none" | "shaking" }
+        | { kind: "braukaiser" };
+      dmeGrams: number;
+      endBillion: number;
+    }>;
+    requiredCellsB: number;
+    cellsAvailableB: number;
+    finalEndB: number;
+    totalStarterL: number;
+    totalDmeG: number;
+  } | null>(null);
+  // One-time hydration state for YeastPitchCalc when loading/resetting a recipe
+  const [yeastStarterInitial, setYeastStarterInitial] = useState<{
     yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
     packs: number;
     mfgDate: string;
@@ -432,6 +455,8 @@ export default function RecipeBuilder() {
     setActualOg(undefined);
     setFgAuto(true);
     setActualFg(undefined);
+    setYeastStarterExport(null);
+    setYeastStarterInitial(null);
   };
 
   const loadRecipe = (r: Recipe) => {
@@ -480,6 +505,9 @@ export default function RecipeBuilder() {
     setKettleLossL(r.water?.kettleLossL ?? 0.5);
     setChillerLossL(r.water?.chillerLossL ?? 0);
     setBrewMethod(r.brewMethod ?? "three-vessel");
+    // Yeast starter snapshot (for hydration of calculator)
+    setYeastStarterExport(r.yeastStarter ?? null);
+    setYeastStarterInitial(r.yeastStarter ?? null);
     // OG/FG
     if (r.targetOG != null) {
       setOgAuto(false);
@@ -1046,7 +1074,7 @@ export default function RecipeBuilder() {
   };
 
   return (
-    <div className="page-recipe max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="page-recipe max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div className="flex-1">
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -1534,6 +1562,7 @@ export default function RecipeBuilder() {
           setMashSteps((xs) => xs.map((s, i) => (i === index ? next : s)))
         }
         onRemove={(id) => setMashSteps((xs) => xs.filter((x) => x.id !== id))}
+        onReorder={(next) => setMashSteps(next)}
       />
 
       <HopSchedule
@@ -1606,6 +1635,7 @@ export default function RecipeBuilder() {
           ogUsed={ogUsed}
           batchVolumeL={batchVolumeL}
           onStarterChange={handleStarterChange}
+          starterInitial={yeastStarterInitial}
         />
       </section>
 
@@ -1637,6 +1667,9 @@ export default function RecipeBuilder() {
           spargeWaterL={finalSpargeL}
         />
       </section>
+      <footer className="mt-12 text-center text-white/50 text-sm">
+        <p> Make good things. {new Date().getFullYear()} Cheers 🍺</p>
+      </footer>
     </div>
   );
 }

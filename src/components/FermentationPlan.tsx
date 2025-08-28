@@ -1,4 +1,20 @@
 import { useMemo } from "react";
+import type { CSSProperties } from "react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import type { FermentationStep } from "../hooks/useRecipeStore";
 import InputWithSuffix from "./InputWithSuffix";
 import InlineEditableNumber from "./InlineEditableNumber";
@@ -54,6 +70,11 @@ export default function FermentationPlan({
     }
     return "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_min-content]";
   }, [hasPressure, hasDryHopToggle]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const addStep = (partial?: Partial<FermentationStep>) => {
     const next: FermentationStep = {
@@ -177,130 +198,35 @@ export default function FermentationPlan({
         <div>Notes</div>
         <div></div>
       </div>
-      {steps.map((s, i) => (
-        <div className={"grid grid-cols-1 " + gridCols + " gap-2"} key={s.id}>
-          <label className="flex flex-col">
-            <div className="text-xs text-muted mb-1 sm:hidden">Stage</div>
-            <select
-              className="w-full rounded-md border px-2 py-2.5"
-              value={s.stage}
-              onChange={(e) =>
-                setStep(i, {
-                  stage: e.target.value as FermentationStep["stage"],
-                })
-              }
-            >
-              {(
-                [
-                  "primary",
-                  "secondary",
-                  "diacetyl-rest",
-                  "conditioning",
-                  "cold-crash",
-                  "lagering",
-                  "keg-conditioning",
-                  "bottle-conditioning",
-                  "spunding",
-                ] as const
-              ).map((st) => (
-                <option key={st} value={st}>
-                  {STAGE_LABEL[st]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col">
-            <div className="text-xs text-muted mb-1 sm:hidden">Temp</div>
-            <InputWithSuffix
-              value={s.tempC}
-              onChange={(n) => setStep(i, { tempC: n })}
-              step={0.5}
-              suffix="°C"
-              suffixClassName="right-3 text-[10px]"
+      <DndContext
+        sensors={sensors}
+        onDragEnd={({ active, over }) => {
+          if (!over || active.id === over.id) return;
+          const oldIndex = steps.findIndex((x) => x.id === String(active.id));
+          const newIndex = steps.findIndex((x) => x.id === String(over.id));
+          if (oldIndex < 0 || newIndex < 0) return;
+          const next = arrayMove(steps, oldIndex, newIndex);
+          onChange(next);
+        }}
+      >
+        <SortableContext
+          items={steps.map((s) => s.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {steps.map((s, i) => (
+            <FermentationRow
+              key={s.id}
+              s={s}
+              i={i}
+              gridCols={gridCols}
+              hasPressure={hasPressure}
+              hasDryHopToggle={hasDryHopToggle}
+              setStep={setStep}
+              removeStep={removeStep}
             />
-          </label>
-          <label className="flex flex-col">
-            <div className="text-xs text-muted mb-1 sm:hidden">Days</div>
-            <InputWithSuffix
-              value={s.days}
-              onChange={(n) => setStep(i, { days: n })}
-              step={0.5}
-              suffix=" days"
-              suffixClassName="right-3 text-[10px]"
-            />
-          </label>
-          {hasPressure ? (
-            s.stage === "keg-conditioning" || s.stage === "spunding" ? (
-              <label className="flex flex-col">
-                <div className="text-xs text-muted mb-1 sm:hidden">
-                  Pressure
-                </div>
-                <InlineEditableNumber
-                  value={s.pressurePsi ?? 0}
-                  onChange={(n) =>
-                    setStep(i, { pressurePsi: n > 0 ? n : undefined })
-                  }
-                  step={0.5}
-                  suffix="psi"
-                  suffixClassName="left-9 right-0.5 text-[10px]"
-                  placeholder="0"
-                />
-              </label>
-            ) : (
-              <div className="hidden sm:block" />
-            )
-          ) : null}
-          {hasDryHopToggle ? (
-            s.stage === "primary" ||
-            s.stage === "secondary" ||
-            s.stage === "conditioning" ? (
-              <div className="flex items-center justify-center">
-                <input
-                  type="checkbox"
-                  aria-label="Dry Hop?"
-                  className="h-4 w-4"
-                  checked={Boolean(s.dryHopReminder)}
-                  onChange={(e) =>
-                    setStep(i, { dryHopReminder: e.target.checked })
-                  }
-                />
-              </div>
-            ) : (
-              <div className="hidden sm:block" />
-            )
-          ) : null}
-          <label className="flex flex-col">
-            <div className="text-xs text-muted mb-1 sm:hidden">Notes</div>
-            <input
-              className="w-full rounded-md border px-3 py-2"
-              placeholder="Optional notes"
-              value={s.notes ?? ""}
-              onChange={(e) => setStep(i, { notes: e.target.value })}
-            />
-          </label>
-          <div className="flex justify-end items-center">
-            <button
-              className="p-1 text-neutral-400 hover:text-red-500 transition w-fit"
-              onClick={() => removeStep(s.id)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      ))}
+          ))}
+        </SortableContext>
+      </DndContext>
       <div className="flex items-center justify-between">
         <button
           className="block sm:hidden w-full btn-neon"
@@ -311,6 +237,178 @@ export default function FermentationPlan({
         <div className="text-sm text-white/70">
           Total: {totalDays.toFixed(1)} days
         </div>
+      </div>
+    </div>
+  );
+}
+
+function FermentationRow({
+  s,
+  i,
+  gridCols,
+  hasPressure,
+  hasDryHopToggle,
+  setStep,
+  removeStep,
+}: {
+  s: FermentationStep;
+  i: number;
+  gridCols: string;
+  hasPressure: boolean;
+  hasDryHopToggle: boolean;
+  setStep: (idx: number, updated: Partial<FermentationStep>) => void;
+  removeStep: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: s.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  } as CSSProperties;
+  return (
+    <div
+      className={"grid grid-cols-1 " + gridCols + " gap-2"}
+      style={style}
+      ref={setNodeRef}
+    >
+      <label className="flex flex-col">
+        <div className="text-xs text-muted mb-1 sm:hidden">Stage</div>
+        <select
+          className="w-full rounded-md border px-2 py-2.5"
+          value={s.stage}
+          onChange={(e) =>
+            setStep(i, {
+              stage: e.target.value as FermentationStep["stage"],
+            })
+          }
+        >
+          {(
+            [
+              "primary",
+              "secondary",
+              "diacetyl-rest",
+              "conditioning",
+              "cold-crash",
+              "lagering",
+              "keg-conditioning",
+              "bottle-conditioning",
+              "spunding",
+            ] as const
+          ).map((st) => (
+            <option key={st} value={st}>
+              {STAGE_LABEL[st]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col">
+        <div className="text-xs text-muted mb-1 sm:hidden">Temp</div>
+        <InputWithSuffix
+          value={s.tempC}
+          onChange={(n) => setStep(i, { tempC: n })}
+          step={0.5}
+          suffix="°C"
+          suffixClassName="right-3 text-[10px]"
+        />
+      </label>
+      <label className="flex flex-col">
+        <div className="text-xs text-muted mb-1 sm:hidden">Days</div>
+        <InputWithSuffix
+          value={s.days}
+          onChange={(n) => setStep(i, { days: n })}
+          step={0.5}
+          suffix=" days"
+          suffixClassName="right-3 text-[10px]"
+        />
+      </label>
+      {hasPressure ? (
+        s.stage === "keg-conditioning" || s.stage === "spunding" ? (
+          <label className="flex flex-col">
+            <div className="text-xs text-muted mb-1 sm:hidden">Pressure</div>
+            <InlineEditableNumber
+              value={s.pressurePsi ?? 0}
+              onChange={(n) =>
+                setStep(i, { pressurePsi: n > 0 ? n : undefined })
+              }
+              step={0.5}
+              suffix="psi"
+              suffixClassName="left-9 right-0.5 text-[10px]"
+              placeholder="0"
+            />
+          </label>
+        ) : (
+          <div className="hidden sm:block" />
+        )
+      ) : null}
+      {hasDryHopToggle ? (
+        s.stage === "primary" ||
+        s.stage === "secondary" ||
+        s.stage === "conditioning" ? (
+          <div className="flex items-center justify-center">
+            <input
+              type="checkbox"
+              aria-label="Dry Hop?"
+              className="h-4 w-4"
+              checked={Boolean(s.dryHopReminder)}
+              onChange={(e) => setStep(i, { dryHopReminder: e.target.checked })}
+            />
+          </div>
+        ) : (
+          <div className="hidden sm:block" />
+        )
+      ) : null}
+      <label className="flex flex-col">
+        <div className="text-xs text-muted mb-1 sm:hidden">Notes</div>
+        <input
+          className="w-full rounded-md border px-3 py-2"
+          placeholder="Optional notes"
+          value={s.notes ?? ""}
+          onChange={(e) => setStep(i, { notes: e.target.value })}
+        />
+      </label>
+      <div className="flex justify-end items-center gap-1">
+        <button
+          type="button"
+          aria-label="Drag"
+          className="p-1 cursor-grab text-neutral-400 hover:text-white"
+          {...attributes}
+          {...listeners}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-5 h-5"
+          >
+            <path d="M7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7 10a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+          </svg>
+        </button>
+        <button
+          className="p-1 text-neutral-400 hover:text-red-500 transition w-fit"
+          onClick={() => removeStep(s.id)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
       </div>
     </div>
   );

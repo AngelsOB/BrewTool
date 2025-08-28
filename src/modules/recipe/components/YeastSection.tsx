@@ -8,6 +8,7 @@ export default function YeastSection({
   ogUsed,
   batchVolumeL,
   onStarterChange,
+  starterInitial,
 }: {
   yeast: YeastItem;
   onChangeYeast: (next: YeastItem) => void;
@@ -35,6 +36,28 @@ export default function YeastSection({
     totalStarterL: number;
     totalDmeG: number;
   }) => void;
+  starterInitial?: {
+    yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
+    packs: number;
+    mfgDate: string;
+    slurryLiters: number;
+    slurryBillionPerMl: number;
+    steps: Array<{
+      id: string;
+      liters: number;
+      gravity: number;
+      model:
+        | { kind: "white"; aeration: "none" | "shaking" }
+        | { kind: "braukaiser" };
+      dmeGrams: number;
+      endBillion: number;
+    }>;
+    requiredCellsB: number;
+    cellsAvailableB: number;
+    finalEndB: number;
+    totalStarterL: number;
+    totalDmeG: number;
+  } | null;
 }) {
   return (
     <section className="section-soft space-y-3">
@@ -76,6 +99,7 @@ export default function YeastSection({
           og={ogUsed}
           volumeL={batchVolumeL}
           onChange={onStarterChange}
+          initial={starterInitial ?? undefined}
         />
       </div>
     </section>
