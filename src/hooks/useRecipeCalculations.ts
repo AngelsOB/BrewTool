@@ -20,7 +20,7 @@ import type {
   HopItem,
   YeastItem,
   FermentationStep,
-} from "./useRecipeStore";
+} from "../modules/recipe/types";
 
 export function useRecipeCalculations(params: {
   grains: GrainItem[];

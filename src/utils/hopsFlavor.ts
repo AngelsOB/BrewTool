@@ -1,4 +1,4 @@
-import type { HopItem } from "../hooks/useRecipeStore";
+import type { HopItem } from "../modules/recipe/types";
 import type { HopFlavorProfile } from "./presets";
 import { EMPTY_HOP_FLAVOR, HOP_FLAVOR_KEYS } from "./presets";
 
@@ -44,6 +44,24 @@ function timingAromaFactor(
   }
 }
 
+function normalizeHopFlavor(
+  f: NonNullable<HopItem["flavor"]> | undefined
+): HopFlavorProfile {
+  const anyf: any = f || {};
+  return {
+    ...EMPTY_HOP_FLAVOR,
+    citrus: anyf.citrus ?? 0,
+    floral: anyf.floral ?? 0,
+    tropicalFruit: anyf.tropicalFruit ?? anyf.fruity ?? 0,
+    stoneFruit: anyf.stoneFruit ?? 0,
+    berry: anyf.berry ?? 0,
+    herbal: anyf.herbal ?? 0,
+    spice: anyf.spice ?? anyf.spicy ?? 0,
+    resinPine: anyf.resinPine ?? anyf.piney ?? 0,
+    grassy: anyf.grassy ?? anyf.earthy ?? 0,
+  };
+}
+
 /**
  * Estimate the final hop-driven flavor profile of the recipe, scaled by:
  * - grams per liter (dose)
@@ -85,7 +103,7 @@ export function estimateRecipeHopFlavor(
     );
     const weight = gpl * factor;
     if (weight <= 0) continue;
-    const flavor = (h.flavor ?? EMPTY_HOP_FLAVOR) as HopFlavorProfile;
+    const flavor = normalizeHopFlavor(h.flavor);
     overallWeight += weight;
     for (const k of HOP_FLAVOR_KEYS) {
       const axis = (flavor[k] || 0) / 5; // normalize to 0..1
@@ -123,7 +141,7 @@ export function estimatePerHopContributions(
       h.whirlpoolTempC
     );
     const weight = gpl * factor;
-    const flavor = (h.flavor ?? EMPTY_HOP_FLAVOR) as HopFlavorProfile;
+    const flavor = normalizeHopFlavor(h.flavor);
     const scaled: HopFlavorProfile = { ...EMPTY_HOP_FLAVOR };
     for (const k of HOP_FLAVOR_KEYS) {
       scaled[k] = (flavor[k] || 0) * Math.min(1, weight);

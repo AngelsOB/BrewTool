@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import HopFlavorRadar from "./HopFlavorRadar";
-import type { HopItem } from "../hooks/useRecipeStore";
+import type { HopItem } from "../modules/recipe/types";
+import type { HopFlavorProfile } from "../utils/presets";
+import { EMPTY_HOP_FLAVOR } from "../utils/presets";
 
 export default function FlavorGraphs({
   baseSeries,
@@ -10,6 +12,28 @@ export default function FlavorGraphs({
   estFlavor: NonNullable<HopItem["flavor"]>;
 }) {
   const [mode, setMode] = useState<"base" | "estimated">("base");
+  const toProfile = (f: NonNullable<HopItem["flavor"]>): HopFlavorProfile => {
+    const anyf: any = f as any;
+    return {
+      ...EMPTY_HOP_FLAVOR,
+      // Support both legacy UI shape and canonical HopFlavorProfile
+      citrus: anyf.citrus ?? 0,
+      floral: anyf.floral ?? 0,
+      tropicalFruit: anyf.tropicalFruit ?? anyf.fruity ?? 0,
+      stoneFruit: anyf.stoneFruit ?? 0,
+      berry: anyf.berry ?? 0,
+      herbal: anyf.herbal ?? 0,
+      spice: anyf.spice ?? anyf.spicy ?? 0,
+      resinPine: anyf.resinPine ?? anyf.piney ?? 0,
+      grassy: anyf.grassy ?? anyf.earthy ?? 0,
+    };
+  };
+  const baseSeriesMapped = useMemo(
+    () =>
+      baseSeries.map((s) => ({ name: s.name, flavor: toProfile(s.flavor) })),
+    [baseSeries]
+  );
+  const estFlavorMapped = useMemo(() => toProfile(estFlavor), [estFlavor]);
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between">
@@ -38,7 +62,7 @@ export default function FlavorGraphs({
           <HopFlavorRadar
             title="Base hop profiles"
             emptyHint="Pick hops with flavor data"
-            series={baseSeries}
+            series={baseSeriesMapped}
             colorStrategy="index"
             labelColorize={true}
             outerPadding={72}
@@ -48,7 +72,7 @@ export default function FlavorGraphs({
           <HopFlavorRadar
             title="Estimated final aroma emphasis"
             emptyHint="Increase dose or add late/dry hops"
-            series={[{ name: "Total (est.)", flavor: estFlavor }]}
+            series={[{ name: "Total (est.)", flavor: estFlavorMapped }]}
             colorStrategy="dominant"
             labelColorize={true}
             showLegend={false}

@@ -421,12 +421,10 @@ export function HopSchedule({
         </div>
       </div>
       <Collapsible open={showVisualizer}>
-        {hopFlavorSeries.length > 0 && (
-          <FlavorGraphs
-            baseSeries={hopFlavorSeries}
-            estFlavor={estimatedTotalFlavor}
-          />
-        )}
+        <FlavorGraphs
+          baseSeries={hopFlavorSeries}
+          estFlavor={estimatedTotalFlavor}
+        />
       </Collapsible>
     </section>
   );

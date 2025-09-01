@@ -15,7 +15,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { FermentationStep } from "../hooks/useRecipeStore";
+import type { FermentationStep } from "../modules/recipe/types";
 import InputWithSuffix from "./InputWithSuffix";
 import InlineEditableNumber from "./InlineEditableNumber";
 

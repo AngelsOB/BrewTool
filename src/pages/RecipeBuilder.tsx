@@ -14,7 +14,7 @@ import type {
 import { type WaterParams } from "../utils/calculations";
 // per-hop IBU calc handled inside HopSchedule; keep total calc in hook
 import FermentationSection from "../modules/recipe/components/FermentationSection";
-import { getOtherIngredientPresets } from "../utils/presets";
+import { getOtherIngredientPresets, getHopPresets } from "../utils/presets";
 import type {
   Recipe,
   FermentableAddition,
@@ -329,32 +329,50 @@ function mapHopsToUI(xs: HopAddition[]): HopItem[] {
         return "mash";
     }
   };
-  return xs.map((h) => ({
-    id: h.id,
-    name: h.ingredientRef.id,
-    grams: h.amountG,
-    alphaAcidPercent: h.overrides?.alphaAcidPct ?? 10,
-    timeMin:
-      h.usage.timing === "dry-hop"
-        ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
-        : h.usage.timeMin ?? 0,
-    type: toTiming(h.usage.timing),
-    dryHopStage:
-      h.usage.timing === "dry-hop"
-        ? h.usage.stage === "keg"
-          ? "keg"
-          : h.usage.stage === "secondary"
-          ? "post-fermentation"
-          : "primary"
-        : undefined,
-    dryHopDays:
-      h.usage.timing === "dry-hop"
-        ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
-        : undefined,
-    whirlpoolTempC: h.usage.temperature,
-    whirlpoolTimeMin:
-      h.usage.timing === "whirlpool" ? h.usage.timeMin : undefined,
-  }));
+  return xs.map((h) => {
+    const name = h.ingredientRef.id;
+    const preset = getHopPresets().find((p) => p.name === name);
+    // Map preset flavor (HopFlavorProfile) into legacy UI keys for HopItem
+    const flavor = preset?.flavor
+      ? {
+          citrus: preset.flavor.citrus,
+          floral: preset.flavor.floral,
+          fruity: preset.flavor.tropicalFruit,
+          herbal: preset.flavor.herbal,
+          piney: preset.flavor.resinPine,
+          spicy: preset.flavor.spice,
+          earthy: preset.flavor.grassy,
+        }
+      : undefined;
+    return {
+      id: h.id,
+      name,
+      grams: h.amountG,
+      alphaAcidPercent: h.overrides?.alphaAcidPct ?? 10,
+      timeMin:
+        h.usage.timing === "dry-hop"
+          ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
+          : h.usage.timeMin ?? 0,
+      type: toTiming(h.usage.timing),
+      dryHopStage:
+        h.usage.timing === "dry-hop"
+          ? h.usage.stage === "keg"
+            ? "keg"
+            : h.usage.stage === "secondary"
+            ? "post-fermentation"
+            : "primary"
+          : undefined,
+      dryHopDays:
+        h.usage.timing === "dry-hop"
+          ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
+          : undefined,
+      whirlpoolTempC: h.usage.temperature,
+      whirlpoolTimeMin:
+        h.usage.timing === "whirlpool" ? h.usage.timeMin : undefined,
+      category: preset?.category,
+      flavor,
+    } as HopItem;
+  });
 }
 
 function mapOthersToUI(xs: OtherAddition[]): OtherIngredient[] {
@@ -2078,7 +2096,8 @@ export default function RecipeBuilder() {
                 // Overwrite recipe with current UI state always
                 upsert(recipe);
                 if (!currentRecipeId) setCurrentRecipeId(id);
-                navigate(`/brew/${id}`);
+                // Defer navigation to next tick to avoid race with store update/render
+                window.setTimeout(() => navigate(`/brew/${id}`), 0);
               }}
             >
               Brew
@@ -2397,6 +2416,16 @@ export default function RecipeBuilder() {
           mashWaterL={finalMashL}
           spargeWaterL={finalSpargeL}
           onChange={(data) => {
+            const prev = waterTreatmentRef.current;
+            const sameTotals = prev
+              ? JSON.stringify(prev.totalSalts) ===
+                JSON.stringify(data.totalSalts)
+              : false;
+            const sameProfile = prev
+              ? JSON.stringify(prev.totalProfile) ===
+                JSON.stringify(data.totalProfile)
+              : false;
+            if (sameTotals && sameProfile) return;
             setWaterTreatment(data);
             waterTreatmentRef.current = data;
           }}

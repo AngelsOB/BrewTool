@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useRecipeStore } from "../hooks/useRecipeStore";
+import type { Recipe, HopAddition } from "../types/recipe";
 import {
-  useRecipeStore,
-  type Recipe,
-  type HopItem,
-} from "../hooks/useRecipeStore";
-import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
+  computeMashWaterL,
+  computePreBoilVolumeL,
+  computeSpargeFromMashUsedL,
+  computeSpargeWaterL,
+} from "../utils/calculations";
 import { getBjcpStyleSpec } from "../utils/bjcpSpecs";
 
 type BrewPhase =
@@ -64,14 +66,14 @@ function calculatePsiFromTempFAndVolumes(
 
 function buildBoilTimeline(
   totalBoilMin: number,
-  boilHops: HopItem[],
+  boilHops: HopAddition[],
   otherBoilAdds: { name: string; amount: string }[]
 ): BrewStep[] {
   const steps: BrewStep[] = [];
-  const firstWort = boilHops.filter((h) => h.type === "first wort");
+  const firstWort = boilHops.filter((h) => h.usage.timing === "first-wort");
   const timed = boilHops
-    .filter((h) => h.type === "boil")
-    .map((h) => ({ hop: h, t: Math.max(0, Math.round(h.timeMin ?? 0)) }))
+    .filter((h) => h.usage.timing === "boil")
+    .map((h) => ({ hop: h, t: Math.max(0, Math.round(h.usage.timeMin ?? 0)) }))
     .sort((a, b) => b.t - a.t);
 
   // First wort additions before boil
@@ -79,10 +81,12 @@ function buildBoilTimeline(
     steps.push({
       id: `boil-fw-${fw.id}`,
       phase: "boil",
-      label: `First wort: add ${fw.name || "Hop"}`,
+      label: `First wort: add ${fw.ingredientRef.id || "Hop"}`,
       details:
-        `${Math.round(fw.grams)} g` +
-        (fw.alphaAcidPercent ? ` • ${fw.alphaAcidPercent}% AA` : ""),
+        `${Math.round(fw.amountG)} g` +
+        (fw.overrides?.alphaAcidPct
+          ? ` • ${fw.overrides.alphaAcidPct}% AA`
+          : ""),
     });
   }
 
@@ -117,12 +121,14 @@ function buildBoilTimeline(
         id: `boil-hop-${hop.id}`,
         phase: "boil",
         label:
-          `Add ${hop.name || "Hop"} for ${Math.max(
+          `Add ${hop.ingredientRef.id || "Hop"} for ${Math.max(
             0,
-            Math.round(hop.timeMin ?? 0)
+            Math.round(hop.usage.timeMin ?? 0)
           )} min` +
-          (hop.alphaAcidPercent ? ` • ${hop.alphaAcidPercent}% AA` : ""),
-        details: `${Math.round(hop.grams)} g`,
+          (hop.overrides?.alphaAcidPct
+            ? ` • ${hop.overrides.alphaAcidPct}% AA`
+            : ""),
+        details: `${Math.round(hop.amountG)} g`,
         durationSec: seconds(durationToNext),
       });
     }
@@ -142,41 +148,8 @@ function buildBrewSteps(
 ): BrewStep[] {
   const steps: BrewStep[] = [];
 
-  // Starter first (if captured)
-  if (recipe.yeastStarter) {
-    const ys = recipe.yeastStarter;
-    const pkg = (() => {
-      if (ys.yeastType === "dry") {
-        const n = Math.max(0, Math.floor(ys.packs));
-        return `${n}×11g dry`;
-      }
-      if (ys.yeastType === "slurry")
-        return `Slurry ${
-          Math.round(ys.slurryLiters * 10) / 10
-        } L @ ${Math.round(ys.slurryBillionPerMl)} B/mL`;
-      const label =
-        ys.yeastType === "liquid-200" ? "Liquid (200B)" : "Liquid (100B)";
-      const n = Math.max(0, Math.floor(ys.packs));
-      const mfg = ys.mfgDate ? `, Mfg ${ys.mfgDate}` : "";
-      return `${n} pack${n === 1 ? "" : "s"} ${label}${mfg}`;
-    })();
-    const starter = ys.steps?.length
-      ? `${ys.steps[ys.steps.length - 1].liters.toFixed(1)}L @ ${ys.steps[
-          ys.steps.length - 1
-        ].gravity.toFixed(3)}`
-      : undefined;
-    const dme =
-      ys.totalDmeG != null ? `DME ${Math.round(ys.totalDmeG)} g` : undefined;
-    steps.push({
-      id: `starter`,
-      phase: "prep",
-      label: `Make starter${starter ? ` (${starter})` : ""}`,
-      detailsList: [pkg, dme].filter(Boolean) as string[],
-    });
-  }
-
   // Prep and Mash
-  const firstMashTemp = recipe.mash?.steps?.[0]?.tempC;
+  const firstMashTemp = recipe.process.mash?.steps?.[0]?.targetTempC;
   if (firstMashTemp != null) {
     steps.push({
       id: `prep-strike`,
@@ -201,9 +174,11 @@ function buildBrewSteps(
   }
   // Dough-in with grain bill summary
   const grainLines: string[] = [];
-  for (const g of recipe.grains || []) {
-    if (!g.name && !g.weightKg) continue;
-    grainLines.push(`${(g.weightKg ?? 0).toFixed(2)} kg ${g.name || "Malt"}`);
+  for (const g of recipe.ingredients.fermentables || []) {
+    if (!g.ingredientRef?.id && !g.amountKg) continue;
+    grainLines.push(
+      `${(g.amountKg ?? 0).toFixed(2)} kg ${g.ingredientRef?.id || "Malt"}`
+    );
   }
   steps.push({
     id: `mash-dough`,
@@ -214,15 +189,12 @@ function buildBrewSteps(
         : "Dough-in",
     detailsList: grainLines.length ? grainLines : undefined,
   });
-  for (const s of recipe.mash?.steps || []) {
+  for (const s of recipe.process.mash?.steps || []) {
     const label =
       s.type === "decoction"
-        ? `Decoction rest at ${Math.round(s.tempC)}°C`
-        : `Rest at ${Math.round(s.tempC)}°C`;
-    const details =
-      s.type === "decoction" && s.decoctionPercent != null
-        ? `Boil ${Math.round(s.decoctionPercent)}%`
-        : undefined;
+        ? `Decoction rest at ${Math.round(s.targetTempC)}°C`
+        : `Rest at ${Math.round(s.targetTempC)}°C`;
+    const details = undefined;
     steps.push({
       id: `mash-${s.id}`,
       phase: "mash",
@@ -247,37 +219,42 @@ function buildBrewSteps(
   });
 
   // Boil
-  const boilTimeMin = recipe.water?.boilTimeMin ?? 60;
-  const boilHops = (recipe.hops || []).filter(
-    (h) => h.type === "boil" || h.type === "first wort"
+  const boilTimeMin = recipe.equipment.snapshot.timing.boilTimeMin ?? 60;
+  const boilHops = (recipe.ingredients.hops || []).filter(
+    (h) => h.usage.timing === "boil" || h.usage.timing === "first-wort"
   );
-  const othersBoil = (recipe.others || [])
+  const othersBoil = (recipe.ingredients.other || [])
     .filter((x) => x.timing === "boil")
     .map((x) => ({
-      name: x.name || "Addition",
+      name: x.ingredientRef?.id || x.notes || "Addition",
       amount: `${x.amount ?? ""} ${x.unit ?? ""}`.trim(),
     }));
   steps.push(...buildBoilTimeline(boilTimeMin, boilHops, othersBoil));
 
   // Whirlpool
-  const whirlpoolHops = (recipe.hops || []).filter(
-    (h) => h.type === "whirlpool"
+  const whirlpoolHops = (recipe.ingredients.hops || []).filter(
+    (h) => h.usage.timing === "whirlpool"
   );
   for (const w of whirlpoolHops) {
     const temp =
-      w.whirlpoolTempC != null ? ` @ ${Math.round(w.whirlpoolTempC)}°C` : "";
-    const t = w.whirlpoolTimeMin ?? 0;
+      w.usage.temperature != null
+        ? ` @ ${Math.round(w.usage.temperature)}°C`
+        : "";
+    const t = w.usage.timeMin ?? 0;
     steps.push({
       id: `wp-${w.id}`,
       phase: "whirlpool",
       label: t > 0 ? `Whirlpool ${t} min${temp}` : `Flameout${temp}`,
-      details: `Add ${w.name || "Hop"} — ${Math.round(w.grams)} g`,
+      details: `Add ${w.ingredientRef.id || "Hop"} — ${Math.round(
+        w.amountG
+      )} g`,
       durationSec: t > 0 ? seconds(t) : undefined,
     });
   }
 
   // Chill and transfer
-  const pitchTempC = ctx?.pitchTempC ?? recipe.fermentation?.steps?.[0]?.tempC;
+  const pitchTempC =
+    ctx?.pitchTempC ?? recipe.process.fermentation?.steps?.[0]?.temperatureC;
   const pitchTempF =
     pitchTempC != null ? Math.round((pitchTempC * 9) / 5 + 32) : undefined;
   steps.push({
@@ -300,12 +277,16 @@ function buildBrewSteps(
   steps.push({
     id: `pitch`,
     phase: "fermentation",
-    label: `Pitch yeast${recipe.yeast?.name ? ": " + recipe.yeast.name : ""}`,
+    label: `Pitch yeast${recipe.ingredients.yeast ? "" : ""}`,
   });
-  for (const s of recipe.fermentation?.steps || []) {
-    const days = Math.max(0, s.days || 0);
-    const pressure = s.pressurePsi != null ? ` • ${s.pressurePsi} psi` : "";
-    const details = `${days} days @ ${Math.round(s.tempC)}°C${pressure}`;
+  for (const s of recipe.process.fermentation?.steps || []) {
+    const days = Math.max(0, s.durationDays || 0);
+    const psi =
+      s.pressureKpa != null ? s.pressureKpa * 0.1450377377 : undefined;
+    const pressureDetail = psi != null ? ` • ${psi.toFixed(1)} psi` : "";
+    const details = `${days} days @ ${Math.round(
+      s.temperatureC
+    )}°C${pressureDetail}`;
     steps.push({
       id: `ferm-${s.id}`,
       phase: "fermentation",
@@ -316,20 +297,20 @@ function buildBrewSteps(
 
   // Package (use recipe carbonation data if available, else fallback to BJCP avg)
   const co2Vols = (() => {
-    if (recipe.carbonation?.volumes != null) return recipe.carbonation.volumes;
+    const pack = recipe.process.packaging;
+    if (pack?.carbonation?.co2Volumes != null)
+      return pack.carbonation.co2Volumes;
     const spec = getBjcpStyleSpec(recipe.bjcpStyleCode);
     if (spec?.co2 && spec.co2.length === 2)
       return (spec.co2[0] + spec.co2[1]) / 2;
     return 2.4;
   })();
-  const serveTempF = (() => {
-    if (recipe.carbonation?.tempF != null) return recipe.carbonation.tempF;
-    return 38;
-  })();
   const serveTempC = (() => {
-    if (recipe.carbonation?.tempC != null) return recipe.carbonation.tempC;
-    return Math.round(((serveTempF - 32) * 5) / 9);
+    const pack = recipe.process.packaging;
+    if (pack?.servingTempC != null) return pack.servingTempC;
+    return 3; // default fridge temp C
   })();
+  const serveTempF = Math.round((serveTempC * 9) / 5 + 32);
   const psi = calculatePsiFromTempFAndVolumes(serveTempF, co2Vols);
   steps.push({
     id: `package`,
@@ -352,40 +333,69 @@ export default function BrewMode() {
   const recipes = useRecipeStore((s) => s.recipes);
   const recipe = useMemo(() => recipes.find((r) => r.id === id), [recipes, id]);
 
-  // Call calculations with safe defaults so hooks remain unconditional
-  const grainsCalc = recipe?.grains ?? [];
-  const batchVolumeCalc = recipe?.batchVolumeL ?? 20;
-  const efficiencyCalc = recipe?.efficiencyPct ?? 72;
-  const hopsCalc = recipe?.hops ?? [];
-  const yeastCalc = recipe?.yeast ?? { name: "Yeast" };
-  const mashStepsCalc = recipe?.mash?.steps ?? [];
-  const fermentationStepsCalc = recipe?.fermentation?.steps ?? [];
-  const waterParamsCalc = {
-    mashThicknessLPerKg: recipe?.water?.mashThicknessLPerKg ?? 3,
-    grainAbsorptionLPerKg: recipe?.water?.grainAbsorptionLPerKg ?? 0.8,
-    mashTunDeadspaceL: recipe?.water?.mashTunDeadspaceL ?? 0.5,
-    mashTunCapacityL: recipe?.water?.mashTunCapacityL,
-    boilTimeMin: recipe?.water?.boilTimeMin ?? 60,
-    boilOffRateLPerHour: recipe?.water?.boilOffRateLPerHour ?? 3,
-    coolingShrinkagePercent: recipe?.water?.coolingShrinkagePercent ?? 4,
-    kettleLossL: recipe?.water?.kettleLossL ?? 0.5,
-    chillerLossL: recipe?.water?.chillerLossL ?? 0,
-  } as const;
-  const brewMethodCalc = recipe?.brewMethod ?? "three-vessel";
+  // Compute water volumes based on equipment snapshot and grain bill
+  const { finalMashL, finalSpargeL, preBoilVolumeL } = useMemo(() => {
+    if (!recipe) return { finalMashL: 0, finalSpargeL: 0, preBoilVolumeL: 0 };
+    const eq = recipe.equipment.snapshot;
+    const targetBatchL = recipe.targetProfile.batchVolumeL ?? 20;
+    const totalGrainKg = (recipe.ingredients.fermentables || []).reduce(
+      (sum, f) => sum + Math.max(0, f.amountKg || 0),
+      0
+    );
+    const waterParams = {
+      mashThicknessLPerKg: eq.thermal.mashThicknessLPerKg,
+      grainAbsorptionLPerKg: eq.losses.grainAbsorptionLPerKg,
+      mashTunDeadspaceL: eq.volumes.lauterDeadspaceL ?? 0,
+      mashTunCapacityL: eq.volumes.mashTunVolumeL,
+      boilTimeMin: eq.timing.boilTimeMin,
+      boilOffRateLPerHour: eq.losses.evaporationRateLPerHour,
+      coolingShrinkagePercent: eq.losses.coolingShrinkagePct,
+      kettleLossL: eq.losses.kettleDeadspaceL,
+      chillerLossL: eq.losses.miscLossL,
+    } as const;
+    const preBoil = computePreBoilVolumeL(targetBatchL, waterParams);
+    const mashWater = computeMashWaterL(totalGrainKg, {
+      mashThicknessLPerKg: waterParams.mashThicknessLPerKg,
+      mashTunDeadspaceL: waterParams.mashTunDeadspaceL,
+    });
+    const sparge = computeSpargeWaterL(totalGrainKg, targetBatchL, waterParams);
 
-  const { finalMashL, finalSpargeL, preBoilVolumeL } = useRecipeCalculations({
-    grains: grainsCalc,
-    batchVolumeL: batchVolumeCalc,
-    efficiencyPct: efficiencyCalc,
-    hops: hopsCalc,
-    yeast: yeastCalc,
-    mashSteps: mashStepsCalc,
-    fermentationSteps: fermentationStepsCalc,
-    waterParams: waterParamsCalc,
-    brewMethod: brewMethodCalc,
-    ogAuto: true,
-    fgAuto: true,
-  });
+    let finalMash = mashWater;
+    let finalSparge = sparge;
+    const capacity = waterParams.mashTunCapacityL;
+    const brewMethod = recipe.processSettings.brewMethod;
+    if (brewMethod === "biab-full") {
+      finalMash =
+        preBoil +
+        Math.max(0, waterParams.grainAbsorptionLPerKg) * totalGrainKg +
+        Math.max(0, waterParams.mashTunDeadspaceL);
+      finalSparge = 0;
+      if (capacity && finalMash > capacity) {
+        finalMash = capacity;
+        finalSparge = computeSpargeFromMashUsedL(
+          totalGrainKg,
+          targetBatchL,
+          waterParams,
+          finalMash
+        );
+      }
+    } else {
+      if (capacity && mashWater > capacity) {
+        finalMash = capacity;
+        finalSparge = computeSpargeFromMashUsedL(
+          totalGrainKg,
+          targetBatchL,
+          waterParams,
+          finalMash
+        );
+      }
+    }
+    return {
+      finalMashL: finalMash,
+      finalSpargeL: finalSparge,
+      preBoilVolumeL: preBoil,
+    };
+  }, [recipe]);
 
   const allSteps = useMemo(
     () =>
@@ -394,7 +404,7 @@ export default function BrewMode() {
             mashL: finalMashL,
             spargeL: finalSpargeL,
             preBoilL: preBoilVolumeL,
-            pitchTempC: recipe.fermentation?.steps?.[0]?.tempC,
+            pitchTempC: recipe.process.fermentation?.steps?.[0]?.temperatureC,
           })
         : [],
     [recipe, finalMashL, finalSpargeL, preBoilVolumeL]
