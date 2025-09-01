@@ -14,15 +14,26 @@ function timingAromaFactor(
   type: HopItem["type"],
   timeMin: number,
   dryHopDays?: number,
+  dryHopStartDay?: number,
   whirlpoolTimeMin?: number,
   whirlpoolTempC?: number
 ): number {
   switch (type) {
-    case "dry hop":
+    case "dry hop": {
       if (!dryHopDays || dryHopDays <= 0) return 0.6;
       const t = Math.min(7, dryHopDays);
-      return 0.6 + 0.4 * (1 - Math.exp(-0.6 * t));
-    case "whirlpool":
+      const base = 0.6 + 0.4 * (1 - Math.exp(-0.6 * t));
+      // Start day adjustment (simple model):
+      //  - Early (≤2 days): more CO₂ scrubbing → slight penalty
+      //  - Mid (3–7 days): neutral (best retention)
+      //  - Late (8–14 days): small penalty for staling risk during warm contact
+      //  - Very late (≥15 days): larger penalty
+      const d =
+        typeof dryHopStartDay === "number" ? Math.max(0, dryHopStartDay) : 4;
+      const startAdj = d <= 2 ? 0.9 : d <= 7 ? 1.0 : d <= 14 ? 0.95 : 0.9;
+      return base * startAdj;
+    }
+    case "whirlpool": {
       // Model: base 0.75, boosted by cooler temps and longer steeps (but saturates)
       // colder whirlpool (~75-85C) preserves more oils; hotter (~95C) loses more
       const temp = typeof whirlpoolTempC === "number" ? whirlpoolTempC : 80;
@@ -30,6 +41,7 @@ function timingAromaFactor(
       const tempFactor = 0.6 + 0.4 * Math.max(0, Math.min(1, (95 - temp) / 20)); // 95C->0.6, 75C->1.0
       const timeFactor = 1 - Math.exp(-0.06 * Math.max(0, time)); // saturates ~30 min
       return Math.min(1, 0.5 + 0.5 * tempFactor * timeFactor);
+    }
     case "boil":
       return Math.max(
         0.03,
@@ -47,18 +59,26 @@ function timingAromaFactor(
 function normalizeHopFlavor(
   f: NonNullable<HopItem["flavor"]> | undefined
 ): HopFlavorProfile {
-  const anyf: any = f || {};
+  type FlavorSource = NonNullable<HopItem["flavor"]> & {
+    tropicalFruit?: number;
+    stoneFruit?: number;
+    berry?: number;
+    spice?: number;
+    resinPine?: number;
+    grassy?: number;
+  };
+  const src: Partial<FlavorSource> = f ?? {};
   return {
     ...EMPTY_HOP_FLAVOR,
-    citrus: anyf.citrus ?? 0,
-    floral: anyf.floral ?? 0,
-    tropicalFruit: anyf.tropicalFruit ?? anyf.fruity ?? 0,
-    stoneFruit: anyf.stoneFruit ?? 0,
-    berry: anyf.berry ?? 0,
-    herbal: anyf.herbal ?? 0,
-    spice: anyf.spice ?? anyf.spicy ?? 0,
-    resinPine: anyf.resinPine ?? anyf.piney ?? 0,
-    grassy: anyf.grassy ?? anyf.earthy ?? 0,
+    citrus: src.citrus ?? 0,
+    floral: src.floral ?? 0,
+    tropicalFruit: src.tropicalFruit ?? src.fruity ?? 0,
+    stoneFruit: src.stoneFruit ?? 0,
+    berry: src.berry ?? 0,
+    herbal: src.herbal ?? 0,
+    spice: src.spice ?? src.spicy ?? 0,
+    resinPine: src.resinPine ?? src.piney ?? 0,
+    grassy: src.grassy ?? src.earthy ?? 0,
   };
 }
 
@@ -98,6 +118,7 @@ export function estimateRecipeHopFlavor(
       h.type,
       h.timeMin || 0,
       h.dryHopDays,
+      h.dryHopStartDay,
       h.whirlpoolTimeMin,
       h.whirlpoolTempC
     );
@@ -137,6 +158,7 @@ export function estimatePerHopContributions(
       h.type,
       h.timeMin || 0,
       h.dryHopDays,
+      h.dryHopStartDay,
       h.whirlpoolTimeMin,
       h.whirlpoolTempC
     );
