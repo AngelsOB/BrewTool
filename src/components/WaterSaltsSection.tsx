@@ -4,9 +4,18 @@ import WaterSaltsCalc from "./WaterSaltsCalc";
 export default function WaterSaltsSection({
   mashWaterL,
   spargeWaterL,
+  onChange,
+  initialTotalSalts,
 }: {
   mashWaterL: number;
   spargeWaterL: number;
+  onChange?: (data: {
+    mashSalts: import("../utils/water").SaltAdditions;
+    spargeSalts: import("../utils/water").SaltAdditions;
+    totalSalts: import("../utils/water").SaltAdditions;
+    totalProfile: import("../utils/water").WaterProfile;
+  }) => void;
+  initialTotalSalts?: import("../utils/water").SaltAdditions;
 }) {
   const [compact, setCompact] = useState<boolean>(true);
   return (
@@ -27,6 +36,8 @@ export default function WaterSaltsSection({
         variant="embedded"
         compact={compact}
         onCompactChange={setCompact}
+        onChange={onChange}
+        initialTotalSalts={initialTotalSalts}
       />
     </>
   );

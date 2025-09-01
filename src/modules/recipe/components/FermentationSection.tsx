@@ -1,5 +1,5 @@
 import FermentationPlan from "../../../components/FermentationPlan";
-import type { FermentationStep } from "../../../hooks/useRecipeStore";
+import type { FermentationStep } from "../types";
 
 export default function FermentationSection({
   steps,

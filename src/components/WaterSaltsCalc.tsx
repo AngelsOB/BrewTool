@@ -108,12 +108,21 @@ export default function WaterSaltsCalc({
   variant = "card",
   compact: compactProp,
   onCompactChange,
+  onChange,
+  initialTotalSalts,
 }: {
   mashWaterL?: number;
   spargeWaterL?: number;
   variant?: "card" | "embedded";
   compact?: boolean;
   onCompactChange?: (value: boolean) => void;
+  onChange?: (data: {
+    mashSalts: SaltAdditions;
+    spargeSalts: SaltAdditions;
+    totalSalts: SaltAdditions;
+    totalProfile: WaterProfile;
+  }) => void;
+  initialTotalSalts?: SaltAdditions;
 }) {
   const [localCompact, setLocalCompact] = useState<boolean>(false);
   const [sourceProfileName, setSourceProfileName] = useState<string>("RO");
@@ -300,6 +309,63 @@ export default function WaterSaltsCalc({
   useEffect(() => {
     if (compact) setAdditionsMode("single");
   }, [compact]);
+
+  // Emit changes upwards
+  useEffect(() => {
+    if (!onChange) return;
+    const sum = (a?: number, b?: number) => (a ?? 0) + (b ?? 0);
+    const total: SaltAdditions =
+      additionsMode === "single"
+        ? {
+            gypsum_g: singleSalts.gypsum_g ?? 0,
+            cacl2_g: singleSalts.cacl2_g ?? 0,
+            epsom_g: singleSalts.epsom_g ?? 0,
+            nacl_g: singleSalts.nacl_g ?? 0,
+            nahco3_g: singleSalts.nahco3_g ?? 0,
+          }
+        : {
+            gypsum_g: sum(mashSalts.gypsum_g, spargeSalts.gypsum_g),
+            cacl2_g: sum(mashSalts.cacl2_g, spargeSalts.cacl2_g),
+            epsom_g: sum(mashSalts.epsom_g, spargeSalts.epsom_g),
+            nacl_g: sum(mashSalts.nacl_g, spargeSalts.nacl_g),
+            nahco3_g: sum(mashSalts.nahco3_g, spargeSalts.nahco3_g),
+          };
+    onChange({
+      mashSalts: computedMashSalts,
+      spargeSalts: computedSpargeSalts,
+      totalSalts: total,
+      totalProfile,
+    });
+  }, [
+    onChange,
+    additionsMode,
+    singleSalts.gypsum_g,
+    singleSalts.cacl2_g,
+    singleSalts.epsom_g,
+    singleSalts.nacl_g,
+    singleSalts.nahco3_g,
+    mashSalts.gypsum_g,
+    mashSalts.cacl2_g,
+    mashSalts.epsom_g,
+    mashSalts.nacl_g,
+    mashSalts.nahco3_g,
+    spargeSalts.gypsum_g,
+    spargeSalts.cacl2_g,
+    spargeSalts.epsom_g,
+    spargeSalts.nacl_g,
+    spargeSalts.nahco3_g,
+    totalProfile,
+  ]);
+
+  // Hydrate salts when a recipe provides saved totals; clear when undefined
+  useEffect(() => {
+    if (initialTotalSalts) {
+      setAdditionsMode("single");
+      setSingleSalts({ ...initialTotalSalts });
+    } else {
+      setSingleSalts({});
+    }
+  }, [initialTotalSalts]);
 
   const content = (
     <>

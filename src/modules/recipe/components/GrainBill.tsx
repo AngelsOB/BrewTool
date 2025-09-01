@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import InputWithSuffix from "../../../components/InputWithSuffix";
-import type { GrainItem } from "../../../hooks/useRecipeStore";
+import type { GrainItem } from "../types";
 import { addCustomGrain, getGrainPresets } from "../../../utils/presets";
 
 export function GrainBill({

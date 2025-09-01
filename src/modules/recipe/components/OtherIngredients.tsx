@@ -1,10 +1,7 @@
 import { useRef } from "react";
 import AutoWidthUnitSelect from "../../../components/AutoWidthUnitSelect";
 import InputWithSuffix from "../../../components/InputWithSuffix";
-import type {
-  OtherIngredient,
-  OtherIngredientCategory,
-} from "../../../hooks/useRecipeStore";
+import type { OtherIngredient, OtherIngredientCategory } from "../types";
 
 export default function OtherIngredients({
   items,

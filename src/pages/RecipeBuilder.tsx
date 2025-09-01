@@ -1,24 +1,456 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Collapsible from "../components/Collapsible";
-import {
-  useRecipeStore,
-  type GrainItem,
-  type HopItem,
-  type YeastItem,
-  type FermentationStep,
-  type MashStep,
-  type OtherIngredient,
-  type OtherIngredientCategory,
-} from "../hooks/useRecipeStore";
+import { useRecipeStore } from "../hooks/useRecipeStore";
+import type {
+  GrainItem,
+  HopItem,
+  YeastItem,
+  FermentationStep,
+  MashStep,
+  OtherIngredient,
+  OtherIngredientCategory,
+} from "../modules/recipe/types";
 import { type WaterParams } from "../utils/calculations";
 // per-hop IBU calc handled inside HopSchedule; keep total calc in hook
 import FermentationSection from "../modules/recipe/components/FermentationSection";
 import { getOtherIngredientPresets } from "../utils/presets";
-import type { Recipe } from "../hooks/useRecipeStore";
+import type {
+  Recipe,
+  FermentableAddition,
+  HopAddition,
+  YeastAddition,
+  OtherAddition,
+  MashProfile,
+  FermentationSchedule,
+  EquipmentProfile,
+} from "../types/recipe";
+
+function defaultEquipmentFromUI(params: {
+  mashThicknessLPerKg: number;
+  grainAbsorptionLPerKg: number;
+  mashTunDeadspaceL: number;
+  boilTimeMin: number;
+  boilOffRateLPerHour: number;
+  coolingShrinkagePercent: number;
+  kettleLossL: number;
+  brewMethod: "three-vessel" | "biab-full" | "biab-sparge";
+}): EquipmentProfile {
+  return {
+    id: "default",
+    name: "Default Equipment",
+    type: "all-grain",
+    volumes: {
+      batchVolumeL: 20,
+      boilVolumeL: 25,
+      fermenterVolumeL: 23,
+      mashTunVolumeL: 30,
+      kettleDeadspaceL: params.mashTunDeadspaceL,
+      lauterDeadspaceL: 0,
+    },
+    efficiency: {
+      mashEfficiencyPct: 75,
+      brewHouseEfficiencyPct: 70,
+    },
+    losses: {
+      evaporationRateLPerHour: params.boilOffRateLPerHour,
+      kettleDeadspaceL: params.kettleLossL,
+      grainAbsorptionLPerKg: params.grainAbsorptionLPerKg,
+      hopsAbsorptionLPerKg: 0.7,
+      coolingShrinkagePct: params.coolingShrinkagePercent,
+      miscLossL: 0.5,
+      fermenterLossL: 1,
+    },
+    thermal: {
+      mashTunTempLossPerHour: 1,
+      grainTempC: 20,
+      mashThicknessLPerKg: params.mashThicknessLPerKg,
+    },
+    timing: {
+      boilTimeMin: params.boilTimeMin,
+      mashTimeMin: 60,
+    },
+    calibration: {
+      hydrometerOffsetPoints: 0,
+      wortCorrectionFactor: 1,
+      hopUtilizationFactor: 1,
+    },
+    equipment: {},
+  };
+}
+
+function mapGrainsToRecipe(grains: GrainItem[]): FermentableAddition[] {
+  return grains.map((g) => ({
+    id: g.id,
+    ingredientRef: { type: "custom", id: g.name || "" },
+    amountKg: g.weightKg,
+    usage: {
+      timing: g.type === "extract" || g.type === "sugar" ? "boil" : "mash",
+    },
+    overrides: {
+      colorLovibond: g.colorLovibond,
+      potentialGu: g.potentialGu,
+      fermentability: g.fermentability,
+    },
+  }));
+}
+
+function mapHopsToRecipe(hops: HopItem[]): HopAddition[] {
+  return hops.map((h) => ({
+    id: h.id,
+    ingredientRef: { type: "custom", id: h.name || "" },
+    amountG: h.grams,
+    usage: {
+      timing:
+        h.type === "first wort"
+          ? "first-wort"
+          : (h.type.replace(" ", "-") as HopAddition["usage"]["timing"]),
+      timeMin:
+        h.timeMin ?? (h.type === "dry hop" ? (h.dryHopDays ?? 3) * 24 * 60 : 0),
+      temperature: h.whirlpoolTempC,
+      stage:
+        h.type === "dry hop"
+          ? h.dryHopStage === "keg"
+            ? "keg"
+            : h.dryHopStage === "post-fermentation"
+            ? "secondary"
+            : "primary"
+          : undefined,
+    },
+    overrides: { alphaAcidPct: h.alphaAcidPercent },
+  }));
+}
+
+function mapOthersToRecipe(items: OtherIngredient[]): OtherAddition[] {
+  return items.map((o) => ({
+    id: o.id,
+    ingredientRef: { type: "custom", id: o.name || "" },
+    amount: o.amount,
+    unit: o.unit,
+    timing:
+      o.timing === "kegging" || o.timing === "bottling"
+        ? "packaging"
+        : (o.timing as OtherAddition["timing"]),
+    notes: o.notes,
+  }));
+}
+
+function buildRecipe(params: {
+  id: string;
+  name: string;
+  createdAt?: string;
+  bjcpStyleCode?: string;
+  batchVolumeL: number;
+  efficiencyPct: number;
+  ogUsed: number;
+  fgUsed: number;
+  abv: number;
+  ibu: number;
+  srm: number;
+  grains: GrainItem[];
+  hops: HopItem[];
+  yeast: YeastItem;
+  mashSteps: MashStep[];
+  fermentationSteps: FermentationStep[];
+  waterParams: WaterParams;
+  finalMashL: number;
+  finalSpargeL: number;
+  preBoilVolumeL: number;
+  brewMethod: "three-vessel" | "biab-full" | "biab-sparge";
+  otherIngredients: OtherIngredient[];
+  carbonationVolumes?: number;
+  servingTempC?: number;
+}): Recipe {
+  const now = new Date().toISOString();
+  const equipmentSnapshot = defaultEquipmentFromUI({
+    mashThicknessLPerKg: params.waterParams.mashThicknessLPerKg ?? 3,
+    grainAbsorptionLPerKg: params.waterParams.grainAbsorptionLPerKg ?? 0.8,
+    mashTunDeadspaceL: params.waterParams.mashTunDeadspaceL ?? 0.5,
+    boilTimeMin: params.waterParams.boilTimeMin ?? 60,
+    boilOffRateLPerHour: params.waterParams.boilOffRateLPerHour ?? 3,
+    coolingShrinkagePercent: params.waterParams.coolingShrinkagePercent ?? 4,
+    kettleLossL: params.waterParams.kettleLossL ?? 0.5,
+    brewMethod: params.brewMethod,
+  });
+  const mashProfile: MashProfile = {
+    method: params.mashSteps.length > 1 ? "step-mash" : "single-infusion",
+    steps: params.mashSteps.map((s) => ({
+      id: s.id,
+      name: undefined,
+      type:
+        s.type === "ramp"
+          ? "temperature"
+          : s.type === "infusion"
+          ? "infusion"
+          : "decoction",
+      targetTempC: s.tempC,
+      timeMin: s.timeMin,
+    })),
+    grainAbsorptionLPerKg: params.waterParams.grainAbsorptionLPerKg,
+    mashTunDeadSpaceL: params.waterParams.mashTunDeadspaceL,
+  };
+  const fermSchedule: FermentationSchedule = {
+    steps: params.fermentationSteps.map((s) => ({
+      id: s.id,
+      name: s.stage,
+      stage:
+        s.stage === "cold-crash"
+          ? "cold-crash"
+          : s.stage === "primary"
+          ? "primary"
+          : s.stage === "secondary"
+          ? "secondary"
+          : "conditioning",
+      temperatureC: s.tempC,
+      durationDays: s.days,
+      pressureKpa: s.pressurePsi != null ? s.pressurePsi * 6.89476 : undefined,
+      notes: s.notes,
+    })),
+    estimatedDays: params.fermentationSteps.reduce((acc, s) => acc + s.days, 0),
+  };
+  const recipe: Recipe = {
+    id: params.id,
+    name: params.name,
+    createdAt: params.createdAt ?? now,
+    updatedAt: now,
+    version: 1,
+    bjcpStyleCode: params.bjcpStyleCode,
+    targetProfile: {
+      batchVolumeL: params.batchVolumeL,
+      originalGravity: params.ogUsed,
+      finalGravity: params.fgUsed,
+      abv: params.abv,
+      ibu: params.ibu,
+      srm: params.srm,
+    },
+    equipment: {
+      profileId: equipmentSnapshot.id,
+      snapshotAt: now,
+      snapshot: equipmentSnapshot,
+    },
+    processSettings: {
+      mashEfficiencyPct: params.efficiencyPct,
+      ibuCalculationMethod: "tinseth",
+      colorCalculationMethod: "morey",
+      hopUtilizationFactor: 1,
+      brewMethod: params.brewMethod,
+    },
+    ingredients: {
+      fermentables: mapGrainsToRecipe(params.grains),
+      hops: mapHopsToRecipe(params.hops),
+      yeast: {
+        ingredientRef: { type: "custom", id: params.yeast.name },
+        form: "dry",
+        quantity: {},
+        starter: undefined,
+        overrides:
+          params.yeast.attenuationPercent != null
+            ? {
+                attenuationPct: Math.round(
+                  params.yeast.attenuationPercent * 100
+                ),
+              }
+            : undefined,
+      } as YeastAddition,
+      other: mapOthersToRecipe(params.otherIngredients),
+    },
+    process: {
+      mash: mashProfile,
+      fermentation: fermSchedule,
+      packaging:
+        params.carbonationVolumes != null || params.servingTempC != null
+          ? {
+              method: "keg",
+              carbonation: {
+                co2Volumes: params.carbonationVolumes ?? 0,
+                method: "forced",
+              },
+              servingTempC: params.servingTempC,
+            }
+          : undefined,
+    },
+    preferences: {
+      displayUnits: "metric",
+      preferredIbuMethod: "tinseth",
+      preferredColorMethod: "morey",
+      sugarScale: "sg",
+    },
+    brewSessions: [],
+    calculated: {
+      originalGravity: params.ogUsed,
+      finalGravity: params.fgUsed,
+      abv: params.abv,
+      ibuTinseth: params.ibu,
+      ibuRager: params.ibu,
+      ibuGaretz: params.ibu,
+      srmMorey: params.srm,
+      srmDaniels: params.srm,
+      srmMosher: params.srm,
+      preboilVolumeL: params.preBoilVolumeL,
+      postboilVolumeL: params.batchVolumeL,
+      mashWaterL: params.finalMashL,
+      spargeWaterL: params.finalSpargeL,
+      totalWaterL: (params.finalMashL || 0) + (params.finalSpargeL || 0),
+      calories: 0,
+      realExtract: 0,
+      apparentAttenuation: 0,
+      lastCalculated: now,
+    },
+  };
+
+  return recipe;
+}
+
+// v2 -> UI mapping helpers
+function mapFermentablesToUI(xs: FermentableAddition[]): GrainItem[] {
+  return xs.map((f) => ({
+    id: f.id,
+    name: f.ingredientRef.id,
+    weightKg: f.amountKg,
+    colorLovibond: f.overrides?.colorLovibond ?? 2,
+    potentialGu: f.overrides?.potentialGu ?? 34,
+    type: f.usage.timing === "boil" ? "extract" : "grain",
+    fermentability: f.overrides?.fermentability,
+  }));
+}
+
+function mapHopsToUI(xs: HopAddition[]): HopItem[] {
+  const toTiming = (t: HopAddition["usage"]["timing"]): HopItem["type"] => {
+    switch (t) {
+      case "first-wort":
+        return "first wort";
+      case "dry-hop":
+        return "dry hop";
+      case "boil":
+        return "boil";
+      case "whirlpool":
+        return "whirlpool";
+      case "mash":
+        return "mash";
+    }
+  };
+  return xs.map((h) => ({
+    id: h.id,
+    name: h.ingredientRef.id,
+    grams: h.amountG,
+    alphaAcidPercent: h.overrides?.alphaAcidPct ?? 10,
+    timeMin:
+      h.usage.timing === "dry-hop"
+        ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
+        : h.usage.timeMin ?? 0,
+    type: toTiming(h.usage.timing),
+    dryHopStage:
+      h.usage.timing === "dry-hop"
+        ? h.usage.stage === "keg"
+          ? "keg"
+          : h.usage.stage === "secondary"
+          ? "post-fermentation"
+          : "primary"
+        : undefined,
+    dryHopDays:
+      h.usage.timing === "dry-hop"
+        ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
+        : undefined,
+    whirlpoolTempC: h.usage.temperature,
+    whirlpoolTimeMin:
+      h.usage.timing === "whirlpool" ? h.usage.timeMin : undefined,
+  }));
+}
+
+function mapOthersToUI(xs: OtherAddition[]): OtherIngredient[] {
+  const toTiming = (t: OtherAddition["timing"]): OtherIngredient["timing"] => {
+    switch (t) {
+      case "mash":
+        return "mash";
+      case "boil":
+        return "boil";
+      case "whirlpool":
+        return "whirlpool";
+      case "primary":
+        return "secondary";
+      case "secondary":
+        return "secondary";
+      case "packaging":
+        return "bottling";
+    }
+  };
+  return xs.map((o) => ({
+    id: o.id,
+    name: o.ingredientRef.id,
+    category: "other",
+    amount: o.amount,
+    unit: o.unit,
+    timing: toTiming(o.timing),
+    notes: o.notes,
+  }));
+}
+
+// Yeast starter mapping between UI export shape and canonical YeastStarter
+function mapYeastStarterExportToCanonical(starter: any | null | undefined) {
+  if (!starter) return undefined;
+  const steps = Array.isArray(starter.steps)
+    ? starter.steps.map((s: any) => ({
+        id: s.id,
+        volumeL: typeof s.liters === "number" ? s.liters : 0,
+        gravityPoints:
+          typeof s.gravity === "number" && s.gravity > 1
+            ? Math.round((s.gravity - 1) * 1000)
+            : 0,
+        timeHours: 0,
+        temperature: 0,
+        agitation:
+          s?.model?.kind === "white"
+            ? s?.model?.aeration === "shaking"
+              ? "shaking"
+              : "none"
+            : "stir-plate",
+      }))
+    : [];
+  return {
+    steps,
+    totalVolumeL:
+      typeof starter.totalStarterL === "number" ? starter.totalStarterL : 0,
+    totalDmeG: typeof starter.totalDmeG === "number" ? starter.totalDmeG : 0,
+    estimatedViableCells:
+      typeof starter.finalEndB === "number" ? starter.finalEndB : 0,
+  };
+}
+
+function mapCanonicalStarterToYeastPitchInitial(
+  starter: any | null | undefined
+) {
+  if (!starter) return null;
+  const steps = Array.isArray(starter.steps)
+    ? starter.steps.map((s: any) => ({
+        id: s.id,
+        liters: s.volumeL ?? 0,
+        gravity:
+          typeof s.gravityPoints === "number"
+            ? 1 + s.gravityPoints / 1000
+            : 1.04,
+        model: { kind: "braukaiser" },
+        dmeGrams: 0,
+        endBillion: 0,
+      }))
+    : [];
+  return {
+    yeastType: "liquid-100" as const,
+    packs: 1,
+    mfgDate: "",
+    slurryLiters: 0,
+    slurryBillionPerMl: 0,
+    steps,
+    requiredCellsB: 0,
+    cellsAvailableB: 0,
+    finalEndB: starter.estimatedViableCells ?? 0,
+    totalStarterL: starter.totalVolumeL ?? 0,
+    totalDmeG: starter.totalDmeG ?? 0,
+  };
+}
 import { findBjcpStyleByCode } from "../utils/bjcp";
 import { getBjcpStyleSpec } from "../utils/bjcpSpecs";
 import WaterSaltsSection from "../components/WaterSaltsSection";
+import type { SaltAdditions, WaterProfile } from "../utils/water";
 import StyleRangeBars from "../components/StyleRangeBars";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import GrainBill from "../modules/recipe/components/GrainBill";
@@ -117,6 +549,23 @@ export default function RecipeBuilder() {
   const [coolingShrinkagePercent, setCoolingShrinkagePercent] = useState(4);
   const [kettleLossL, setKettleLossL] = useState(0.5);
   const [chillerLossL, setChillerLossL] = useState(0);
+  // Water treatment capture for persistence
+  const [waterTreatment, setWaterTreatment] = useState<{
+    mashSalts: SaltAdditions;
+    spargeSalts: SaltAdditions;
+    totalSalts: SaltAdditions;
+    totalProfile: WaterProfile;
+  } | null>(null);
+  // UI hydration source for salts on load (avoid relying on async id/recipes lookup)
+  const [waterInitialSalts, setWaterInitialSalts] = useState<
+    import("../utils/water").SaltAdditions | undefined
+  >(undefined);
+  const waterTreatmentRef = useRef<{
+    mashSalts: SaltAdditions;
+    spargeSalts: SaltAdditions;
+    totalSalts: SaltAdditions;
+    totalProfile: WaterProfile;
+  } | null>(null);
   // Carbonation calculator state for export
   const [carbUnit, setCarbUnit] = useState<"metric" | "us">("metric");
   const [carbVolumes, setCarbVolumes] = useState<number>(2.2);
@@ -379,6 +828,8 @@ export default function RecipeBuilder() {
     return () => document.removeEventListener("click", onDocClick);
   }, [showSaveMenu]);
 
+  // (no autoload; load only on selection)
+
   // Close delete menu on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -460,69 +911,285 @@ export default function RecipeBuilder() {
   };
 
   const loadRecipe = (r: Recipe) => {
-    setCurrentRecipeId(r.id);
-    setName(r.name || "Untitled");
-    setBjcpStyleCode(r.bjcpStyleCode || "");
-    setBatchVolumeL(r.batchVolumeL);
-    if (r.efficiencyPct != null) setEfficiencyPct(r.efficiencyPct);
-    setGrains(
-      (r.grains && r.grains.length ? r.grains : []).map((g) => ({ ...g }))
+    if (!r) return;
+    // Clear transient per-recipe UI state that shouldn't leak between loads
+    setWaterTreatment(null);
+    const rr = r as unknown as {
+      id: string;
+      name?: string;
+      bjcpStyleCode?: string;
+      targetProfile?: { batchVolumeL?: number };
+      processSettings?: {
+        mashEfficiencyPct?: number;
+        brewMethod?: "three-vessel" | "biab-full" | "biab-sparge" | "extract";
+      };
+      ingredients?: {
+        fermentables?: FermentableAddition[];
+        hops?: HopAddition[];
+        yeast?: {
+          ingredientRef?: { id?: string };
+          overrides?: { attenuationPct?: number };
+        };
+        other?: OtherAddition[];
+      };
+      process?: {
+        mash?: {
+          steps?: Array<{
+            id: string;
+            type: "infusion" | "temperature" | "decoction";
+            targetTempC: number;
+            timeMin: number;
+          }>;
+        };
+        fermentation?: {
+          steps?: Array<{
+            id: string;
+            stage: string;
+            temperatureC: number;
+            durationDays: number;
+            pressureKpa?: number;
+            notes?: string;
+          }>;
+        };
+        packaging?: {
+          carbonation?: { co2Volumes?: number };
+          servingTempC?: number;
+        };
+      };
+      equipment?: {
+        snapshot?: {
+          thermal?: { mashThicknessLPerKg?: number };
+          losses?: {
+            grainAbsorptionLPerKg?: number;
+            evaporationRateLPerHour?: number;
+            coolingShrinkagePct?: number;
+            kettleDeadspaceL?: number;
+          };
+          volumes?: { kettleDeadspaceL?: number; mashTunVolumeL?: number };
+          timing?: { boilTimeMin?: number };
+        };
+      };
+      // legacy
+      batchVolumeL?: number;
+      efficiencyPct?: number;
+      grains?: any[];
+      hops?: any[];
+      yeast?: any;
+      others?: any[];
+      mash?: { steps?: MashStep[] };
+      fermentation?: { steps?: FermentationStep[] };
+      water?: Partial<WaterParams> & { chillerLossL?: number };
+      targetOG?: number;
+      targetFG?: number;
+      brewMethod?: "three-vessel" | "biab-full" | "biab-sparge";
+      yeastStarter?: any;
+    };
+    setCurrentRecipeId(rr.id);
+    setName(rr.name || "Untitled");
+    setBjcpStyleCode(rr.bjcpStyleCode || "");
+
+    const isCanonical = !!(
+      rr.targetProfile &&
+      rr.processSettings &&
+      rr.ingredients
     );
-    setHops((r.hops && r.hops.length ? r.hops : []).map((h) => ({ ...h })));
-    setYeast(
-      r.yeast
-        ? { ...r.yeast }
-        : { name: "SafAle US-05", attenuationPercent: 0.78 }
-    );
-    setOtherIngredients(
-      (r.others && r.others.length ? r.others : []).map((x) => ({ ...x }))
-    );
-    const steps: MashStep[] =
-      r.mash?.steps && r.mash.steps.length
-        ? (r.mash.steps as MashStep[])
-        : [
-            {
-              id: crypto.randomUUID(),
-              type: "infusion",
-              tempC: 66,
-              timeMin: 60,
-            },
-          ];
-    setMashSteps(steps);
-    const ferm: FermentationStep[] =
-      r.fermentation?.steps && r.fermentation.steps.length
-        ? (r.fermentation.steps as FermentationStep[])
-        : [{ id: crypto.randomUUID(), stage: "primary", tempC: 20, days: 10 }];
-    setFermentationSteps(ferm);
-    // Water
-    setMashThicknessLPerKg(r.water?.mashThicknessLPerKg ?? 3);
-    setGrainAbsorptionLPerKg(r.water?.grainAbsorptionLPerKg ?? 0.8);
-    setMashTunDeadspaceL(r.water?.mashTunDeadspaceL ?? 0.5);
-    setMashTunCapacityL(r.water?.mashTunCapacityL);
-    setBoilTimeMin(r.water?.boilTimeMin ?? 60);
-    setBoilOffRateLPerHour(r.water?.boilOffRateLPerHour ?? 3);
-    setCoolingShrinkagePercent(r.water?.coolingShrinkagePercent ?? 4);
-    setKettleLossL(r.water?.kettleLossL ?? 0.5);
-    setChillerLossL(r.water?.chillerLossL ?? 0);
-    setBrewMethod(r.brewMethod ?? "three-vessel");
-    // Yeast starter snapshot (for hydration of calculator)
-    setYeastStarterExport(r.yeastStarter ?? null);
-    setYeastStarterInitial(r.yeastStarter ?? null);
-    // OG/FG
-    if (r.targetOG != null) {
-      setOgAuto(false);
-      setActualOg(r.targetOG);
+    if (isCanonical) {
+      setBatchVolumeL(rr.targetProfile?.batchVolumeL ?? 20);
+      setEfficiencyPct(rr.processSettings?.mashEfficiencyPct ?? 72);
+      setGrains(mapFermentablesToUI(rr.ingredients?.fermentables ?? []));
+      setHops(mapHopsToUI(rr.ingredients?.hops ?? []));
+      setYeast({
+        name: rr.ingredients?.yeast?.ingredientRef?.id || "",
+        attenuationPercent:
+          rr.ingredients?.yeast?.overrides?.attenuationPct != null
+            ? rr.ingredients.yeast.overrides.attenuationPct / 100
+            : undefined,
+      });
+      setOtherIngredients(mapOthersToUI(rr.ingredients?.other ?? []));
+      // Yeast starter hydration (canonical → YeastPitchCalc initial state)
+      const starterCanonical = (rr.ingredients as any)?.yeast?.starter;
+      const starterInit =
+        mapCanonicalStarterToYeastPitchInitial(starterCanonical);
+      setYeastStarterExport(starterInit);
+      setYeastStarterInitial(starterInit);
+
+      // Water salts: seed session state from recipe to ensure Save writes current UI
+      const waterCanonical = (rr.ingredients as any)?.water;
+      if (waterCanonical?.salts) {
+        const totalSalts: import("../utils/water").SaltAdditions = {
+          gypsum_g: waterCanonical.salts.gypsumG ?? 0,
+          cacl2_g: waterCanonical.salts.calciumChlorideG ?? 0,
+          epsom_g: waterCanonical.salts.epsomSaltG ?? 0,
+          nacl_g: waterCanonical.salts.tableSaltG ?? 0,
+          nahco3_g: waterCanonical.salts.bakingSodaG ?? 0,
+        };
+        setWaterTreatment({
+          mashSalts: {},
+          spargeSalts: {},
+          totalSalts,
+          totalProfile:
+            (waterCanonical.resultingProfile as import("../utils/water").WaterProfile) ||
+            ({
+              Ca: 0,
+              Mg: 0,
+              Na: 0,
+              Cl: 0,
+              SO4: 0,
+              HCO3: 0,
+            } as import("../utils/water").WaterProfile),
+        });
+        setWaterInitialSalts(totalSalts);
+        waterTreatmentRef.current = {
+          mashSalts: {},
+          spargeSalts: {},
+          totalSalts,
+          totalProfile:
+            (waterCanonical.resultingProfile as import("../utils/water").WaterProfile) ||
+            ({
+              Ca: 0,
+              Mg: 0,
+              Na: 0,
+              Cl: 0,
+              SO4: 0,
+              HCO3: 0,
+            } as import("../utils/water").WaterProfile),
+        };
+      } else {
+        setWaterTreatment(null);
+        setWaterInitialSalts(undefined);
+        waterTreatmentRef.current = null;
+      }
+
+      const steps: MashStep[] = (rr.process?.mash?.steps ?? []).map((s) => ({
+        id: s.id,
+        type:
+          s.type === "temperature"
+            ? "ramp"
+            : s.type === "infusion"
+            ? "infusion"
+            : "decoction",
+        tempC: s.targetTempC,
+        timeMin: s.timeMin,
+      }));
+      setMashSteps(
+        steps.length
+          ? steps
+          : [
+              {
+                id: crypto.randomUUID(),
+                type: "infusion",
+                tempC: 66,
+                timeMin: 60,
+              },
+            ]
+      );
+
+      const ferm: FermentationStep[] = (
+        rr.process?.fermentation?.steps ?? []
+      ).map((s) => ({
+        id: s.id,
+        stage:
+          s.stage === "primary" || s.stage === "secondary"
+            ? s.stage
+            : s.stage === "cold-crash"
+            ? "cold-crash"
+            : "conditioning",
+        tempC: s.temperatureC,
+        days: s.durationDays,
+        pressurePsi:
+          s.pressureKpa != null ? s.pressureKpa / 6.89476 : undefined,
+        notes: s.notes,
+      }));
+      setFermentationSteps(
+        ferm.length
+          ? ferm
+          : [{ id: crypto.randomUUID(), stage: "primary", tempC: 20, days: 10 }]
+      );
+
+      // Water from equipment snapshot (guarded)
+      const eq = rr.equipment?.snapshot;
+      if (eq) {
+        setMashThicknessLPerKg(eq.thermal?.mashThicknessLPerKg ?? 3);
+        setGrainAbsorptionLPerKg(eq.losses?.grainAbsorptionLPerKg ?? 0.8);
+        setMashTunDeadspaceL(eq.volumes?.kettleDeadspaceL ?? 0.5);
+        setMashTunCapacityL(eq.volumes?.mashTunVolumeL);
+        setBoilTimeMin(eq.timing?.boilTimeMin ?? 60);
+        setBoilOffRateLPerHour(eq.losses?.evaporationRateLPerHour ?? 3);
+        setCoolingShrinkagePercent(eq.losses?.coolingShrinkagePct ?? 4);
+        setKettleLossL(eq.losses?.kettleDeadspaceL ?? 0.5);
+      }
+      setChillerLossL(0);
+      setBrewMethod(
+        rr.processSettings?.brewMethod === "extract"
+          ? "three-vessel"
+          : rr.processSettings?.brewMethod ?? "three-vessel"
+      );
+
+      // Carbonation
+      const carb = rr.process?.packaging?.carbonation;
+      if (carb) {
+        if (typeof carb.co2Volumes === "number")
+          setCarbVolumes(carb.co2Volumes);
+        if (typeof rr.process?.packaging?.servingTempC === "number") {
+          setCarbTempC(rr.process.packaging.servingTempC);
+          const f = cToF(rr.process.packaging.servingTempC);
+          if (typeof f === "number") setCarbTempF(f);
+        }
+        setCarbUnit("metric");
+      }
     } else {
-      setOgAuto(true);
-      setActualOg(undefined);
+      // Legacy alpha fallback
+      setBatchVolumeL(rr.batchVolumeL ?? 20);
+      if (rr.efficiencyPct != null) setEfficiencyPct(rr.efficiencyPct);
+      setGrains((rr.grains ?? []).map((g) => ({ ...g })) as any);
+      setHops((rr.hops ?? []).map((h) => ({ ...h })) as any);
+      setYeast(
+        rr.yeast
+          ? { ...rr.yeast }
+          : { name: "SafAle US-05", attenuationPercent: 0.78 }
+      );
+      setOtherIngredients((rr.others ?? []).map((x: any) => ({ ...x })));
+      const steps: MashStep[] = (rr.mash?.steps ?? [
+        { id: crypto.randomUUID(), type: "infusion", tempC: 66, timeMin: 60 },
+      ]) as MashStep[];
+      setMashSteps(steps);
+      const ferm: FermentationStep[] = (rr.fermentation?.steps ?? [
+        { id: crypto.randomUUID(), stage: "primary", tempC: 20, days: 10 },
+      ]) as FermentationStep[];
+      setFermentationSteps(ferm);
+      setMashThicknessLPerKg(rr.water?.mashThicknessLPerKg ?? 3);
+      setGrainAbsorptionLPerKg(rr.water?.grainAbsorptionLPerKg ?? 0.8);
+      setMashTunDeadspaceL(rr.water?.mashTunDeadspaceL ?? 0.5);
+      setMashTunCapacityL(rr.water?.mashTunCapacityL);
+      setBoilTimeMin(rr.water?.boilTimeMin ?? 60);
+      setBoilOffRateLPerHour(rr.water?.boilOffRateLPerHour ?? 3);
+      setCoolingShrinkagePercent(rr.water?.coolingShrinkagePercent ?? 4);
+      setKettleLossL(rr.water?.kettleLossL ?? 0.5);
+      setChillerLossL(rr.water?.chillerLossL ?? 0);
+      setBrewMethod(rr.brewMethod ?? "three-vessel");
+      setYeastStarterExport(rr.yeastStarter ?? null);
+      setYeastStarterInitial(rr.yeastStarter ?? null);
+      if (rr.targetOG != null) {
+        setOgAuto(false);
+        setActualOg(rr.targetOG);
+      } else {
+        setOgAuto(true);
+        setActualOg(undefined);
+      }
+      if (rr.targetFG != null) {
+        setFgAuto(false);
+        setActualFg(rr.targetFG);
+      } else {
+        setFgAuto(true);
+        setActualFg(undefined);
+      }
     }
-    if (r.targetFG != null) {
-      setFgAuto(false);
-      setActualFg(r.targetFG);
-    } else {
-      setFgAuto(true);
-      setActualFg(undefined);
-    }
+
+    // Reset OG/FG to auto by default after load
+    setOgAuto(true);
+    setActualOg(undefined);
+    setFgAuto(true);
+    setActualFg(undefined);
   };
 
   const getUniqueRecipeName = (proposedRaw: string): string => {
@@ -1118,30 +1785,51 @@ export default function RecipeBuilder() {
                 } else {
                   // Save brand new
                   const id = crypto.randomUUID();
-                  const recipe: Recipe = {
+                  const recipe: Recipe = buildRecipe({
                     id,
                     name: getUniqueRecipeName(name),
-                    createdAt: new Date().toISOString(),
                     bjcpStyleCode: bjcpStyleCode || undefined,
                     batchVolumeL,
                     efficiencyPct,
-                    targetOG: ogAuto ? undefined : actualOg ?? ogUsed,
-                    targetFG: fgAuto ? undefined : actualFg ?? fgUsed,
+                    ogUsed,
+                    fgUsed,
+                    abv,
+                    ibu,
+                    srm,
                     grains,
                     hops,
-                    others: otherIngredients,
                     yeast,
-                    yeastStarter: yeastStarterExport || undefined,
-                    mash: { steps: mashSteps },
-                    fermentation: { steps: fermentationSteps },
-                    water: {
-                      ...waterParams,
-                      mashWaterL: finalMashL,
-                      spargeWaterL: finalSpargeL,
-                      preBoilVolumeL,
-                    },
+                    mashSteps,
+                    fermentationSteps,
+                    waterParams,
+                    finalMashL: finalMashL ?? 0,
+                    finalSpargeL: finalSpargeL ?? 0,
+                    preBoilVolumeL: preBoilVolumeL ?? 0,
                     brewMethod,
-                  };
+                    otherIngredients,
+                    carbonationVolumes: carbVolumes,
+                    servingTempC: carbTempC,
+                  });
+                  // Attach latest yeast starter (if present)
+                  if (yeastStarterExport) {
+                    (recipe.ingredients.yeast as any).starter =
+                      mapYeastStarterExportToCanonical(yeastStarterExport);
+                  }
+                  // Attach water treatment: prefer current UI state, else none for brand new
+                  const wt = waterTreatmentRef.current || waterTreatment;
+                  if (wt) {
+                    recipe.ingredients.water = {
+                      salts: {
+                        gypsumG: wt.totalSalts.gypsum_g ?? 0,
+                        calciumChlorideG: wt.totalSalts.cacl2_g ?? 0,
+                        epsomSaltG: wt.totalSalts.epsom_g ?? 0,
+                        tableSaltG: wt.totalSalts.nacl_g ?? 0,
+                        bakingSodaG: wt.totalSalts.nahco3_g ?? 0,
+                      },
+                      acids: {},
+                      resultingProfile: wt.totalProfile,
+                    } as any;
+                  }
                   upsert(recipe);
                   setCurrentRecipeId(id);
                 }
@@ -1156,37 +1844,52 @@ export default function RecipeBuilder() {
                   onClick={() => {
                     const id = currentRecipeId;
                     const existing = recipes.find((x) => x.id === id);
-                    const recipe: Recipe = {
+                    const recipe: Recipe = buildRecipe({
                       id,
                       name,
-                      createdAt:
-                        existing?.createdAt ?? new Date().toISOString(),
+                      createdAt: existing?.createdAt,
                       bjcpStyleCode: bjcpStyleCode || undefined,
                       batchVolumeL,
                       efficiencyPct,
-                      targetOG: ogAuto ? undefined : actualOg ?? ogUsed,
-                      targetFG: fgAuto ? undefined : actualFg ?? fgUsed,
+                      ogUsed,
+                      fgUsed,
+                      abv,
+                      ibu,
+                      srm,
                       grains,
                       hops,
-                      others: otherIngredients,
                       yeast,
-                      yeastStarter: yeastStarterExport || undefined,
-                      carbonation: {
-                        unit: carbUnit,
-                        volumes: carbVolumes,
-                        tempC: carbTempC,
-                        tempF: carbTempF,
-                      },
-                      mash: { steps: mashSteps },
-                      fermentation: { steps: fermentationSteps },
-                      water: {
-                        ...waterParams,
-                        mashWaterL: finalMashL,
-                        spargeWaterL: finalSpargeL,
-                        preBoilVolumeL,
-                      },
+                      mashSteps,
+                      fermentationSteps,
+                      waterParams,
+                      finalMashL: finalMashL ?? 0,
+                      finalSpargeL: finalSpargeL ?? 0,
+                      preBoilVolumeL: preBoilVolumeL ?? 0,
                       brewMethod,
-                    };
+                      otherIngredients,
+                      carbonationVolumes: carbVolumes,
+                      servingTempC: carbTempC,
+                    });
+                    // Attach latest yeast starter (if present)
+                    if (yeastStarterExport) {
+                      (recipe.ingredients.yeast as any).starter =
+                        mapYeastStarterExportToCanonical(yeastStarterExport);
+                    }
+                    const wt = waterTreatmentRef.current || waterTreatment;
+                    if (wt) {
+                      recipe.ingredients.water = {
+                        salts: {
+                          gypsumG: wt.totalSalts.gypsum_g ?? 0,
+                          calciumChlorideG: wt.totalSalts.cacl2_g ?? 0,
+                          epsomSaltG: wt.totalSalts.epsom_g ?? 0,
+                          tableSaltG: wt.totalSalts.nacl_g ?? 0,
+                          bakingSodaG: wt.totalSalts.nahco3_g ?? 0,
+                        },
+                        acids: {},
+                        resultingProfile: wt.totalProfile,
+                      } as any;
+                    }
+                    // Overwrite recipe with current UI state always
                     upsert(recipe);
                     setShowSaveMenu(false);
                   }}
@@ -1197,36 +1900,49 @@ export default function RecipeBuilder() {
                   className="block w-full text-left px-3 py-2 hover:bg-white/10"
                   onClick={() => {
                     const id = crypto.randomUUID();
-                    const recipe: Recipe = {
+                    const recipe: Recipe = buildRecipe({
                       id,
                       name: getUniqueRecipeName(name),
-                      createdAt: new Date().toISOString(),
                       bjcpStyleCode: bjcpStyleCode || undefined,
                       batchVolumeL,
                       efficiencyPct,
-                      targetOG: ogAuto ? undefined : actualOg ?? ogUsed,
-                      targetFG: fgAuto ? undefined : actualFg ?? fgUsed,
+                      ogUsed,
+                      fgUsed,
+                      abv,
+                      ibu,
+                      srm,
                       grains,
                       hops,
-                      others: otherIngredients,
                       yeast,
-                      yeastStarter: yeastStarterExport || undefined,
-                      carbonation: {
-                        unit: carbUnit,
-                        volumes: carbVolumes,
-                        tempC: carbTempC,
-                        tempF: carbTempF,
-                      },
-                      mash: { steps: mashSteps },
-                      fermentation: { steps: fermentationSteps },
-                      water: {
-                        ...waterParams,
-                        mashWaterL: finalMashL,
-                        spargeWaterL: finalSpargeL,
-                        preBoilVolumeL,
-                      },
+                      mashSteps,
+                      fermentationSteps,
+                      waterParams,
+                      finalMashL: finalMashL ?? 0,
+                      finalSpargeL: finalSpargeL ?? 0,
+                      preBoilVolumeL: preBoilVolumeL ?? 0,
                       brewMethod,
-                    };
+                      otherIngredients,
+                    });
+                    // Attach latest yeast starter (if present)
+                    if (yeastStarterExport) {
+                      (recipe.ingredients.yeast as any).starter =
+                        mapYeastStarterExportToCanonical(yeastStarterExport);
+                    }
+                    // Attach water treatment if captured in this session
+                    const wt = waterTreatmentRef.current || waterTreatment;
+                    if (wt) {
+                      recipe.ingredients.water = {
+                        salts: {
+                          gypsumG: wt.totalSalts.gypsum_g ?? 0,
+                          calciumChlorideG: wt.totalSalts.cacl2_g ?? 0,
+                          epsomSaltG: wt.totalSalts.epsom_g ?? 0,
+                          tableSaltG: wt.totalSalts.nacl_g ?? 0,
+                          bakingSodaG: wt.totalSalts.nahco3_g ?? 0,
+                        },
+                        acids: {},
+                        resultingProfile: wt.totalProfile,
+                      } as any;
+                    }
                     upsert(recipe);
                     setCurrentRecipeId(id);
                     setShowSaveMenu(false);
@@ -1315,36 +2031,51 @@ export default function RecipeBuilder() {
                 const existing = currentRecipeId
                   ? recipes.find((x) => x.id === currentRecipeId)
                   : undefined;
-                const recipe: Recipe = {
+                const recipe: Recipe = buildRecipe({
                   id,
                   name: currentRecipeId ? name : getUniqueRecipeName(name),
-                  createdAt: existing?.createdAt ?? new Date().toISOString(),
+                  createdAt: existing?.createdAt,
                   bjcpStyleCode: bjcpStyleCode || undefined,
                   batchVolumeL,
                   efficiencyPct,
-                  targetOG: ogAuto ? undefined : actualOg ?? ogUsed,
-                  targetFG: fgAuto ? undefined : actualFg ?? fgUsed,
+                  ogUsed,
+                  fgUsed,
+                  abv,
+                  ibu,
+                  srm,
                   grains,
                   hops,
-                  others: otherIngredients,
                   yeast,
-                  yeastStarter: yeastStarterExport || undefined,
-                  carbonation: {
-                    unit: carbUnit,
-                    volumes: carbVolumes,
-                    tempC: carbTempC,
-                    tempF: carbTempF,
-                  },
-                  mash: { steps: mashSteps },
-                  fermentation: { steps: fermentationSteps },
-                  water: {
-                    ...waterParams,
-                    mashWaterL: finalMashL,
-                    spargeWaterL: finalSpargeL,
-                    preBoilVolumeL,
-                  },
+                  mashSteps,
+                  fermentationSteps,
+                  waterParams,
+                  finalMashL: finalMashL ?? 0,
+                  finalSpargeL: finalSpargeL ?? 0,
+                  preBoilVolumeL: preBoilVolumeL ?? 0,
                   brewMethod,
-                };
+                  otherIngredients,
+                  carbonationVolumes: carbVolumes,
+                  servingTempC: carbTempC,
+                });
+                // Attach latest yeast starter (if present)
+                if (yeastStarterExport) {
+                  (recipe.ingredients.yeast as any).starter =
+                    mapYeastStarterExportToCanonical(yeastStarterExport);
+                }
+                if (waterTreatment) {
+                  recipe.ingredients.water = {
+                    salts: {
+                      gypsumG: waterTreatment.totalSalts.gypsum_g ?? 0,
+                      calciumChlorideG: waterTreatment.totalSalts.cacl2_g ?? 0,
+                      epsomSaltG: waterTreatment.totalSalts.epsom_g ?? 0,
+                      tableSaltG: waterTreatment.totalSalts.nacl_g ?? 0,
+                      bakingSodaG: waterTreatment.totalSalts.nahco3_g ?? 0,
+                    },
+                    acids: {},
+                    resultingProfile: waterTreatment.totalProfile,
+                  };
+                }
+                // Overwrite recipe with current UI state always
                 upsert(recipe);
                 if (!currentRecipeId) setCurrentRecipeId(id);
                 navigate(`/brew/${id}`);
@@ -1665,6 +2396,11 @@ export default function RecipeBuilder() {
         <WaterSaltsSection
           mashWaterL={finalMashL}
           spargeWaterL={finalSpargeL}
+          onChange={(data) => {
+            setWaterTreatment(data);
+            waterTreatmentRef.current = data;
+          }}
+          initialTotalSalts={waterInitialSalts}
         />
       </section>
       <footer className="mt-12 text-center text-white/50 text-sm">

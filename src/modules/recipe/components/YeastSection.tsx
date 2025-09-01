@@ -1,5 +1,5 @@
 import { getYeastPresets } from "../../../utils/presets";
-import type { YeastItem } from "../../../hooks/useRecipeStore";
+import type { YeastItem } from "../types";
 import YeastPitchCalc from "../../../components/YeastPitchCalc";
 
 export default function YeastSection({

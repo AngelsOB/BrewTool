@@ -3,7 +3,7 @@ import InputWithSuffix from "../../../components/InputWithSuffix";
 import InlineEditableNumber from "../../../components/InlineEditableNumber";
 import Collapsible from "../../../components/Collapsible";
 import FlavorGraphs from "../../../components/FlavorGraphs";
-import type { HopItem, HopTimingType } from "../../../hooks/useRecipeStore";
+import type { HopItem, HopTimingType } from "../types";
 import { addCustomHop, getHopPresets } from "../../../utils/presets";
 import { ibuSingleAddition } from "../../../calculators/ibu";
 
