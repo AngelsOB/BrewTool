@@ -108,14 +108,10 @@ function mapHopsToRecipe(hops: HopItem[]): HopAddition[] {
       timeMin:
         h.timeMin ?? (h.type === "dry hop" ? (h.dryHopDays ?? 3) * 24 * 60 : 0),
       temperature: h.whirlpoolTempC,
-      stage:
-        h.type === "dry hop"
-          ? h.dryHopStage === "keg"
-            ? "keg"
-            : h.dryHopStage === "post-fermentation"
-            ? "secondary"
-            : "primary"
-          : undefined,
+      stage: h.type === "dry hop" ? undefined : undefined,
+      dayOffsetFromFermentationStart:
+        h.type === "dry hop" ? h.dryHopStartDay : undefined,
+      durationDays: h.type === "dry hop" ? h.dryHopDays : undefined,
     },
     overrides: { alphaAcidPct: h.alphaAcidPercent },
   }));
@@ -354,17 +350,14 @@ function mapHopsToUI(xs: HopAddition[]): HopItem[] {
           ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
           : h.usage.timeMin ?? 0,
       type: toTiming(h.usage.timing),
-      dryHopStage:
-        h.usage.timing === "dry-hop"
-          ? h.usage.stage === "keg"
-            ? "keg"
-            : h.usage.stage === "secondary"
-            ? "post-fermentation"
-            : "primary"
-          : undefined,
+      dryHopStage: undefined,
       dryHopDays:
         h.usage.timing === "dry-hop"
           ? Math.round((h.usage.timeMin ?? 0) / (24 * 60))
+          : undefined,
+      dryHopStartDay:
+        h.usage.timing === "dry-hop"
+          ? h.usage.dayOffsetFromFermentationStart
           : undefined,
       whirlpoolTempC: h.usage.temperature,
       whirlpoolTimeMin:
@@ -1404,7 +1397,11 @@ export default function RecipeBuilder() {
       lines.push("Dry Hop:");
       for (const h of dryHops) {
         const oz = gToOz(h.grams);
-        const stage = h.dryHopStage ? ` (${h.dryHopStage})` : "";
+        const stage = "";
+        const start =
+          h.dryHopStartDay != null
+            ? ` on day ${formatNumber(h.dryHopStartDay, 0)}`
+            : "";
         const days =
           h.dryHopDays != null
             ? ` for ${formatNumber(h.dryHopDays, 0)} days`
@@ -1413,7 +1410,7 @@ export default function RecipeBuilder() {
           `- ${oz != null ? `${formatNumber(oz, 2)} oz` : "-"} (${formatNumber(
             h.grams,
             0
-          )} g) ${h.name || "Hop"}${stage}${days}`
+          )} g) ${h.name || "Hop"}${stage}${start}${days}`
         );
       }
     }
@@ -1681,13 +1678,16 @@ export default function RecipeBuilder() {
       );
     }
     for (const h of dryHops) {
-      const stage = h.dryHopStage ? h.dryHopStage : "post-fermentation";
+      const start =
+        h.dryHopStartDay != null
+          ? ` on day ${formatNumber(h.dryHopStartDay, 0)}`
+          : "";
       const days =
         h.dryHopDays != null
           ? ` for ${formatNumber(h.dryHopDays, 0)} days`
           : "";
       lines.push(
-        `   - Dry hop (${stage}): ${formatNumber(h.grams, 0)} g (${formatNumber(
+        `   - Dry hop${start}: ${formatNumber(h.grams, 0)} g (${formatNumber(
           gToOz(h.grams),
           2
         )} oz) ${h.name}${days}`

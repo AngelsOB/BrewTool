@@ -314,23 +314,22 @@ export function HopSchedule({
             <label className="flex flex-col sm:order-4">
               <div className="text-xs text-muted mb-1 sm:hidden">Timing A</div>
               {h.type === "dry hop" ? (
-                <select
-                  className="w-full rounded-md border px-2 py-2.5"
-                  value={h.dryHopStage ?? "primary"}
-                  onChange={(e) =>
-                    onUpdate(i, {
-                      ...h,
-                      dryHopStage: e.target.value as
-                        | "primary"
-                        | "post-fermentation"
-                        | "keg",
-                    })
-                  }
-                >
-                  <option value="primary">Primary</option>
-                  <option value="post-fermentation">Post-Fermentation</option>
-                  <option value="keg">Keg</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted shrink-0">on</span>
+                  <InputWithSuffix
+                    value={h.dryHopStartDay ?? 0}
+                    onChange={(n) =>
+                      onUpdate(i, {
+                        ...h,
+                        dryHopStartDay: Math.max(0, n),
+                      })
+                    }
+                    suffix=" day"
+                    suffixClassName="right-25 text-[10px]"
+                    step={0.5}
+                    placeholder="On day"
+                  />
+                </div>
               ) : h.type === "whirlpool" ? (
                 <InputWithSuffix
                   value={h.whirlpoolTempC ?? 80}
@@ -358,14 +357,17 @@ export function HopSchedule({
                   Timing B
                 </div>
                 {h.type === "dry hop" ? (
-                  <InputWithSuffix
-                    value={h.dryHopDays ?? 3}
-                    onChange={(n) => onUpdate(i, { ...h, dryHopDays: n })}
-                    suffix=" days"
-                    suffixClassName="right-3 text-[10px]"
-                    step={0.5}
-                    placeholder="3"
-                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted shrink-0">for</span>
+                    <InputWithSuffix
+                      value={h.dryHopDays ?? 3}
+                      onChange={(n) => onUpdate(i, { ...h, dryHopDays: n })}
+                      suffix=" days"
+                      suffixClassName="right-3 text-[10px]"
+                      step={0.5}
+                      placeholder="For days"
+                    />
+                  </div>
                 ) : h.type === "whirlpool" ? (
                   <InputWithSuffix
                     value={h.whirlpoolTimeMin ?? 15}

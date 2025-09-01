@@ -12,7 +12,12 @@ export type GrainItem = {
   customNameSelected?: boolean;
 };
 
-export type HopTimingType = "boil" | "dry hop" | "whirlpool" | "first wort" | "mash";
+export type HopTimingType =
+  | "boil"
+  | "dry hop"
+  | "whirlpool"
+  | "first wort"
+  | "mash";
 
 export type HopItem = {
   id: string;
@@ -34,6 +39,8 @@ export type HopItem = {
   customNameLocked?: boolean;
   customNameSelected?: boolean;
   dryHopStage?: "primary" | "post-fermentation" | "keg";
+  // New: explicit scheduling semantics for dry hop
+  dryHopStartDay?: number; // day offset from start of fermentation (e.g., 8)
   dryHopDays?: number;
   whirlpoolTempC?: number;
   whirlpoolTimeMin?: number;
@@ -90,5 +97,3 @@ export type OtherIngredient = {
   customNameLocked?: boolean;
   customNameSelected?: boolean;
 };
-
-

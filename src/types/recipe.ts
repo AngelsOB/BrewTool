@@ -127,6 +127,13 @@ export type HopAddition = {
     timeMin: number;
     temperature?: number;
     stage?: "primary" | "secondary" | "keg";
+    // Optional dry-hop scheduling semantics. When provided and timing == "dry-hop",
+    // these fields indicate when to add hops and for how long (in days),
+    // relative to fermentation start.
+    // Note: timeMin should still encode total contact time (durationDays * 1440)
+    // for backward compatibility with calculators/UI that expect minutes.
+    dayOffsetFromFermentationStart?: number; // e.g., 8 means add on day 8
+    durationDays?: number; // e.g., 3 means remove/transfer after 3 days
   };
   overrides?: {
     alphaAcidPct?: number;
