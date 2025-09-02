@@ -14,7 +14,11 @@ import type {
 import { type WaterParams } from "../utils/calculations";
 // per-hop IBU calc handled inside HopSchedule; keep total calc in hook
 import FermentationSection from "../modules/recipe/components/FermentationSection";
-import { getOtherIngredientPresets, getHopPresets } from "../utils/presets";
+import {
+  getOtherIngredientPresets,
+  getHopPresets,
+  getGrainPresets,
+} from "../utils/presets";
 import type {
   Recipe,
   FermentableAddition,
@@ -299,15 +303,44 @@ function buildRecipe(params: {
 
 // v2 -> UI mapping helpers
 function mapFermentablesToUI(xs: FermentableAddition[]): GrainItem[] {
-  return xs.map((f) => ({
-    id: f.id,
-    name: f.ingredientRef.id,
-    weightKg: f.amountKg,
-    colorLovibond: f.overrides?.colorLovibond ?? 2,
-    potentialGu: f.overrides?.potentialGu ?? 34,
-    type: f.usage.timing === "boil" ? "extract" : "grain",
-    fermentability: f.overrides?.fermentability,
-  }));
+  const grainsPresets = getGrainPresets();
+  return xs.map((f) => {
+    const rawName = f.ingredientRef.id || "";
+    const normalize = (s: string) => s.trim().toLowerCase();
+    const stripParens = (s: string) =>
+      s.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+    const stripVendorSuffixDash = (s: string) =>
+      s.replace(/\s*-\s*[^-]+$/, "").trim();
+    const candidates = Array.from(
+      new Set([
+        rawName,
+        normalize(rawName),
+        stripParens(rawName),
+        normalize(stripParens(rawName)),
+        stripVendorSuffixDash(rawName),
+        normalize(stripVendorSuffixDash(rawName)),
+      ])
+    );
+    const findPreset = () => {
+      for (const name of candidates) {
+        let p = grainsPresets.find((g) => g.name === name);
+        if (p) return p as { colorLovibond?: number; potentialGu?: number };
+        p = grainsPresets.find((g) => normalize(g.name) === name);
+        if (p) return p as { colorLovibond?: number; potentialGu?: number };
+      }
+      return undefined;
+    };
+    const preset = findPreset();
+    return {
+      id: f.id,
+      name: f.ingredientRef.id,
+      weightKg: f.amountKg,
+      colorLovibond: f.overrides?.colorLovibond ?? preset?.colorLovibond ?? 2,
+      potentialGu: f.overrides?.potentialGu ?? preset?.potentialGu ?? 34,
+      type: f.usage.timing === "boil" ? "extract" : "grain",
+      fermentability: f.overrides?.fermentability,
+    } as GrainItem;
+  });
 }
 
 function mapHopsToUI(xs: HopAddition[]): HopItem[] {

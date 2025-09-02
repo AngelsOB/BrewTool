@@ -334,12 +334,28 @@ export function GrainBill({
                         { label: "Custom grain...", value: "__add_custom__" },
                       ],
                     });
+                    // Build label lookup map so selected value renders with flag
+                    const labelByValue = new Map<string, string>();
+                    for (const o of options) labelByValue.set(o.value, o.label);
+                    for (const grp of grouped) {
+                      for (const o of grp.options)
+                        labelByValue.set(o.value, o.label);
+                    }
+                    const formatSelected = (v: string) => {
+                      const label = labelByValue.get(v) ?? v;
+                      const codepoints = Array.from(label);
+                      const MAX = 45; // cap displayed label length
+                      return codepoints.length > MAX
+                        ? codepoints.slice(0, MAX - 1).join("") + "…"
+                        : label;
+                    };
                     return (
                       <SearchSelect
                         value={g.name}
                         options={options}
                         groups={grouped}
                         placeholder="Grains... type to search"
+                        formatSelectedLabel={formatSelected}
                         onChange={(value) => {
                           if (value === "__add_custom__") {
                             setCustomIndex(i);
@@ -398,7 +414,7 @@ export function GrainBill({
                 </>
               )}
               <div
-                className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 text-xs text-neutral-600 px-2 py-0.5"
+                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-600 px-2 py-0.5"
                 aria-hidden="true"
               >
                 {g.colorLovibond}°L
