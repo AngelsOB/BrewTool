@@ -2411,16 +2411,14 @@ export default function RecipeBuilder() {
         }
       />
 
-      <section className="section-soft space-y-3">
-        <YeastSection
-          yeast={yeast}
-          onChangeYeast={setYeast}
-          ogUsed={ogUsed}
-          batchVolumeL={batchVolumeL}
-          onStarterChange={handleStarterChange}
-          starterInitial={yeastStarterInitial}
-        />
-      </section>
+      <YeastSection
+        yeast={yeast}
+        onChangeYeast={setYeast}
+        ogUsed={ogUsed}
+        batchVolumeL={batchVolumeL}
+        onStarterChange={handleStarterChange}
+        starterInitial={yeastStarterInitial}
+      />
 
       <FermentationSection
         steps={fermentationSteps}

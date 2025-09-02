@@ -73,7 +73,12 @@ export default function YeastSection({
   return (
     <section className="section-soft space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="font-semibold text_PRIMARY-strong">Yeast</div>
+        <div className="font-semibold text-primary-strong">Yeast</div>
+        {yeast.attenuationPercent != null ? (
+          <div className="hidden sm:block text-xs text-muted">
+            Est. Attenuation: {(yeast.attenuationPercent * 100).toFixed(0)}%
+          </div>
+        ) : null}
       </div>
       <label className="flex flex-col">
         {(() => {
@@ -98,16 +103,27 @@ export default function YeastSection({
             label: "Custom",
             options: [{ label: "Custom yeast...", value: "__custom__" }],
           });
+          // Build selected-label formatter with truncation like other sections
+          const labelByValue = new Map<string, string>();
+          for (const o of options) labelByValue.set(o.value, o.label);
+          for (const g of groups)
+            for (const o of g.options) labelByValue.set(o.value, o.label);
+          const formatSelected = (v: string) => {
+            const p = presets.find((x) => x.name === v);
+            const base = p ? `${p.category || "Other"} - ${p.name}` : v;
+            const codepoints = Array.from(base);
+            const MAX = 45;
+            return codepoints.length > MAX
+              ? codepoints.slice(0, MAX - 1).join("") + "…"
+              : base;
+          };
           return (
             <SearchSelect
               value={yeast.name}
               options={options}
               groups={groups}
               placeholder="Select yeast... type to search"
-              formatSelectedLabel={(v) => {
-                const p = getYeastPresets().find((x) => x.name === v);
-                return p ? `${p.category || "Other"} - ${p.name}` : v;
-              }}
+              formatSelectedLabel={formatSelected}
               onChange={(value) => {
                 if (value === "__custom__") {
                   setNewYeastDraft({
@@ -141,11 +157,11 @@ export default function YeastSection({
           );
         })()}
       </label>
-      {yeast.attenuationPercent && (
-        <div className="text-sm text-neutral-600">
+      {yeast.attenuationPercent != null ? (
+        <div className="mt-1 text-[11px] text-white/50 translate-x-2">
           Est. Attenuation: {(yeast.attenuationPercent * 100).toFixed(0)}%
         </div>
-      )}
+      ) : null}
       <div className="pt-1">
         <YeastPitchCalc
           og={ogUsed}
