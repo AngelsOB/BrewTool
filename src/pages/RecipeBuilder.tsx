@@ -604,11 +604,23 @@ export default function RecipeBuilder() {
   const [waterInitialSalts, setWaterInitialSalts] = useState<
     import("../utils/water").SaltAdditions | undefined
   >(undefined);
+  const [waterInitialSourceProfile, setWaterInitialSourceProfile] = useState<
+    import("../utils/water").WaterProfile | undefined
+  >(undefined);
+  const [waterInitialTargetProfile, setWaterInitialTargetProfile] = useState<
+    import("../utils/water").WaterProfile | undefined
+  >(undefined);
   const waterTreatmentRef = useRef<{
     mashSalts: SaltAdditions;
     spargeSalts: SaltAdditions;
     totalSalts: SaltAdditions;
     totalProfile: WaterProfile;
+    sourceProfile?: WaterProfile;
+    targetProfile?: WaterProfile;
+    sourceProfileName?: string;
+    targetProfileName?: string;
+    sourceProfileCustomName?: string;
+    targetProfileCustomName?: string;
   } | null>(null);
   // Carbonation calculator state for export
   const [carbUnit, setCarbUnit] = useState<"metric" | "us">("metric");
@@ -1098,9 +1110,20 @@ export default function RecipeBuilder() {
               HCO3: 0,
             } as import("../utils/water").WaterProfile),
         };
+        // If recipe carries raw profiles, hydrate widget defaults
+        const src: import("../utils/water").WaterProfile | undefined = (
+          waterCanonical as any
+        )?.sourceProfile;
+        const tgt: import("../utils/water").WaterProfile | undefined = (
+          waterCanonical as any
+        )?.targetProfile;
+        if (src) setWaterInitialSourceProfile(src);
+        if (tgt) setWaterInitialTargetProfile(tgt);
       } else {
         setWaterTreatment(null);
         setWaterInitialSalts(undefined);
+        setWaterInitialSourceProfile(undefined);
+        setWaterInitialTargetProfile(undefined);
         waterTreatmentRef.current = null;
       }
 
@@ -1870,6 +1893,14 @@ export default function RecipeBuilder() {
                   const wt = waterTreatmentRef.current || waterTreatment;
                   if (wt) {
                     recipe.ingredients.water = {
+                      sourceProfileId: undefined,
+                      targetProfileId: undefined,
+                      sourceProfile: (wt as any).sourceProfile,
+                      targetProfile: (wt as any).targetProfile,
+                      sourceProfileCustomName: (wt as any)
+                        .sourceProfileCustomName,
+                      targetProfileCustomName: (wt as any)
+                        .targetProfileCustomName,
                       salts: {
                         gypsumG: wt.totalSalts.gypsum_g ?? 0,
                         calciumChlorideG: wt.totalSalts.cacl2_g ?? 0,
@@ -1929,6 +1960,14 @@ export default function RecipeBuilder() {
                     const wt = waterTreatmentRef.current || waterTreatment;
                     if (wt) {
                       recipe.ingredients.water = {
+                        sourceProfileId: undefined,
+                        targetProfileId: undefined,
+                        sourceProfile: (wt as any).sourceProfile,
+                        targetProfile: (wt as any).targetProfile,
+                        sourceProfileCustomName: (wt as any)
+                          .sourceProfileCustomName,
+                        targetProfileCustomName: (wt as any)
+                          .targetProfileCustomName,
                         salts: {
                           gypsumG: wt.totalSalts.gypsum_g ?? 0,
                           calciumChlorideG: wt.totalSalts.cacl2_g ?? 0,
@@ -1983,6 +2022,14 @@ export default function RecipeBuilder() {
                     const wt = waterTreatmentRef.current || waterTreatment;
                     if (wt) {
                       recipe.ingredients.water = {
+                        sourceProfileId: undefined,
+                        targetProfileId: undefined,
+                        sourceProfile: (wt as any).sourceProfile,
+                        targetProfile: (wt as any).targetProfile,
+                        sourceProfileCustomName: (wt as any)
+                          .sourceProfileCustomName,
+                        targetProfileCustomName: (wt as any)
+                          .targetProfileCustomName,
                         salts: {
                           gypsumG: wt.totalSalts.gypsum_g ?? 0,
                           calciumChlorideG: wt.totalSalts.cacl2_g ?? 0,
@@ -2115,6 +2162,14 @@ export default function RecipeBuilder() {
                 }
                 if (waterTreatment) {
                   recipe.ingredients.water = {
+                    sourceProfileId: undefined,
+                    targetProfileId: undefined,
+                    sourceProfile: (waterTreatment as any).sourceProfile,
+                    targetProfile: (waterTreatment as any).targetProfile,
+                    sourceProfileCustomName: (waterTreatment as any)
+                      .sourceProfileCustomName,
+                    targetProfileCustomName: (waterTreatment as any)
+                      .targetProfileCustomName,
                     salts: {
                       gypsumG: waterTreatment.totalSalts.gypsum_g ?? 0,
                       calciumChlorideG: waterTreatment.totalSalts.cacl2_g ?? 0,
@@ -2456,11 +2511,35 @@ export default function RecipeBuilder() {
               ? JSON.stringify(prev.totalProfile) ===
                 JSON.stringify(data.totalProfile)
               : false;
-            if (sameTotals && sameProfile) return;
+            const sameSourceName = prev
+              ? prev.sourceProfileName === data.sourceProfileName
+              : false;
+            const sameTargetName = prev
+              ? prev.targetProfileName === data.targetProfileName
+              : false;
+            const sameSourceProfile = prev
+              ? JSON.stringify(prev.sourceProfile) ===
+                JSON.stringify(data.sourceProfile)
+              : false;
+            const sameTargetProfile = prev
+              ? JSON.stringify(prev.targetProfile) ===
+                JSON.stringify(data.targetProfile)
+              : false;
+            if (
+              sameTotals &&
+              sameProfile &&
+              sameSourceName &&
+              sameTargetName &&
+              sameSourceProfile &&
+              sameTargetProfile
+            )
+              return;
             setWaterTreatment(data);
             waterTreatmentRef.current = data;
           }}
           initialTotalSalts={waterInitialSalts}
+          initialSourceProfile={waterInitialSourceProfile}
+          initialTargetProfile={waterInitialTargetProfile}
         />
       </section>
       <footer className="mt-12 text-center text-white/50 text-sm">

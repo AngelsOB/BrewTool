@@ -179,8 +179,16 @@ export type StarterStep = {
 
 // Water treatment as separate concern
 export type WaterTreatment = {
+  // May be a preset key (e.g., "RO", "Montreal"), a saved profile id ("saved:uuid"),
+  // a style target ("style:Belgian Ale"), or "Custom".
   sourceProfileId?: string;
   targetProfileId?: string;
+  // When custom or resolved at time of save, persist raw profiles for fidelity
+  sourceProfile?: WaterProfile;
+  targetProfile?: WaterProfile;
+  // Optional custom display names when profiles are user-defined
+  sourceProfileCustomName?: string;
+  targetProfileCustomName?: string;
   salts: {
     gypsumG: number;
     calciumChlorideG: number;

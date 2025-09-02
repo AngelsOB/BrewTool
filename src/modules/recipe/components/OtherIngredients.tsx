@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AutoWidthUnitSelect from "../../../components/AutoWidthUnitSelect";
 import InputWithSuffix from "../../../components/InputWithSuffix";
 import type { OtherIngredient, OtherIngredientCategory } from "../types";
@@ -52,6 +52,8 @@ export default function OtherIngredients({
     <section
       className={"section-soft space-y-3 " + (items.length === 0 ? "py-2" : "")}
     >
+      {/* spring keyframes for notes expansion */}
+      <style>{`@keyframes springy{0%{transform:scaleY(0.985)}50%{transform:scaleY(1.02)}100%{transform:scaleY(1)}}`}</style>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="font-semibold text-primary-strong">
           Additional Ingredients
@@ -197,13 +199,11 @@ export default function OtherIngredients({
             </label>
           </div>
 
-          <label className="flex flex-col">
+          <label className="flex flex-col group relative">
             <div className="text-xs text-muted mb-1 sm:hidden">Notes</div>
-            <input
-              className="w-full rounded-md border px-3 py-2"
+            <NotesTextarea
               value={ing.notes ?? ""}
-              placeholder="Optional notes"
-              onChange={(e) => onUpdate(i, { ...ing, notes: e.target.value })}
+              onChange={(v) => onUpdate(i, { ...ing, notes: v })}
             />
           </label>
 
@@ -284,5 +284,91 @@ export default function OtherIngredients({
         + Add Ingredient
       </button>
     </section>
+  );
+}
+
+function NotesTextarea({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+  const [overflowing, setOverflowing] = useState(false);
+  const rafRef = useRef<number | null>(null);
+
+  const measure = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    const maxPx = Math.round(window.innerHeight * 0.75);
+    el.style.height = Math.min(el.scrollHeight, maxPx) + "px";
+    const hasText = (el.value?.trim().length ?? 0) > 0;
+    const rootPx = parseFloat(
+      getComputedStyle(document.documentElement).fontSize || "16"
+    );
+    const collapsedMaxPx = Math.round(
+      (Number.isFinite(rootPx) ? rootPx : 16) * 2.5
+    );
+    setOverflowing(hasText && el.scrollHeight > collapsedMaxPx + 2);
+  };
+  const schedule = () => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => measure(ref.current));
+  };
+  useEffect(() => {
+    measure(ref.current);
+  }, [value]);
+  useEffect(() => {
+    const onResize = () => measure(ref.current);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  useEffect(
+    () => () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    },
+    []
+  );
+  return (
+    <>
+      <textarea
+        ref={ref}
+        rows={1}
+        className={
+          "w-full rounded-md border px-3 py-2 resize-none min-h-[2.5rem] overflow-hidden max-h-10 transition-[max-height] duration-120 ease-[cubic-bezier(0.31,1.46,0.62,1)] will-change-[max-height] [transform-origin:top]" +
+          (overflowing
+            ? " group-hover:overflow-auto focus:overflow-auto group-hover:max-h-[75vh] focus:max-h-[75vh] group-hover:duration-[320ms] group-focus-within:duration-[360ms] group-hover:animate-[springy_255ms_cubic-bezier(0.34,1.56,0.64,1)_both] group-focus-within:animate-[springy_255ms_cubic-bezier(0.34,1.56,0.64,1)_both]"
+            : "")
+        }
+        placeholder="Optional notes"
+        value={value}
+        onFocus={(e) => measure(e.currentTarget)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          measure(e.currentTarget);
+          schedule();
+        }}
+        onInput={() => schedule()}
+        onKeyUp={() => schedule()}
+        onBlur={() => {
+          schedule();
+          window.setTimeout(schedule, 160);
+        }}
+        onMouseEnter={() => schedule()}
+        onMouseLeave={() => {
+          schedule();
+          window.setTimeout(schedule, 160);
+        }}
+        onTransitionEnd={(e) => {
+          if (e.propertyName.includes("max-height")) schedule();
+        }}
+      />
+      {overflowing ? (
+        <div className="pointer-events-none absolute inset-x-1 bottom-1 h-4 bg-gradient-to-t from-black/35 to-transparent rounded-sm flex justify-end items-end pr-1 text-[18px] text-white/50 opacity-100 group-hover:opacity-0 group-focus-within:opacity-0 transition-opacity">
+          …
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -6,6 +6,10 @@ export default function WaterSaltsSection({
   spargeWaterL,
   onChange,
   initialTotalSalts,
+  initialSourceProfileName,
+  initialTargetProfileName,
+  initialSourceProfile,
+  initialTargetProfile,
 }: {
   mashWaterL: number;
   spargeWaterL: number;
@@ -14,8 +18,16 @@ export default function WaterSaltsSection({
     spargeSalts: import("../utils/water").SaltAdditions;
     totalSalts: import("../utils/water").SaltAdditions;
     totalProfile: import("../utils/water").WaterProfile;
+    sourceProfileName: string;
+    targetProfileName: string;
+    sourceProfile: import("../utils/water").WaterProfile;
+    targetProfile: import("../utils/water").WaterProfile;
   }) => void;
   initialTotalSalts?: import("../utils/water").SaltAdditions;
+  initialSourceProfileName?: string;
+  initialTargetProfileName?: string;
+  initialSourceProfile?: import("../utils/water").WaterProfile;
+  initialTargetProfile?: import("../utils/water").WaterProfile;
 }) {
   const [compact, setCompact] = useState<boolean>(true);
   return (
@@ -38,6 +50,10 @@ export default function WaterSaltsSection({
         onCompactChange={setCompact}
         onChange={onChange}
         initialTotalSalts={initialTotalSalts}
+        initialSourceProfileName={initialSourceProfileName}
+        initialTargetProfileName={initialTargetProfileName}
+        initialSourceProfile={initialSourceProfile}
+        initialTargetProfile={initialTargetProfile}
       />
     </>
   );

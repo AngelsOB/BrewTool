@@ -110,6 +110,10 @@ export default function WaterSaltsCalc({
   onCompactChange,
   onChange,
   initialTotalSalts,
+  initialSourceProfileName,
+  initialTargetProfileName,
+  initialSourceProfile,
+  initialTargetProfile,
 }: {
   mashWaterL?: number;
   spargeWaterL?: number;
@@ -121,12 +125,26 @@ export default function WaterSaltsCalc({
     spargeSalts: SaltAdditions;
     totalSalts: SaltAdditions;
     totalProfile: WaterProfile;
+    sourceProfileName: string;
+    targetProfileName: string;
+    sourceProfile: WaterProfile;
+    targetProfile: WaterProfile;
+    sourceProfileCustomName?: string;
+    targetProfileCustomName?: string;
   }) => void;
   initialTotalSalts?: SaltAdditions;
+  initialSourceProfileName?: string;
+  initialTargetProfileName?: string;
+  initialSourceProfile?: WaterProfile;
+  initialTargetProfile?: WaterProfile;
 }) {
   const [localCompact, setLocalCompact] = useState<boolean>(false);
-  const [sourceProfileName, setSourceProfileName] = useState<string>("RO");
-  const [targetProfileName, setTargetProfileName] = useState<string>("Burton");
+  const [sourceProfileName, setSourceProfileName] = useState<string>(
+    initialSourceProfileName ?? "RO"
+  );
+  const [targetProfileName, setTargetProfileName] = useState<string>(
+    initialTargetProfileName ?? "Burton"
+  );
   const [customSource, setCustomSource] = useState<WaterProfile | null>(null);
   const [customTarget, setCustomTarget] = useState<WaterProfile | null>(null);
   const [savedProfiles, setSavedProfiles] = useState<SavedWaterProfile[]>(() =>
@@ -152,6 +170,70 @@ export default function WaterSaltsCalc({
   );
   const [autoSplitByVolume, setAutoSplitByVolume] = useState<boolean>(true);
   const [manualMashPercent] = useState<number>(50);
+
+  // Initialize custom profiles when provided by parent (e.g., loading a recipe)
+  useEffect(() => {
+    // Helper: approximate match to presets/styles so we can select proper options
+    const matchProfile = (
+      p: WaterProfile | null | undefined
+    ):
+      | { name: string; custom: false }
+      | { name: "Custom"; custom: true }
+      | null => {
+      if (!p) return null;
+      const tol = 3; // ppm per ion
+      const isClose = (a: WaterProfile, b: WaterProfile) =>
+        Math.max(
+          Math.abs(a.Ca - b.Ca),
+          Math.abs(a.Mg - b.Mg),
+          Math.abs(a.Na - b.Na),
+          Math.abs(a.Cl - b.Cl),
+          Math.abs(a.SO4 - b.SO4),
+          Math.abs(a.HCO3 - b.HCO3)
+        ) <= tol;
+      // Common profiles
+      for (const [k, v] of Object.entries(COMMON_WATER_PROFILES)) {
+        if (isClose(p, v)) return { name: k, custom: false };
+      }
+      // Styles
+      for (const [k, v] of Object.entries(STYLE_TARGETS)) {
+        if (isClose(p, v.profile))
+          return { name: `style:${k}` as const, custom: false };
+      }
+      return { name: "Custom", custom: true };
+    };
+
+    const srcMatch = matchProfile(initialSourceProfile);
+    if (srcMatch) {
+      setSourceProfileName(srcMatch.name);
+      if (srcMatch.custom) setCustomSource(initialSourceProfile!);
+      else setCustomSource(null);
+    }
+
+    const tgtMatch = matchProfile(initialTargetProfile);
+    if (tgtMatch) {
+      setTargetProfileName(tgtMatch.name);
+      if (tgtMatch.custom) setCustomTarget(initialTargetProfile!);
+      else setCustomTarget(null);
+    }
+  }, [
+    initialSourceProfile,
+    initialTargetProfile,
+    initialSourceProfileName,
+    initialTargetProfileName,
+    customSourceName,
+    customTargetName,
+  ]);
+
+  // Keep select values in sync if parent updates the initial names (e.g., loading a recipe)
+  useEffect(() => {
+    if (initialSourceProfileName)
+      setSourceProfileName(initialSourceProfileName);
+  }, [initialSourceProfileName]);
+  useEffect(() => {
+    if (initialTargetProfileName)
+      setTargetProfileName(initialTargetProfileName);
+  }, [initialTargetProfileName]);
 
   const totalWater =
     Math.max(0, effectiveMashVol) + Math.max(0, effectiveSpargeVol);
@@ -335,6 +417,14 @@ export default function WaterSaltsCalc({
       spargeSalts: computedSpargeSalts,
       totalSalts: total,
       totalProfile,
+      sourceProfileName,
+      targetProfileName,
+      sourceProfile: source,
+      targetProfile: target,
+      sourceProfileCustomName:
+        sourceProfileName === "Custom" ? customSourceName : undefined,
+      targetProfileCustomName:
+        targetProfileName === "Custom" ? customTargetName : undefined,
     });
   }, [
     onChange,
@@ -355,6 +445,12 @@ export default function WaterSaltsCalc({
     spargeSalts.nacl_g,
     spargeSalts.nahco3_g,
     totalProfile,
+    computedMashSalts,
+    computedSpargeSalts,
+    sourceProfileName,
+    targetProfileName,
+    source,
+    target,
   ]);
 
   // Hydrate salts when a recipe provides saved totals; clear when undefined

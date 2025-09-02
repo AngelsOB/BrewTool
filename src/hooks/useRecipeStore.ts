@@ -49,11 +49,11 @@ function createDemoRecipePaterbier(): Recipe {
       : `${Date.now()}`;
   return {
     id,
-    name: "Belgian Single / Patersbier (Mini Tripel)",
+    name: "Mini 🇧🇪 Tripel - Pseudo Belgian Single / Patersbier",
     createdAt: now,
     updatedAt: now,
     version: 1,
-    bjcpStyleCode: "26A", // Belg. Single/Patersbier closest (Belgian Ale family)
+    bjcpStyleCode: "26B", // Belg. Single/Patersbier closest (Belgian Ale family)
     targetProfile: {
       batchVolumeL: 21,
       originalGravity: 1.056,
@@ -110,84 +110,129 @@ function createDemoRecipePaterbier(): Recipe {
     },
     ingredients: {
       fermentables: [
-        // 9.5 lb Bohemian Pilsner ≈ 4.309 kg
+        // 9.5 lb Belgian Pilsner ≈ 4.309 kg
         {
           id: "piln",
-          ingredientRef: { type: "custom", id: "Bohemian Pilsner Malt" },
+          ingredientRef: {
+            type: "preset",
+            id: "Dingemans - Belgian Pilsner Malt",
+          },
           amountKg: 4.309,
           usage: { timing: "mash" },
         },
         // 0.5 lb Aromatic ≈ 0.227 kg
         {
           id: "arom",
-          ingredientRef: { type: "custom", id: "Aromatic Malt" },
+          ingredientRef: {
+            type: "preset",
+            id: "Dingemans - Aromatic Malt",
+          },
           amountKg: 0.227,
           usage: { timing: "mash" },
         },
         // 0.75 lb Flaked Corn ≈ 0.340 kg
         {
           id: "corn",
-          ingredientRef: { type: "custom", id: "Flaked Corn" },
+          ingredientRef: { type: "preset", id: "Flaked Corn" },
           amountKg: 0.34,
           usage: { timing: "mash" },
         },
-        // 1.0 lb D-45 Candi Syrup ≈ 0.454 kg, added in fermenter
+        // 1.0 lb Candi Syrup D-45 ≈ 0.454 kg, added in fermenter
         {
           id: "d45",
-          ingredientRef: { type: "custom", id: "D-45 Candi Syrup" },
+          ingredientRef: {
+            type: "preset",
+            id: "Candi Syrup - Belgian Candi Syrup - D-45",
+          },
           amountKg: 0.454,
           usage: { timing: "fermentation" },
         },
       ],
       hops: [
-        // 0.5 oz Saaz @ FWH ≈ 7.09 g, AA ~3.5
+        // 0.5 oz Saaz @ FWH ≈ 14 g, AA ~3.5
         {
           id: "h1",
-          ingredientRef: { type: "custom", id: "Saaz" },
-          amountG: 7.1,
+          ingredientRef: { type: "preset", id: "Saaz" },
+          amountG: 14,
           usage: { timing: "first-wort", timeMin: 60 },
           overrides: { alphaAcidPct: 3.5 },
         },
-        // 0.5 oz Hallertau Mittelfrüh @60 ≈ 7.09 g, AA ~4.0
+        // 0.5 oz Hallertau Mittelfrüh @60 ≈ 14 g, AA ~4.0
         {
           id: "h2",
-          ingredientRef: { type: "custom", id: "Hallertau Mittelfrüh" },
-          amountG: 7.1,
+          ingredientRef: { type: "preset", id: "Hallertau Mittelfrüh" },
+          amountG: 14,
           usage: { timing: "boil", timeMin: 60 },
           overrides: { alphaAcidPct: 4.0 },
         },
-        // 0.5 oz Hallertau Mittelfrüh @15 ≈ 7.09 g
+        // 0.5 oz Hallertau Mittelfrüh @15 ≈ 14 g
         {
           id: "h3",
-          ingredientRef: { type: "custom", id: "Hallertau Mittelfrüh" },
-          amountG: 7.1,
+          ingredientRef: { type: "preset", id: "Hallertau Mittelfrüh" },
+          amountG: 14,
           usage: { timing: "boil", timeMin: 15 },
           overrides: { alphaAcidPct: 4.0 },
         },
-        // 0.25 oz Tettnang @15 ≈ 3.54 g, AA ~4.5
+        // 0.25 oz Tettnang @15 ≈ 7 g, AA ~4.5
         {
           id: "h4",
-          ingredientRef: { type: "custom", id: "Tettnang" },
-          amountG: 3.5,
+          ingredientRef: { type: "preset", id: "Tettnang" },
+          amountG: 7,
           usage: { timing: "boil", timeMin: 15 },
           overrides: { alphaAcidPct: 4.5 },
         },
         // 0.75 oz Tettnang @5 ≈ 21.26 g
         {
           id: "h5",
-          ingredientRef: { type: "custom", id: "Tettnang" },
+          ingredientRef: { type: "preset", id: "Tettnang" },
           amountG: 21.3,
           usage: { timing: "boil", timeMin: 5 },
           overrides: { alphaAcidPct: 4.5 },
         },
       ],
       yeast: {
-        ingredientRef: { type: "custom", id: "Westmalle 3787 / WLP530" },
+        ingredientRef: { type: "preset", id: "WLP530 Abbey Ale Yeast" },
         form: "liquid",
         quantity: {},
+        starter: {
+          steps: [
+            {
+              id: "ys1",
+              volumeL: 1,
+              gravityPoints: 40,
+              timeHours: 0,
+              temperature: 0,
+              agitation: "stir-plate",
+            },
+          ],
+          totalVolumeL: 1,
+          totalDmeG: 0,
+          estimatedViableCells: 0,
+        },
         overrides: { attenuationPct: 82 },
       },
-      other: [],
+      other: [
+        {
+          id: "campden",
+          ingredientRef: { type: "preset", id: "Campden Tablets" },
+          amount: 1,
+          unit: "tablet",
+          timing: "boil",
+          notes: "Chlorine/chloramine removal",
+        },
+      ],
+      water: {
+        sourceProfile: { Ca: 31, Mg: 8, Na: 15, Cl: 26, SO4: 22, HCO3: 0 }, // Montreal
+        targetProfile: { Ca: 60, Mg: 6, Na: 18, Cl: 79, SO4: 62, HCO3: 47 }, // Belgian Ale
+        salts: {
+          gypsumG: 2,
+          calciumChlorideG: 3,
+          epsomSaltG: 0,
+          tableSaltG: 0.3,
+          bakingSodaG: 1,
+        },
+        acids: {},
+      },
     },
     process: {
       mash: {
@@ -217,23 +262,18 @@ function createDemoRecipePaterbier(): Recipe {
             id: "f2",
             name: "Free rise",
             stage: "primary",
-            temperatureC: 22,
-            durationDays: 7,
-          },
-          {
-            id: "f3",
-            name: "Conditioning",
-            stage: "conditioning",
-            temperatureC: 20,
-            durationDays: 14,
+            temperatureC: 23,
+            durationDays: 21,
+            notes:
+              "let free rise to 23°C and complete fermentation. 3-4 weeks.",
           },
         ],
         estimatedDays: 24,
       },
       packaging: {
-        method: "bottle",
-        carbonation: { co2Volumes: 2.6, method: "priming-sugar" },
-        servingTempC: 6,
+        method: "keg",
+        carbonation: { co2Volumes: 2.2, method: "forced" },
+        servingTempC: 2,
       },
     },
     preferences: {

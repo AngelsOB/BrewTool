@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   DndContext,
@@ -158,6 +158,8 @@ export default function FermentationPlan({
 
   return (
     <div className="space-y-3">
+      {/* spring keyframes for textarea scale overshoot */}
+      <style>{`@keyframes springy{0%{transform:scaleY(0.96) scaleX(1.02) rotate(-0.2deg)}60%{transform:scaleY(1.04) scaleX(0.98) rotate(0.2deg)}100%{transform:scaleY(1) scaleX(1) rotate(0deg)}}`}</style>{" "}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="font-semibold text-primary-strong">
           Fermentation Plan
@@ -272,6 +274,46 @@ function FermentationRow({
     transition,
     opacity: isDragging ? 0.6 : 1,
   } as CSSProperties;
+  const notesRef = useRef<HTMLTextAreaElement | null>(null);
+  const [isOverflowing, setIsOverflowing] = useState<boolean>(false);
+  const rafIdRef = useRef<number | null>(null);
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    const maxPx = Math.round(window.innerHeight * 0.75);
+    el.style.height = Math.min(el.scrollHeight, maxPx) + "px";
+    // detect overflow
+    const hasText = (el.value?.trim().length ?? 0) > 0;
+    // Compare against collapsed max height (Tailwind max-h-10 = 2.5rem)
+    const rootFontPx = parseFloat(
+      getComputedStyle(document.documentElement).fontSize || "16"
+    );
+    const collapsedMaxPx = Math.round(
+      (Number.isFinite(rootFontPx) ? rootFontPx : 16) * 2.5
+    );
+    const overflow = hasText && el.scrollHeight > collapsedMaxPx + 2;
+    setIsOverflowing(overflow);
+  };
+  const scheduleResize = () => {
+    if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(() =>
+      autoResize(notesRef.current)
+    );
+  };
+  useEffect(() => {
+    autoResize(notesRef.current);
+  }, [s.notes]);
+  useEffect(() => {
+    const onResize = () => autoResize(notesRef.current);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  useEffect(
+    () => () => {
+      if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+    },
+    []
+  );
   return (
     <div
       className={"grid grid-cols-1 " + gridCols + " gap-2"}
@@ -364,14 +406,45 @@ function FermentationRow({
           <div className="hidden sm:block" />
         )
       ) : null}
-      <label className="flex flex-col">
+      <label className="flex flex-col group relative">
         <div className="text-xs text-muted mb-1 sm:hidden">Notes</div>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+        <textarea
+          ref={notesRef}
+          rows={1}
+          className={
+            "w-full rounded-md border px-3 py-2 resize-none min-h-[2.5rem] overflow-hidden max-h-10 transition-[max-height] duration-120 ease-[cubic-bezier(0.31,1.46,0.62,1)] will-change-[max-height] [transform-origin:top]" +
+            (isOverflowing
+              ? " group-hover:overflow-auto focus:overflow-auto group-hover:max-h-[75vh] focus:max-h-[75vh] group-hover:duration-[320ms] group-focus-within:duration-[360ms] group-hover:animate-[springy_255ms_cubic-bezier(0.34,1.56,0.64,1)_both] group-focus-within:animate-[springy_255ms_cubic-bezier(0.34,1.56,0.64,1)_both]"
+              : "")
+          }
           placeholder="Optional notes"
           value={s.notes ?? ""}
-          onChange={(e) => setStep(i, { notes: e.target.value })}
+          onFocus={(e) => autoResize(e.currentTarget)}
+          onChange={(e) => {
+            setStep(i, { notes: e.target.value });
+            autoResize(e.currentTarget);
+            scheduleResize();
+          }}
+          onInput={() => scheduleResize()}
+          onKeyUp={() => scheduleResize()}
+          onBlur={() => {
+            scheduleResize();
+            window.setTimeout(scheduleResize, 160);
+          }}
+          onMouseEnter={() => scheduleResize()}
+          onMouseLeave={() => {
+            scheduleResize();
+            window.setTimeout(scheduleResize, 160);
+          }}
+          onTransitionEnd={(e) => {
+            if (e.propertyName.includes("max-height")) scheduleResize();
+          }}
         />
+        {isOverflowing ? (
+          <div className="pointer-events-none absolute inset-x-1 bottom-1 h-4 bg-gradient-to-t from-black/35 to-transparent rounded-sm flex justify-end items-end pr-1 text-[18px] text-white/50 opacity-100 group-hover:opacity-0 group-focus-within:opacity-0 transition-opacity">
+            …
+          </div>
+        ) : null}
       </label>
       <div className="flex justify-end items-center gap-1">
         <button
