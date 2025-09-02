@@ -1,11 +1,17 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import InputWithSuffix from "../../../components/InputWithSuffix";
 import InlineEditableNumber from "../../../components/InlineEditableNumber";
 import Collapsible from "../../../components/Collapsible";
 import FlavorGraphs from "../../../components/FlavorGraphs";
 import type { HopItem, HopTimingType } from "../types";
-import { addCustomHop, getHopPresets } from "../../../utils/presets";
+import {
+  addCustomHop,
+  getHopPresets,
+  HOP_FLAVOR_KEYS,
+  type HopFlavorProfile,
+} from "../../../utils/presets";
 import { ibuSingleAddition } from "../../../calculators/ibu";
+import SearchSelect from "../../../components/SearchSelect";
 
 export function HopSchedule({
   hops,
@@ -35,16 +41,20 @@ export function HopSchedule({
   const [savedCustomHop, setSavedCustomHop] = useState<
     Record<string, "idle" | "saved" | "done">
   >({});
-  const customHopNameRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const focusCustomHopName = (id: string) => {
-    window.setTimeout(() => {
-      const el = customHopNameRefs.current[id];
-      if (el) {
-        el.focus();
-        el.select?.();
-      }
-    }, 0);
-  };
+  // no local refs needed for modal-based custom entry
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customIndex, setCustomIndex] = useState<number | null>(null);
+  const [newHopDraft, setNewHopDraft] = useState<{
+    name: string;
+    alphaAcidPercent: number;
+    category?: string;
+    flavor?: Record<string, number>;
+  }>({
+    name: "",
+    alphaAcidPercent: 10,
+    category: "",
+    flavor: {},
+  });
   return (
     <section className="section-soft space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -179,90 +189,89 @@ export function HopSchedule({
                 </>
               ) : (
                 <>
-                  <select
-                    className="w-full rounded-md border px-2 py-2.5"
-                    onChange={(e) => {
-                      if (e.target.value === "__add_custom__") {
-                        onUpdate(i, {
-                          ...h,
-                          name: "",
-                          customNameSelected: true,
-                          customNameLocked: false,
-                          category: undefined,
-                          flavor: undefined,
-                        });
-                        focusCustomHopName(h.id);
-                      } else {
-                        const preset = getHopPresets().find(
-                          (p) => p.name === e.target.value
-                        );
-                        if (!preset) return;
-                        onUpdate(i, {
-                          ...h,
-                          name: preset.name,
-                          alphaAcidPercent: preset.alphaAcidPercent,
-                          category: preset.category,
-                          flavor: preset.flavor,
-                          customNameSelected: false,
-                          customNameLocked: false,
-                        } as HopItem);
+                  {(() => {
+                    const presets = getHopPresets();
+                    const options = presets.map((p) => ({
+                      label: p.name,
+                      value: p.name,
+                    }));
+                    const byCategory = new Map<
+                      string,
+                      {
+                        label: string;
+                        options: { label: string; value: string }[];
                       }
-                    }}
-                    value={(() => {
-                      if (h.customNameSelected && !h.customNameLocked) {
-                        return "__add_custom__";
-                      }
-                      const preset = getHopPresets().find(
-                        (p) => p.name === h.name
-                      );
-                      if (!h.name) return "";
-                      return preset ? h.name : "__add_custom__";
-                    })()}
-                  >
-                    <option value="" disabled>
-                      Hops...
-                    </option>
-                    {getHopPresets().map((p) => (
-                      <option key={p.name} value={p.name}>
-                        {p.name}
-                      </option>
-                    ))}
-                    <option value="__add_custom__">Custom (type below)</option>
-                  </select>
-                  {(h.customNameSelected && !h.customNameLocked) ||
-                  (() => {
-                    const preset = getHopPresets().find(
-                      (p) => p.name === h.name
-                    );
-                    return h.name !== "" && !preset;
-                  })() ? (
-                    <input
-                      className="mt-2 w-full rounded-md border px-3 py-2"
-                      placeholder="Custom hop name"
-                      value={h.name}
-                      ref={(el) => {
-                        customHopNameRefs.current[h.id] = el;
-                      }}
-                      onChange={(e) =>
-                        onUpdate(i, {
-                          ...h,
-                          name: e.target.value,
-                          customNameSelected: true,
-                        })
-                      }
-                      onBlur={(e) => {
-                        const value = e.target.value.trim();
-                        if (value) {
-                          onUpdate(i, {
-                            ...h,
-                            name: value,
-                            customNameLocked: true,
-                            customNameSelected: false,
+                    >();
+                    for (const p of presets) {
+                      const cat =
+                        (p as { category?: string }).category || "Other";
+                      if (!byCategory.has(cat))
+                        byCategory.set(cat, { label: cat, options: [] });
+                      byCategory
+                        .get(cat)!
+                        .options.push({ label: p.name, value: p.name });
+                    }
+                    options.push({
+                      label: "Custom hop...",
+                      value: "__add_custom__",
+                    });
+                    const groups = Array.from(byCategory.values());
+                    groups.push({
+                      label: "Custom",
+                      options: [
+                        { label: "Custom hop...", value: "__add_custom__" },
+                      ],
+                    });
+                    return (
+                      <SearchSelect
+                        value={h.name}
+                        options={options}
+                        groups={groups}
+                        placeholder="Hops... type to search"
+                        onChange={(value) => {
+                          if (value === "__add_custom__") {
+                            setCustomIndex(i);
+                            setNewHopDraft({
+                              name: (h.name || "").trim(),
+                              alphaAcidPercent: h.alphaAcidPercent || 10,
+                            });
+                            setShowCustomModal(true);
+                            return;
+                          }
+                          const preset = getHopPresets().find(
+                            (p) => p.name === value
+                          );
+                          if (preset) {
+                            onUpdate(i, {
+                              ...h,
+                              name: preset.name,
+                              alphaAcidPercent: preset.alphaAcidPercent,
+                              category: preset.category,
+                              flavor: preset.flavor,
+                              customNameSelected: false,
+                              customNameLocked: false,
+                            } as HopItem);
+                          } else {
+                            // Update to typed value so the input reflects user typing
+                            onUpdate(i, {
+                              ...h,
+                              name: value,
+                              customNameSelected: true,
+                              customNameLocked: false,
+                            });
+                          }
+                        }}
+                        onCreate={(q) => {
+                          setCustomIndex(i);
+                          setNewHopDraft({
+                            name: (q || "").trim(),
+                            alphaAcidPercent: 10,
                           });
-                        }
-                      }}
-                    />
-                  ) : null}
+                          setShowCustomModal(true);
+                        }}
+                      />
+                    );
+                  })()}
                 </>
               )}
               <div className="mt-1 text-[11px] text-white/50 translate-x-2">
@@ -422,6 +431,131 @@ export function HopSchedule({
           </button>
         </div>
       </div>
+      {showCustomModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCustomModal(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg border border-white/15 bg-black/20 backdrop-blur p-4 shadow-xl">
+            <div className="text-sm font-semibold mb-3">Add new hop?</div>
+            <div className="space-y-2">
+              <input
+                className="w-full rounded-md border px-3 py-2"
+                placeholder="Hop name"
+                value={newHopDraft.name}
+                onChange={(e) =>
+                  setNewHopDraft((d) => ({ ...d, name: e.target.value }))
+                }
+              />
+              <div className="grid grid-cols-1 gap-2">
+                <InputWithSuffix
+                  value={newHopDraft.alphaAcidPercent}
+                  onChange={(n) =>
+                    setNewHopDraft((d) => ({ ...d, alphaAcidPercent: n }))
+                  }
+                  suffix=" % AA"
+                  suffixClassName="right-2 text-[10px]"
+                  step={0.1}
+                  placeholder="10.0"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                <input
+                  className="w-full rounded-md border px-3 py-2"
+                  placeholder="Category (optional)"
+                  value={newHopDraft.category ?? ""}
+                  onChange={(e) =>
+                    setNewHopDraft((d) => ({ ...d, category: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {(HOP_FLAVOR_KEYS as unknown as string[]).map((k) => (
+                  <label key={k} className="text-xs text-muted">
+                    <div className="mb-1 capitalize">
+                      {k.replace(/([A-Z])/g, " $1").toLowerCase()}
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={5}
+                      step={1}
+                      value={newHopDraft.flavor?.[k] ?? 0}
+                      onChange={(e) => {
+                        const v = Math.max(
+                          0,
+                          Math.min(5, Number(e.target.value) || 0)
+                        );
+                        setNewHopDraft((d) => ({
+                          ...d,
+                          flavor: { ...(d.flavor || {}), [k]: v },
+                        }));
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className="rounded-md border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition duration-150 hover:bg-white/10 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-white/15 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => setShowCustomModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-md border border-white/20 bg-black/10 text-white px-3 py-2 text-sm transition duration-150 hover:bg-black/20 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-black/30 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => {
+                    const name = newHopDraft.name.trim();
+                    if (!name) return;
+                    const idx = customIndex ?? 0;
+                    const current = hops[idx];
+                    const flavor: HopFlavorProfile | undefined = (() => {
+                      const f = newHopDraft.flavor;
+                      if (!f || Object.keys(f).length === 0) return undefined;
+                      return {
+                        citrus: f.citrus ?? 0,
+                        tropicalFruit: f.tropicalFruit ?? 0,
+                        stoneFruit: f.stoneFruit ?? 0,
+                        berry: f.berry ?? 0,
+                        floral: f.floral ?? 0,
+                        grassy: f.grassy ?? 0,
+                        herbal: f.herbal ?? 0,
+                        spice: f.spice ?? 0,
+                        resinPine: f.resinPine ?? 0,
+                      } as HopFlavorProfile;
+                    })();
+                    addCustomHop({
+                      name,
+                      alphaAcidPercent:
+                        Number(newHopDraft.alphaAcidPercent) || 0,
+                      category:
+                        (newHopDraft.category || current?.category) ??
+                        undefined,
+                      flavor,
+                    });
+                    onUpdate(idx, {
+                      ...current,
+                      name,
+                      alphaAcidPercent:
+                        Number(newHopDraft.alphaAcidPercent) || 0,
+                      category:
+                        (newHopDraft.category || current?.category) ??
+                        current?.category,
+                      flavor: flavor ?? current.flavor,
+                      customNameSelected: false,
+                      customNameLocked: false,
+                    } as HopItem);
+                    setShowCustomModal(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <Collapsible open={showVisualizer}>
         <FlavorGraphs
           baseSeries={hopFlavorSeries}

@@ -1,6 +1,9 @@
-import { getYeastPresets } from "../../../utils/presets";
+import { addCustomYeast, getYeastPresets } from "../../../utils/presets";
 import type { YeastItem } from "../types";
 import YeastPitchCalc from "../../../components/YeastPitchCalc";
+import InputWithSuffix from "../../../components/InputWithSuffix";
+import { useState } from "react";
+import SearchSelect from "../../../components/SearchSelect";
 
 export default function YeastSection({
   yeast,
@@ -59,35 +62,84 @@ export default function YeastSection({
     totalDmeG: number;
   } | null;
 }) {
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [newYeastDraft, setNewYeastDraft] = useState<{
+    name: string;
+    attenuationPercent?: number;
+    category?: string;
+  }>({
+    name: "",
+  });
   return (
     <section className="section-soft space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="font-semibold text_PRIMARY-strong">Yeast</div>
       </div>
       <label className="flex flex-col">
-        <select
-          className="w-full rounded-md border px-2 py-2.5"
-          value={yeast.name}
-          onChange={(e) => {
-            const preset = getYeastPresets().find(
-              (p) => p.name === e.target.value
-            );
-            if (!preset) return;
-            onChangeYeast(preset);
-          }}
-        >
-          <option value="" disabled>
-            Select Yeast...
-          </option>
-          {getYeastPresets()
+        {(() => {
+          const presets = getYeastPresets();
+          const options = presets
             .slice()
             .sort((a, b) => a.name.localeCompare(b.name))
-            .map((p) => (
-              <option key={p.name} value={p.name}>
-                {p.name}
-              </option>
-            ))}
-        </select>
+            .map((p) => ({ label: p.name, value: p.name }));
+          const byCategory = new Map<
+            string,
+            { label: string; options: { label: string; value: string }[] }
+          >();
+          for (const p of presets) {
+            const cat = (p as { category?: string }).category || "Other";
+            if (!byCategory.has(cat))
+              byCategory.set(cat, { label: cat, options: [] });
+            byCategory.get(cat)!.options.push({ label: p.name, value: p.name });
+          }
+          options.push({ label: "Custom yeast...", value: "__custom__" });
+          const groups = Array.from(byCategory.values());
+          groups.push({
+            label: "Custom",
+            options: [{ label: "Custom yeast...", value: "__custom__" }],
+          });
+          return (
+            <SearchSelect
+              value={yeast.name}
+              options={options}
+              groups={groups}
+              placeholder="Select yeast... type to search"
+              formatSelectedLabel={(v) => {
+                const p = getYeastPresets().find((x) => x.name === v);
+                return p ? `${p.category || "Other"} - ${p.name}` : v;
+              }}
+              onChange={(value) => {
+                if (value === "__custom__") {
+                  setNewYeastDraft({
+                    name: "",
+                    attenuationPercent: 0.75,
+                    category: "Custom",
+                  });
+                  setShowCustomModal(true);
+                  return;
+                }
+                const preset = getYeastPresets().find((p) => p.name === value);
+                if (preset) {
+                  onChangeYeast(preset);
+                } else {
+                  // Reflect free-typed value so input can be edited/erased
+                  onChangeYeast({
+                    name: value,
+                    attenuationPercent: yeast.attenuationPercent,
+                  });
+                }
+              }}
+              onCreate={(q) => {
+                setNewYeastDraft({
+                  name: (q || "").trim(),
+                  attenuationPercent: 0.75,
+                  category: "Custom",
+                });
+                setShowCustomModal(true);
+              }}
+            />
+          );
+        })()}
       </label>
       {yeast.attenuationPercent && (
         <div className="text-sm text-neutral-600">
@@ -102,6 +154,75 @@ export default function YeastSection({
           initial={starterInitial ?? undefined}
         />
       </div>
+      {showCustomModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCustomModal(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg border border-white/15 bg-black/20 backdrop-blur p-4 shadow-xl">
+            <div className="text-sm font-semibold mb-3">Add new yeast?</div>
+            <div className="space-y-2">
+              <input
+                className="w-full rounded-md border px-3 py-2"
+                placeholder="Yeast name"
+                value={newYeastDraft.name}
+                onChange={(e) =>
+                  setNewYeastDraft((d) => ({ ...d, name: e.target.value }))
+                }
+              />
+              <InputWithSuffix
+                value={newYeastDraft.attenuationPercent ?? 0.75}
+                onChange={(n: number) =>
+                  setNewYeastDraft((d) => ({
+                    ...d,
+                    attenuationPercent: Math.max(0, Math.min(1, n)),
+                  }))
+                }
+                suffix=" attn"
+                suffixClassName="right-2 text-[10px]"
+                step={0.01}
+                placeholder="0.75"
+              />
+              <input
+                className="w-full rounded-md border px-3 py-2"
+                placeholder="Category (optional)"
+                value={newYeastDraft.category ?? ""}
+                onChange={(e) =>
+                  setNewYeastDraft((d) => ({ ...d, category: e.target.value }))
+                }
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className="rounded-md border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition duration-150 hover:bg-white/10 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-white/15 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => setShowCustomModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-md border border-white/20 bg-black/10 text-white px-3 py-2 text-sm transition duration-150 hover:bg-black/20 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-black/30 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => {
+                    const name = (newYeastDraft.name || "").trim();
+                    if (!name) return;
+                    addCustomYeast({
+                      name,
+                      category: newYeastDraft.category || "Custom",
+                      attenuationPercent: newYeastDraft.attenuationPercent,
+                    });
+                    onChangeYeast({
+                      name,
+                      attenuationPercent: newYeastDraft.attenuationPercent,
+                    });
+                    setShowCustomModal(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

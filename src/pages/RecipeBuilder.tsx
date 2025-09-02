@@ -1772,7 +1772,7 @@ export default function RecipeBuilder() {
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <div className="flex items-center gap-2">
             <select
-              className="rounded-md border px-2 py-2 bg-black/20"
+              className="rounded-md border px-2 py-2 bg-black/20 text-sm"
               value={currentRecipeId || ""}
               onChange={(e) => {
                 const id = e.target.value;

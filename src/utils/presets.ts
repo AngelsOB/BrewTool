@@ -1,9 +1,15 @@
 import { loadJson, saveJson } from "./storage";
+// Single source of truth for fermentables (generated offline and committed)
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - JSON import handled by bundler
+import GENERATED_GRAINS from "./presets.generated.grains.json";
 
 export type GrainPreset = {
   name: string;
   colorLovibond: number; // °L
   potentialGu: number; // GU/PPG at 100% conversion (as-is)
+  type?: "grain" | "adjunct_mashable" | "extract" | "sugar"; // optional; default to grain
+  originCode?: string; // ISO-3166-1 alpha-2 (e.g., US, DE, GB)
 };
 
 export type HopPreset = {
@@ -12,6 +18,8 @@ export type HopPreset = {
   category?: string; // Optional category, e.g., "US Hops", "Noble Hops", "New Zealand Hops"
   // Optional sensory flavor/aroma profile on a 0-5 scale (0 = none/unknown, 5 = very strong)
   flavor?: HopFlavorProfile;
+  // Optional free-form tasting notes or metadata
+  notes?: string;
 };
 
 export type YeastPreset = {
@@ -58,48 +66,12 @@ export const EMPTY_HOP_FLAVOR: HopFlavorProfile = {
   resinPine: 0,
 };
 
-// Convert prior yield% heuristics to GU using 46 * yield
-const gu = (yieldDecimal: number) => Math.round(46 * yieldDecimal * 10) / 10;
-export const GRAIN_PRESETS: GrainPreset[] = [
-  { name: "Pilsner Malt", colorLovibond: 1.5, potentialGu: gu(0.8) },
-  { name: "Pale Malt (2-Row)", colorLovibond: 2, potentialGu: gu(0.78) },
-  { name: "Maris Otter", colorLovibond: 3, potentialGu: gu(0.81) },
-  { name: "Vienna Malt", colorLovibond: 4, potentialGu: gu(0.78) },
-  { name: "Munich Malt", colorLovibond: 10, potentialGu: gu(0.75) },
-  { name: "Wheat Malt", colorLovibond: 2, potentialGu: gu(0.8) },
-  { name: "Crystal 20L", colorLovibond: 20, potentialGu: gu(0.75) },
-  { name: "Crystal 40L", colorLovibond: 40, potentialGu: gu(0.72) },
-  { name: "Crystal 60L", colorLovibond: 60, potentialGu: gu(0.7) },
-  { name: "Chocolate Malt", colorLovibond: 350, potentialGu: gu(0.6) },
-  { name: "Roasted Barley", colorLovibond: 500, potentialGu: gu(0.55) },
-  { name: "Acid Malt", colorLovibond: 3, potentialGu: gu(0.75) },
-  { name: "Amber Malt", colorLovibond: 25, potentialGu: gu(0.7) },
-  { name: "Biscuit Malt", colorLovibond: 25, potentialGu: gu(0.75) },
-  { name: "Black (Patent) Malt", colorLovibond: 500, potentialGu: gu(0.55) },
-  { name: "Brown Malt", colorLovibond: 65, potentialGu: gu(0.65) },
-  { name: "Cara-Pils/Dextrine", colorLovibond: 2, potentialGu: gu(0.78) },
-  { name: "Caramunich Malt", colorLovibond: 56, potentialGu: gu(0.75) },
-  { name: "Caravienne Malt", colorLovibond: 22, potentialGu: gu(0.75) },
-  { name: "Chocolate Malt (Darker)", colorLovibond: 400, potentialGu: gu(0.6) },
-  { name: "Crystal 10L", colorLovibond: 10, potentialGu: gu(0.75) },
-  { name: "Crystal 80L", colorLovibond: 80, potentialGu: gu(0.68) },
-  { name: "Crystal 120L", colorLovibond: 120, potentialGu: gu(0.65) },
-  { name: "Dark Munich Malt", colorLovibond: 18, potentialGu: gu(0.72) },
-  { name: "Flaked Barley", colorLovibond: 2, potentialGu: gu(0.68) },
-  { name: "Flaked Oats", colorLovibond: 1, potentialGu: gu(0.6) },
-  { name: "Flaked Wheat", colorLovibond: 2, potentialGu: gu(0.7) },
-  { name: "Honey Malt", colorLovibond: 25, potentialGu: gu(0.75) },
-  { name: "Lactose (Milk Sugar)", colorLovibond: 0, potentialGu: gu(1.0) },
-  { name: "Melanoidin Malt", colorLovibond: 20, potentialGu: gu(0.75) },
-  { name: "Oats, Malted", colorLovibond: 2, potentialGu: gu(0.7) },
-  { name: "Pale Chocolate Malt", colorLovibond: 220, potentialGu: gu(0.65) },
-  { name: "Smoked Malt", colorLovibond: 9, potentialGu: gu(0.75) },
-  { name: "Special B Malt", colorLovibond: 180, potentialGu: gu(0.68) },
-  { name: "Victory Malt", colorLovibond: 25, potentialGu: gu(0.73) },
-  { name: "White Wheat Malt", colorLovibond: 2, potentialGu: gu(0.8) },
-  { name: "Torrefied Wheat", colorLovibond: 2, potentialGu: gu(0.78) },
-  { name: "Rice Hulls", colorLovibond: 0, potentialGu: 0 },
-];
+// Convert prior yield% heuristics to GU using 46 * yield (legacy helper)
+// Kept for reference; not used now that presets are fully data-driven
+// const gu = (yieldDecimal: number) => Math.round(46 * yieldDecimal * 10) / 10;
+// Note: We keep this array empty to avoid duplicating data. The single source of
+// truth is the curated dataset imported above.
+export const GRAIN_PRESETS: GrainPreset[] = [];
 
 export const HOP_PRESETS: HopPreset[] = [
   // US Hops
@@ -1644,7 +1616,256 @@ const CUSTOM_YEASTS_KEY = "beerapp.customYeasts";
 
 export function getGrainPresets(): GrainPreset[] {
   const custom = loadJson<GrainPreset[]>(CUSTOM_GRAINS_KEY, []);
-  return [...GRAIN_PRESETS, ...custom];
+  const generated: GrainPreset[] = GENERATED_GRAINS as unknown as GrainPreset[];
+
+  // Deduplicate by name (prefer explicit entries -> generated -> custom)
+  const byName = new Map<string, GrainPreset>();
+  const put = (p: GrainPreset) =>
+    byName.set(p.name, { ...byName.get(p.name), ...p });
+  for (const p of GRAIN_PRESETS) put(p);
+  for (const p of generated) put(p);
+  for (const p of custom) put(p);
+  return Array.from(byName.values());
+}
+
+// Grouping for better UX in dropdowns
+export type GrainGroup =
+  | "Base malts"
+  | "Crystal/Caramel"
+  | "Roasted"
+  | "Toasted & specialty"
+  | "Adjuncts (mashable/flaked)"
+  | "Extracts"
+  | "Sugars"
+  | "Lauter aids & other";
+
+const GRAIN_GROUP_ORDER: GrainGroup[] = [
+  "Base malts",
+  "Crystal/Caramel",
+  "Roasted",
+  "Toasted & specialty",
+  "Adjuncts (mashable/flaked)",
+  "Extracts",
+  "Sugars",
+  "Lauter aids & other",
+];
+
+function getPresetType(
+  p: GrainPreset
+): "grain" | "adjunct_mashable" | "extract" | "sugar" {
+  const t = (p as { type?: string }).type as
+    | "grain"
+    | "adjunct_mashable"
+    | "extract"
+    | "sugar"
+    | undefined;
+  if (t) return t;
+  const name = (p.name || "").toLowerCase();
+  const isMaltNamed = name.includes("malt");
+
+  // Extracts
+  if (
+    name.includes("extract") ||
+    name.includes(" dme") ||
+    name.includes("dme ") ||
+    name.includes(" lme") ||
+    name.includes("lme ")
+  ) {
+    return "extract";
+  }
+
+  // Sugars (avoid misclassifying Honey Malt)
+  if (
+    (!isMaltNamed && name.includes("honey")) ||
+    name.includes("syrup") ||
+    name.includes("candi") ||
+    name.includes("sugar") ||
+    name.includes("dextrose") ||
+    name.includes("sucrose") ||
+    name.includes("lactose") ||
+    name.includes("maltodextrin") ||
+    name.includes("turbinado") ||
+    name.includes("molasses") ||
+    name.includes("maple")
+  ) {
+    return "sugar";
+  }
+
+  // Adjunct mashables
+  if (
+    name.includes("flaked") ||
+    name.includes("torrified") ||
+    name.includes("torrefied") ||
+    name.includes("grits")
+  ) {
+    return "adjunct_mashable";
+  }
+
+  return "grain";
+}
+
+function inferGrainGroup(p: GrainPreset): GrainGroup {
+  const name = (p.name || "").toLowerCase();
+  // Type-based groups first with name-based inference fallback
+  const inferredType = getPresetType(p);
+  if (inferredType === "extract") return "Extracts";
+  if (inferredType === "sugar") return "Sugars";
+  if (name.includes("rice hulls")) return "Lauter aids & other";
+  if (inferredType === "adjunct_mashable") return "Adjuncts (mashable/flaked)";
+
+  // Name-based inference for grains
+  if (
+    name.includes("crystal") ||
+    name.includes("caramel") ||
+    name.startsWith("cara") ||
+    name.includes("caramunich") ||
+    name.includes("caravienne") ||
+    name.includes("carapils") ||
+    name.includes("carafoam") ||
+    name.includes("special b") ||
+    name.includes("honey malt")
+  ) {
+    return "Crystal/Caramel";
+  }
+
+  if (
+    name.includes("chocolate") ||
+    name.includes("black") ||
+    name.includes("roast") ||
+    name.includes("roasted") ||
+    name.includes("patent")
+  ) {
+    return "Roasted";
+  }
+
+  if (
+    name.includes("biscuit") ||
+    name.includes("victory") ||
+    name.includes("amber") ||
+    name.includes("aromatic") ||
+    name.includes("melanoidin") ||
+    name.includes("smoked") ||
+    name.includes("peat") ||
+    name.includes("brown malt") ||
+    name.includes("acid")
+  ) {
+    return "Toasted & specialty";
+  }
+
+  if (
+    name.includes("pilsner") ||
+    name.includes("2-row") ||
+    name.includes("6-row") ||
+    name.includes("maris otter") ||
+    name.includes("golden promise") ||
+    name.includes("vienna") ||
+    name.includes("munich") ||
+    name.includes("mild malt") ||
+    name.includes("wheat malt") ||
+    name.includes("rye malt")
+  ) {
+    return "Base malts";
+  }
+
+  // Fallback
+  return "Base malts";
+}
+
+export function getGrainPresetsGrouped(): Array<{
+  label: GrainGroup;
+  items: GrainPreset[];
+}> {
+  const grouped: Record<GrainGroup, GrainPreset[]> = {
+    "Base malts": [],
+    "Crystal/Caramel": [],
+    Roasted: [],
+    "Toasted & specialty": [],
+    "Adjuncts (mashable/flaked)": [],
+    Extracts: [],
+    Sugars: [],
+    "Lauter aids & other": [],
+  };
+
+  for (const p of getGrainPresets()) {
+    const g = inferGrainGroup(p);
+    grouped[g].push(p);
+  }
+
+  // Sort each group by name asc
+  for (const key of Object.keys(grouped) as GrainGroup[]) {
+    grouped[key].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return GRAIN_GROUP_ORDER.map((label) => ({ label, items: grouped[label] }));
+}
+
+// Infer a manufacturer/vendor from common "Vendor - Product" naming used by catalogs
+function inferVendorFromName(name: string): string | undefined {
+  const seps = [" - ", " — ", " – "];
+  for (const sep of seps) {
+    const idx = name.indexOf(sep);
+    if (idx > 0) {
+      const left = name.slice(0, idx).trim();
+      const right = name.slice(idx + sep.length).trim();
+      // Heuristics: allow vendors with digits as long as they also contain letters
+      // (e.g., "1886 Malt House"). Ignore cases where left is only digits.
+      const leftHasDigit = /\d/.test(left);
+      const leftHasLetter = /[A-Za-z]/.test(left);
+      if (leftHasDigit && !leftHasLetter) continue;
+      // Must have a reasonable product part
+      if (right.length < 3) continue;
+      return left;
+    }
+  }
+  return undefined;
+}
+
+// Group by grain group AND vendor, formatted as "<Group> · <Vendor>"
+export function getGrainPresetsGroupedByVendor(): Array<{
+  label: string;
+  items: GrainPreset[];
+}> {
+  type BucketKey = { group: GrainGroup; vendor: string };
+  const buckets = new Map<string, { key: BucketKey; items: GrainPreset[] }>();
+
+  const add = (group: GrainGroup, vendor: string, p: GrainPreset) => {
+    const k = `${group}__${vendor}`;
+    if (!buckets.has(k)) buckets.set(k, { key: { group, vendor }, items: [] });
+    buckets.get(k)!.items.push(p);
+  };
+
+  for (const p of getGrainPresets()) {
+    const group = inferGrainGroup(p);
+    const vendor = inferVendorFromName(p.name) || "Generic";
+    add(group, vendor, p);
+  }
+
+  // Sort items in each bucket
+  for (const b of buckets.values()) {
+    b.items.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  // Order buckets by group order then vendor asc, with Generic FIRST in each group
+  const ordered = Array.from(buckets.values()).sort((a, b) => {
+    const ga = GRAIN_GROUP_ORDER.indexOf(a.key.group);
+    const gb = GRAIN_GROUP_ORDER.indexOf(b.key.group);
+    if (ga !== gb) return ga - gb;
+    // Generic first
+    if (a.key.vendor === "Generic" && b.key.vendor !== "Generic") return -1;
+    if (b.key.vendor === "Generic" && a.key.vendor !== "Generic") return 1;
+    const normalize = (v: string) => {
+      // Push numeric-leading vendors after alphabetic vendors
+      return /^\d/.test(v) ? `~~~_${v}` : v;
+    };
+    const va = normalize(a.key.vendor);
+    const vb = normalize(b.key.vendor);
+    return va.localeCompare(vb);
+  });
+
+  return ordered.map((b) => ({
+    label: `${b.key.group} · ${b.key.vendor}`,
+    items: b.items,
+  }));
 }
 
 export function getHopPresets(): HopPreset[] {

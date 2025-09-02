@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import InputWithSuffix from "../../../components/InputWithSuffix";
 import type { GrainItem } from "../types";
-import { addCustomGrain, getGrainPresets } from "../../../utils/presets";
+import {
+  addCustomGrain,
+  getGrainPresets,
+  getGrainPresetsGroupedByVendor,
+} from "../../../utils/presets";
+import SearchSelect from "../../../components/SearchSelect";
 
 export function GrainBill({
   grains,
@@ -36,18 +41,17 @@ export function GrainBill({
   const [savedCustomGrain, setSavedCustomGrain] = useState<
     Record<string, "idle" | "saved" | "done">
   >({});
-  // Refs to custom name inputs per row for autofocus on select
-  const customNameRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const focusCustomName = (id: string) => {
-    // defer to next tick to ensure input is mounted
-    window.setTimeout(() => {
-      const el = customNameRefs.current[id];
-      if (el) {
-        el.focus();
-        el.select?.();
-      }
-    }, 0);
-  };
+  // Removed inline custom name editing; using modal instead
+
+  // Custom grain modal state
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customIndex, setCustomIndex] = useState<number | null>(null);
+  const [newGrainDraft, setNewGrainDraft] = useState<{
+    name: string;
+    colorLovibond: number;
+    potentialGu: number;
+    type: "grain" | "adjunct_mashable" | "extract" | "sugar";
+  }>({ name: "", colorLovibond: 10, potentialGu: 36, type: "grain" });
 
   // When switching to percent mode, seed percents from current weights
   useEffect(() => {
@@ -284,90 +288,113 @@ export function GrainBill({
                 </>
               ) : (
                 <>
-                  <select
-                    className="w-full rounded-md border py-2.5 pl-2 pr-12"
-                    onChange={(e) => {
-                      if (e.target.value === "__add_custom__") {
-                        onUpdate(i, {
-                          ...g,
-                          name: "",
-                          customNameSelected: true,
-                          customNameLocked: false,
-                        });
-                        focusCustomName(g.id);
-                        return;
+                  {(() => {
+                    const options = getGrainPresets().map((p) => {
+                      const c = (p as { originCode?: string }).originCode;
+                      let flag = "";
+                      if (c && c.length === 2) {
+                        const cc = c.toUpperCase();
+                        const base = 127397;
+                        flag =
+                          String.fromCodePoint(base + cc.charCodeAt(0)) +
+                          String.fromCodePoint(base + cc.charCodeAt(1)) +
+                          " ";
                       }
-                      const preset = getGrainPresets().find(
-                        (p) => p.name === e.target.value
-                      );
-                      if (!preset) return;
-                      onUpdate(i, {
-                        ...g,
-                        name: preset.name,
-                        colorLovibond: (preset as { colorLovibond: number })
-                          .colorLovibond,
-                        potentialGu: (preset as { potentialGu: number })
-                          .potentialGu,
-                        type: "grain",
-                        customNameSelected: false,
-                        customNameLocked: false,
-                      } as GrainItem);
-                    }}
-                    value={(() => {
-                      if (g.customNameSelected && !g.customNameLocked) {
-                        return "__add_custom__";
-                      }
-                      const preset = getGrainPresets().find(
-                        (p) => p.name === g.name
-                      );
-                      if (!g.name) return "";
-                      return preset ? g.name : "__add_custom__";
-                    })()}
-                  >
-                    <option value="" disabled>
-                      Grains...
-                    </option>
-                    {getGrainPresets().map((p) => (
-                      <option key={p.name} value={p.name}>
-                        {p.name}
-                      </option>
-                    ))}
-                    <option value="__add_custom__">Custom (type below)</option>
-                  </select>
-                  {(g.customNameSelected && !g.customNameLocked) ||
-                  (() => {
-                    const preset = getGrainPresets().find(
-                      (p) => p.name === g.name
+                      return { label: `${flag}${p.name}`, value: p.name };
+                    });
+                    // Build grouped view: grain group · vendor
+                    const grouped = getGrainPresetsGroupedByVendor().map(
+                      (g) => ({
+                        label: g.label,
+                        options: g.items.map((p) => {
+                          const c = (p as { originCode?: string }).originCode;
+                          let flag = "";
+                          // Remove country flags for Generic vendor sections
+                          const isGeneric = g.label.trim().endsWith("Generic");
+                          if (!isGeneric && c && c.length === 2) {
+                            const cc = c.toUpperCase();
+                            const base = 127397;
+                            flag =
+                              String.fromCodePoint(base + cc.charCodeAt(0)) +
+                              String.fromCodePoint(base + cc.charCodeAt(1)) +
+                              " ";
+                          }
+                          return { label: `${flag}${p.name}`, value: p.name };
+                        }),
+                      })
                     );
-                    return g.name !== "" && !preset;
-                  })() ? (
-                    <input
-                      className="mt-2 w-full rounded-md border px-3 py-2"
-                      placeholder="Custom grain name"
-                      value={g.name}
-                      ref={(el) => {
-                        customNameRefs.current[g.id] = el;
-                      }}
-                      onChange={(e) =>
-                        onUpdate(i, {
-                          ...g,
-                          name: e.target.value,
-                          customNameSelected: true,
-                        })
-                      }
-                      onBlur={(e) => {
-                        const value = e.target.value.trim();
-                        if (value) {
-                          onUpdate(i, {
-                            ...g,
-                            name: value,
-                            customNameLocked: true,
-                            customNameSelected: false,
+                    // Append Custom option
+                    options.push({
+                      label: "Custom grain...",
+                      value: "__add_custom__",
+                    });
+                    grouped.push({
+                      label: "Custom",
+                      options: [
+                        { label: "Custom grain...", value: "__add_custom__" },
+                      ],
+                    });
+                    return (
+                      <SearchSelect
+                        value={g.name}
+                        options={options}
+                        groups={grouped}
+                        placeholder="Grains... type to search"
+                        onChange={(value) => {
+                          if (value === "__add_custom__") {
+                            setCustomIndex(i);
+                            setNewGrainDraft({
+                              name: (g.name || "").trim(),
+                              colorLovibond: 10,
+                              potentialGu: 36,
+                              type: "grain",
+                            });
+                            setShowCustomModal(true);
+                            return;
+                          }
+                          const preset = getGrainPresets().find(
+                            (p) => p.name === value
+                          );
+                          if (preset) {
+                            onUpdate(i, {
+                              ...g,
+                              name: preset.name,
+                              colorLovibond: (
+                                preset as { colorLovibond: number }
+                              ).colorLovibond,
+                              potentialGu: (preset as { potentialGu: number })
+                                .potentialGu,
+                              type:
+                                (
+                                  preset as {
+                                    type?:
+                                      | "grain"
+                                      | "adjunct_mashable"
+                                      | "extract"
+                                      | "sugar";
+                                  }
+                                ).type ?? "grain",
+                              customNameSelected: false,
+                              customNameLocked: false,
+                            } as GrainItem);
+                          } else {
+                            onUpdate(i, { ...g, name: value });
+                          }
+                        }}
+                        onCreate={(q) => {
+                          setCustomIndex(i);
+                          setNewGrainDraft({
+                            name: (q || "").trim(),
+                            colorLovibond: 10,
+                            potentialGu: 36,
+                            type: "grain",
                           });
-                        }
-                      }}
-                    />
-                  ) : null}
+                          setShowCustomModal(true);
+                        }}
+                      />
+                    );
+                  })()}
+                  {null}
                 </>
               )}
               <div
@@ -503,6 +530,83 @@ export function GrainBill({
           + Add Grain
         </button>
       </div>
+      {showCustomModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCustomModal(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg border border-white/15 bg-black/20 backdrop-blur p-4 shadow-xl">
+            <div className="text-sm font-semibold mb-3">Add new grain?</div>
+            <div className="space-y-2">
+              <input
+                className="w-full rounded-md border px-3 py-2"
+                placeholder="Grain name"
+                value={newGrainDraft.name}
+                onChange={(e) =>
+                  setNewGrainDraft((d) => ({ ...d, name: e.target.value }))
+                }
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <InputWithSuffix
+                  value={newGrainDraft.colorLovibond}
+                  onChange={(n) =>
+                    setNewGrainDraft((d) => ({ ...d, colorLovibond: n }))
+                  }
+                  suffix=" °L"
+                  suffixClassName="right-2 text-[10px]"
+                  step={1}
+                  placeholder="10"
+                />
+                <InputWithSuffix
+                  value={newGrainDraft.potentialGu}
+                  onChange={(n) =>
+                    setNewGrainDraft((d) => ({ ...d, potentialGu: n }))
+                  }
+                  suffix=" GU"
+                  suffixClassName="right-2 text-[10px]"
+                  step={0.1}
+                  placeholder="36.0"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className="rounded-md border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition duration-150 hover:bg-white/10 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-white/15 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => setShowCustomModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-md border border-white/20 bg-black/10 text-white px-3 py-2 text-sm transition duration-150 hover:bg-black/20 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-black/30 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => {
+                    const name = newGrainDraft.name.trim();
+                    if (!name) return;
+                    addCustomGrain({
+                      name,
+                      colorLovibond: Number(newGrainDraft.colorLovibond) || 0,
+                      potentialGu: Number(newGrainDraft.potentialGu) || 0,
+                    });
+                    const idx = customIndex ?? 0;
+                    const current = grains[idx];
+                    onUpdate(idx, {
+                      ...current,
+                      name,
+                      colorLovibond: Number(newGrainDraft.colorLovibond) || 0,
+                      potentialGu: Number(newGrainDraft.potentialGu) || 0,
+                      type: newGrainDraft.type,
+                      customNameSelected: false,
+                      customNameLocked: false,
+                    } as GrainItem);
+                    setShowCustomModal(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

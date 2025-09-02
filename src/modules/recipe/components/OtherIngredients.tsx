@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useState } from "react";
 import AutoWidthUnitSelect from "../../../components/AutoWidthUnitSelect";
 import InputWithSuffix from "../../../components/InputWithSuffix";
 import type { OtherIngredient, OtherIngredientCategory } from "../types";
+import SearchSelect from "../../../components/SearchSelect";
 
 export default function OtherIngredients({
   items,
@@ -40,16 +41,12 @@ export default function OtherIngredients({
   ];
 
   // Autofocus for custom name input when selecting Custom
-  const customNameRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const focusCustomName = (id: string) => {
-    window.setTimeout(() => {
-      const el = customNameRefs.current[id];
-      if (el) {
-        el.focus();
-        el.select?.();
-      }
-    }, 0);
-  };
+  // no refs needed for modal-based custom entry
+
+  // Modal state for custom ingredient entry (aligned with GrainBill/Hops)
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customIndex, setCustomIndex] = useState<number | null>(null);
+  const [newNameDraft, setNewNameDraft] = useState<string>("");
 
   return (
     <section
@@ -81,108 +78,64 @@ export default function OtherIngredients({
         >
           <label className="flex flex-col">
             <div className="text-xs text-muted mb-1 sm:hidden">Name</div>
-            {ing.customNameLocked ? (
-              <input
-                className="rounded-md border px-3 py-2"
-                placeholder="Custom name"
-                value={ing.name}
-                onChange={(e) => onUpdate(i, { ...ing, name: e.target.value })}
-              />
-            ) : (
-              <>
-                <select
-                  className="w-full rounded-md border px-2 py-2.5"
-                  value={(() => {
-                    if (ing.customNameSelected && !ing.customNameLocked) {
-                      return "__custom__";
+            {(() => {
+              const options = Object.values(presetByCategory)
+                .flat()
+                .map((n) => ({ label: n, value: n }));
+              const groups = Object.entries(presetByCategory).map(
+                ([cat, items]) => ({
+                  label: cat
+                    .replace("-", " ")
+                    .replace(/\b\w/g, (m) => m.toUpperCase()),
+                  options: items.map((n) => ({ label: n, value: n })),
+                })
+              );
+              options.push({
+                label: "Custom ingredient...",
+                value: "__custom__",
+              });
+              groups.push({
+                label: "Custom",
+                options: [
+                  { label: "Custom ingredient...", value: "__custom__" },
+                ],
+              });
+              return (
+                <SearchSelect
+                  value={ing.name}
+                  options={options}
+                  groups={groups}
+                  placeholder="Select... type to search"
+                  onChange={(val) => {
+                    if (val === "__custom__") {
+                      setCustomIndex(i);
+                      setNewNameDraft((ing.name || "").trim());
+                      setShowCustomModal(true);
+                      return;
                     }
-                    const allNames = Object.values(presetByCategory).flat();
-                    if (!ing.name) return "";
-                    return allNames.includes(ing.name)
-                      ? ing.name
-                      : "__custom__";
-                  })()}
-                  onChange={(e) => {
-                    const sel = e.target.value;
-                    if (sel === "__custom__") {
-                      onUpdate(i, {
-                        ...ing,
-                        name: "",
-                        category: "other",
-                        customNameSelected: true,
-                        customNameLocked: false,
-                      });
-                      focusCustomName(ing.id);
-                    } else {
-                      let cat: OtherIngredientCategory = "other";
-                      for (const [k, arr] of Object.entries(presetByCategory)) {
-                        if (arr.includes(sel)) {
-                          cat = k as OtherIngredientCategory;
-                          break;
-                        }
+                    let cat: OtherIngredientCategory = "other";
+                    for (const [k, arr] of Object.entries(presetByCategory)) {
+                      if (arr.includes(val)) {
+                        cat = k as OtherIngredientCategory;
+                        break;
                       }
-                      onUpdate(i, {
-                        ...ing,
-                        name: sel,
-                        category: cat,
-                        customNameSelected: false,
-                      });
                     }
+                    onUpdate(i, {
+                      ...ing,
+                      name: val,
+                      category: cat,
+                      customNameSelected: false,
+                      customNameLocked: false,
+                    });
                   }}
-                >
-                  <option value="" disabled>
-                    Select...
-                  </option>
-                  {Object.entries(presetByCategory).map(([cat, items]) => (
-                    <optgroup
-                      key={cat}
-                      label={cat
-                        .replace("-", " ")
-                        .replace(/\b\w/g, (m) => m.toUpperCase())}
-                    >
-                      {items.map((n) => (
-                        <option key={n} value={n}>
-                          {n}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                  <option value="__custom__">Custom (type below)</option>
-                </select>
-                {(ing.customNameSelected && !ing.customNameLocked) ||
-                (() => {
-                  const allNames = Object.values(presetByCategory).flat();
-                  return ing.name !== "" && !allNames.includes(ing.name);
-                })() ? (
-                  <input
-                    className="mt-2 rounded-md border px-3 py-2"
-                    placeholder="Custom name"
-                    value={ing.name}
-                    ref={(el) => {
-                      customNameRefs.current[ing.id] = el;
-                    }}
-                    onChange={(e) =>
-                      onUpdate(i, {
-                        ...ing,
-                        name: e.target.value,
-                        customNameSelected: true,
-                      })
-                    }
-                    onBlur={(e) => {
-                      const value = e.target.value.trim();
-                      if (value) {
-                        onUpdate(i, {
-                          ...ing,
-                          name: value,
-                          customNameLocked: true,
-                          customNameSelected: false,
-                        });
-                      }
-                    }}
-                  />
-                ) : null}
-              </>
-            )}
+                  onCreate={(q) => {
+                    setCustomIndex(i);
+                    setNewNameDraft((q || "").trim());
+                    setShowCustomModal(true);
+                  }}
+                />
+              );
+            })()}
           </label>
 
           <label className="flex flex-col">
@@ -277,6 +230,55 @@ export default function OtherIngredients({
           </div>
         </div>
       ))}
+
+      {showCustomModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCustomModal(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg border border-white/15 bg-black/20 backdrop-blur p-4 shadow-xl">
+            <div className="text-sm font-semibold mb-3">
+              Add custom ingredient?
+            </div>
+            <div className="space-y-2">
+              <input
+                className="w-full rounded-md border px-3 py-2"
+                placeholder="Ingredient name"
+                value={newNameDraft}
+                onChange={(e) => setNewNameDraft(e.target.value)}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className="rounded-md border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition duration-150 hover:bg-white/10 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-white/15 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => setShowCustomModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-md border border-white/20 bg-black/10 text-white px-3 py-2 text-sm transition duration-150 hover:bg-black/20 hover:shadow-[0_0_13px_var(--coral-600)]/80 active:bg-black/30 active:shadow-[0_0_20px_var(--coral-600)] active:translate-y-[1px] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]/60"
+                  onClick={() => {
+                    const name = newNameDraft.trim();
+                    if (!name) return;
+                    const idx = customIndex ?? 0;
+                    const current = items[idx];
+                    onUpdate(idx, {
+                      ...current,
+                      name,
+                      category: current.category ?? "other",
+                      customNameSelected: false,
+                      customNameLocked: false,
+                    });
+                    setShowCustomModal(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <button className="block sm:hidden w-full btn-neon" onClick={onAdd}>
         + Add Ingredient
