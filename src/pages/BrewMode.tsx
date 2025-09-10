@@ -9,6 +9,7 @@ import {
   computeSpargeWaterL,
 } from "../utils/calculations";
 import { getBjcpStyleSpec } from "../utils/bjcpSpecs";
+import { loadJson, saveJson } from "../utils/storage";
 
 type BrewPhase =
   | "prep"
@@ -47,6 +48,11 @@ function formatLiters(n: number | undefined): string {
   if (n == null || !Number.isFinite(n)) return "-";
   return (Math.round(n * 100) / 100).toFixed(2);
 }
+
+const TIMER_KEY = "timerStartTime";
+const makeTimerKey = (recipeId?: string | null) =>
+  recipeId ? `beerapp.timer.${recipeId}` : TIMER_KEY;
+type PersistedTimer = { stepId: string; startMs: number } | null;
 
 function calculatePsiFromTempFAndVolumes(
   tempF: number,
@@ -342,6 +348,14 @@ export default function BrewMode() {
       (sum, f) => sum + Math.max(0, f.amountKg || 0),
       0
     );
+    const totalKettleHopKg = (recipe.ingredients.hops || [])
+      .filter((h) =>
+        ["boil", "first-wort", "whirlpool"].includes(h.usage.timing)
+      )
+      .reduce((sum, h) => sum + Math.max(0, h.amountG || 0) / 1000, 0);
+    const hopCoeff = Math.max(0, eq.losses.hopsAbsorptionLPerKg ?? 0.7);
+    const dynamicKettleLossL =
+      Math.max(0, eq.losses.kettleDeadspaceL) + hopCoeff * totalKettleHopKg;
     const waterParams = {
       mashThicknessLPerKg: eq.thermal.mashThicknessLPerKg,
       grainAbsorptionLPerKg: eq.losses.grainAbsorptionLPerKg,
@@ -350,7 +364,7 @@ export default function BrewMode() {
       boilTimeMin: eq.timing.boilTimeMin,
       boilOffRateLPerHour: eq.losses.evaporationRateLPerHour,
       coolingShrinkagePercent: eq.losses.coolingShrinkagePct,
-      kettleLossL: eq.losses.kettleDeadspaceL,
+      kettleLossL: dynamicKettleLossL,
       chillerLossL: eq.losses.miscLossL,
     } as const;
     const preBoil = computePreBoilVolumeL(targetBatchL, waterParams);
@@ -416,9 +430,10 @@ export default function BrewMode() {
   );
   const [running, setRunning] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const startMsRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Reset timer when step changes
+    // Reset timer when step changes (not when steps array recalculates)
     const dur = allSteps[currentIndex]?.durationSec ?? 0;
     setRemaining(dur);
     setRunning(false);
@@ -426,42 +441,142 @@ export default function BrewMode() {
       window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  }, [currentIndex, allSteps]);
+    startMsRef.current = null;
+  }, [currentIndex]);
 
   useEffect(() => {
     if (!running) return;
-    if (!remaining || remaining <= 0) return;
-    timerRef.current = window.setInterval(() => {
-      setRemaining((s) => {
-        if (s <= 1) {
-          // Auto stop at 0; do not auto-advance to avoid surprises
-          if (timerRef.current) {
-            window.clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          return 0;
+    const step = allSteps[currentIndex];
+    const duration = step?.durationSec ?? 0;
+    if (!duration) return;
+    // Drive remaining based on wall clock and persisted start time
+    const updateFromWallClock = () => {
+      const persisted = loadJson<PersistedTimer>(
+        makeTimerKey(recipe?.id),
+        null
+      );
+      const startMs =
+        startMsRef.current ??
+        (persisted && persisted.stepId === step.id ? persisted.startMs : null);
+      if (startMs == null) return;
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+      const nextRemaining = Math.max(0, duration - elapsedSec);
+      setRemaining(nextRemaining);
+      if (nextRemaining <= 0) {
+        // Auto stop at 0
+        setRunning(false);
+        saveJson<PersistedTimer>(makeTimerKey(recipe?.id), null);
+        startMsRef.current = null;
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
         }
-        return s - 1;
-      });
-    }, 1000);
+      }
+    };
+    updateFromWallClock();
+    timerRef.current = window.setInterval(updateFromWallClock, 1000);
     return () => {
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
         timerRef.current = null;
       }
     };
-  }, [running, remaining]);
+  }, [running, allSteps, currentIndex, recipe?.id]);
 
+  // Ensure accurate time after tab visibility changes or window focus (post-sleep)
   useEffect(() => {
-    // Keep remaining in sync if steps recompute (recipe changed)
-    const dur = allSteps[currentIndex]?.durationSec ?? 0;
-    setRemaining(dur);
-    setRunning(false);
-    if (timerRef.current) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (!running) return;
+    const handler = () => {
+      const step = allSteps[currentIndex];
+      const duration = step?.durationSec ?? 0;
+      if (!duration) return;
+      const persisted = loadJson<PersistedTimer>(
+        makeTimerKey(recipe?.id),
+        null
+      );
+      const startMs =
+        startMsRef.current ??
+        (persisted && step
+          ? persisted.stepId === step.id
+            ? persisted.startMs
+            : null
+          : null);
+      if (startMs == null) return;
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+      const nextRemaining = Math.max(0, duration - elapsedSec);
+      setRemaining(nextRemaining);
+      if (nextRemaining <= 0) {
+        setRunning(false);
+        saveJson<PersistedTimer>(makeTimerKey(recipe?.id), null);
+        startMsRef.current = null;
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      } else if (!timerRef.current) {
+        // Restart ticking if interval was cleared by the browser
+        timerRef.current = window.setInterval(() => {
+          const persistedInner = loadJson<PersistedTimer>(
+            makeTimerKey(recipe?.id),
+            null
+          );
+          const sMs =
+            startMsRef.current ??
+            (persistedInner && step
+              ? persistedInner.stepId === step.id
+                ? persistedInner.startMs
+                : null
+              : null);
+          if (sMs == null) return;
+          const e = Math.max(0, Math.floor((Date.now() - sMs) / 1000));
+          const rem = Math.max(
+            0,
+            (allSteps[currentIndex]?.durationSec ?? 0) - e
+          );
+          setRemaining(rem);
+          if (rem <= 0) {
+            setRunning(false);
+            saveJson<PersistedTimer>(makeTimerKey(recipe?.id), null);
+            startMsRef.current = null;
+            if (timerRef.current) {
+              window.clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+          }
+        }, 1000);
+      }
+    };
+    window.addEventListener("visibilitychange", handler);
+    window.addEventListener("focus", handler);
+    return () => {
+      window.removeEventListener("visibilitychange", handler);
+      window.removeEventListener("focus", handler);
+    };
+  }, [running, allSteps, currentIndex, recipe?.id]);
+
+  // Note: Do not reset on allSteps recalculation; timekeeping uses wall clock.
+
+  // Rehydrate running timer from storage (survives tab sleep/reload)
+  useEffect(() => {
+    const step = allSteps[currentIndex];
+    const duration = step?.durationSec ?? 0;
+    if (!duration || !step) return;
+    const persisted = loadJson<PersistedTimer>(makeTimerKey(recipe?.id), null);
+    if (persisted && persisted.stepId === step.id) {
+      startMsRef.current = persisted.startMs;
+      const elapsedSec = Math.max(
+        0,
+        Math.floor((Date.now() - persisted.startMs) / 1000)
+      );
+      const nextRemaining = Math.max(0, duration - elapsedSec);
+      setRemaining(nextRemaining);
+      if (nextRemaining > 0) setRunning(true);
+      else {
+        saveJson<PersistedTimer>(makeTimerKey(recipe?.id), null);
+        startMsRef.current = null;
+      }
     }
-  }, [allSteps, currentIndex]);
+  }, [allSteps, currentIndex, recipe?.id]);
 
   // Sections rail metadata (Brewfather-like)
   const sections = useMemo(() => {
@@ -612,13 +727,41 @@ export default function BrewMode() {
               </div>
               <div className="flex items-center gap-2">
                 {!running ? (
-                  <button className="btn-neon" onClick={() => setRunning(true)}>
+                  <button
+                    className="btn-neon"
+                    onClick={() => {
+                      const step = allSteps[currentIndex];
+                      const duration = step?.durationSec ?? 0;
+                      if (!duration) return;
+                      const nowMs = Date.now();
+                      const startMs =
+                        remaining < duration
+                          ? nowMs - (duration - remaining) * 1000
+                          : nowMs;
+                      startMsRef.current = startMs;
+                      if (step) {
+                        const payload: PersistedTimer = {
+                          stepId: step.id,
+                          startMs,
+                        };
+                        saveJson<PersistedTimer>(
+                          makeTimerKey(recipe?.id),
+                          payload
+                        );
+                      }
+                      setRunning(true);
+                    }}
+                  >
                     Start
                   </button>
                 ) : (
                   <button
                     className="btn-subtle"
-                    onClick={() => setRunning(false)}
+                    onClick={() => {
+                      setRunning(false);
+                      saveJson<PersistedTimer>(makeTimerKey(recipe?.id), null);
+                      startMsRef.current = null;
+                    }}
                   >
                     Pause
                   </button>
@@ -628,6 +771,8 @@ export default function BrewMode() {
                   onClick={() => {
                     setRunning(false);
                     setRemaining(step.durationSec || 0);
+                    saveJson<PersistedTimer>(makeTimerKey(recipe?.id), null);
+                    startMsRef.current = null;
                   }}
                 >
                   Reset

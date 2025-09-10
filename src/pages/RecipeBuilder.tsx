@@ -38,6 +38,7 @@ function defaultEquipmentFromUI(params: {
   boilOffRateLPerHour: number;
   coolingShrinkagePercent: number;
   kettleLossL: number;
+  hopsAbsorptionLPerKg?: number;
   brewMethod: "three-vessel" | "biab-full" | "biab-sparge";
 }): EquipmentProfile {
   return {
@@ -60,7 +61,7 @@ function defaultEquipmentFromUI(params: {
       evaporationRateLPerHour: params.boilOffRateLPerHour,
       kettleDeadspaceL: params.kettleLossL,
       grainAbsorptionLPerKg: params.grainAbsorptionLPerKg,
-      hopsAbsorptionLPerKg: 0.7,
+      hopsAbsorptionLPerKg: params.hopsAbsorptionLPerKg ?? 0.7,
       coolingShrinkagePct: params.coolingShrinkagePercent,
       miscLossL: 0.5,
       fermenterLossL: 1,
@@ -592,6 +593,7 @@ export default function RecipeBuilder() {
   >("three-vessel");
   const [coolingShrinkagePercent, setCoolingShrinkagePercent] = useState(4);
   const [kettleLossL, setKettleLossL] = useState(0.5);
+  const [hopsAbsorptionLPerKg, setHopsAbsorptionLPerKg] = useState(0.7);
   const [chillerLossL, setChillerLossL] = useState(0);
   // Water treatment capture for persistence
   const [waterTreatment, setWaterTreatment] = useState<{
@@ -767,6 +769,7 @@ export default function RecipeBuilder() {
       // Brewfather-style always on
       coolingShrinkagePercent,
       kettleLossL,
+      hopsAbsorptionLPerKg,
       chillerLossL,
     }),
     [
@@ -778,6 +781,7 @@ export default function RecipeBuilder() {
       boilOffRateLPerHour,
       coolingShrinkagePercent,
       kettleLossL,
+      hopsAbsorptionLPerKg,
       chillerLossL,
     ]
   );
@@ -2309,6 +2313,7 @@ export default function RecipeBuilder() {
           boilOffRateLPerHour,
           coolingShrinkagePercent,
           kettleLossL,
+          hopsAbsorptionLPerKg,
           chillerLossL,
           brewMethod,
         }}
@@ -2327,6 +2332,8 @@ export default function RecipeBuilder() {
           if (patch.coolingShrinkagePercent != null)
             setCoolingShrinkagePercent(patch.coolingShrinkagePercent);
           if (patch.kettleLossL != null) setKettleLossL(patch.kettleLossL);
+          if (patch.hopsAbsorptionLPerKg != null)
+            setHopsAbsorptionLPerKg(patch.hopsAbsorptionLPerKg);
           if (patch.chillerLossL != null) setChillerLossL(patch.chillerLossL);
           if (patch.brewMethod != null) setBrewMethod(patch.brewMethod);
         }}

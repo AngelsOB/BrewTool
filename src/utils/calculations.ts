@@ -176,6 +176,8 @@ export type WaterParams = {
   kettleLossL?: number; // kettle deadspace + trub left in kettle
   chillerLossL?: number; // losses in plate immersion chiller, hoses
   fermenterLossL?: number; // not used for pre-boil if target is into fermenter
+  // Optional hop absorption coefficient (liters per kilogram of hops)
+  hopsAbsorptionLPerKg?: number;
 };
 
 export function totalGrainWeightKg(

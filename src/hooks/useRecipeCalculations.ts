@@ -163,17 +163,31 @@ export function useRecipeCalculations(params: {
   );
 
   // Water calculations
+  // Dynamic hop-based kettle loss: add hop absorption to kettleLossL
+  const totalKettleHopKg = useMemo(() => {
+    const inKettle = new Set(["boil", "first wort", "whirlpool"]);
+    return hops
+      .filter((h) => inKettle.has(h.type))
+      .reduce((sum, h) => sum + Math.max(0, h.grams || 0) / 1000, 0);
+  }, [hops]);
+  const waterParamsAdjusted = useMemo(() => {
+    const hopCoeff = waterParams.hopsAbsorptionLPerKg ?? 0.7;
+    const baseKettle = Math.max(0, waterParams.kettleLossL ?? 0);
+    const dynamicKettle = baseKettle + Math.max(0, hopCoeff) * totalKettleHopKg;
+    return { ...waterParams, kettleLossL: dynamicKettle } as typeof waterParams;
+  }, [waterParams, totalKettleHopKg]);
+
   const preBoilVolumeL = useMemo(
-    () => computePreBoilVolumeL(batchVolumeL, waterParams),
-    [batchVolumeL, waterParams]
+    () => computePreBoilVolumeL(batchVolumeL, waterParamsAdjusted),
+    [batchVolumeL, waterParamsAdjusted]
   );
   const mashWaterL = useMemo(
-    () => computeMashWaterL(totalGrainKg, waterParams),
-    [totalGrainKg, waterParams]
+    () => computeMashWaterL(totalGrainKg, waterParamsAdjusted),
+    [totalGrainKg, waterParamsAdjusted]
   );
   const spargeWaterL = useMemo(
-    () => computeSpargeWaterL(totalGrainKg, batchVolumeL, waterParams),
-    [totalGrainKg, batchVolumeL, waterParams]
+    () => computeSpargeWaterL(totalGrainKg, batchVolumeL, waterParamsAdjusted),
+    [totalGrainKg, batchVolumeL, waterParamsAdjusted]
   );
 
   const { finalMashL, finalSpargeL, capacityExceeded } = useMemo(() => {
@@ -191,7 +205,7 @@ export function useRecipeCalculations(params: {
         usedSparge = computeSpargeFromMashUsedL(
           totalGrainKg,
           batchVolumeL,
-          waterParams,
+          waterParamsAdjusted,
           usedMash
         );
         return {
@@ -212,7 +226,7 @@ export function useRecipeCalculations(params: {
       const usedSparge = computeSpargeFromMashUsedL(
         totalGrainKg,
         batchVolumeL,
-        waterParams,
+        waterParamsAdjusted,
         usedMash
       );
       return {
@@ -228,7 +242,7 @@ export function useRecipeCalculations(params: {
     };
   }, [
     brewMethod,
-    waterParams,
+    waterParamsAdjusted,
     totalGrainKg,
     preBoilVolumeL,
     mashWaterL,

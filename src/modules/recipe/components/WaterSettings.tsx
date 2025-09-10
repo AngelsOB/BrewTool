@@ -18,6 +18,7 @@ export default function WaterSettings({
     boilOffRateLPerHour: number;
     coolingShrinkagePercent: number;
     kettleLossL: number;
+    hopsAbsorptionLPerKg?: number;
     chillerLossL: number;
     brewMethod: "three-vessel" | "biab-full" | "biab-sparge";
   };
@@ -142,6 +143,17 @@ export default function WaterSettings({
               suffixClassName="left-9 right-0.5 text-[10px]"
               step={0.1}
               placeholder="4"
+            />
+          </label>
+          <label className="block">
+            <div className="text-sm text-neutral-700 mb-1">Hop Absorption</div>
+            <InputWithSuffix
+              value={state.hopsAbsorptionLPerKg ?? 0.7}
+              onChange={(n) => onChange({ hopsAbsorptionLPerKg: n })}
+              suffix=" L/kg"
+              suffixClassName="right-3 text-[10px]"
+              step={0.1}
+              placeholder="0.7"
             />
           </label>
           <label className="block">
