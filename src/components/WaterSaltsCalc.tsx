@@ -451,6 +451,8 @@ export default function WaterSaltsCalc({
     targetProfileName,
     source,
     target,
+    customSourceName,
+    customTargetName,
   ]);
 
   // Hydrate salts when a recipe provides saved totals; clear when undefined

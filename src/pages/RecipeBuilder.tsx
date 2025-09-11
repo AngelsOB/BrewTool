@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Collapsible from "../components/Collapsible";
 import { useRecipeStore } from "../hooks/useRecipeStore";
+import type { Recipe, WaterTreatment } from "../types/recipe";
 import type {
   GrainItem,
   HopItem,
@@ -20,7 +21,6 @@ import {
   getGrainPresets,
 } from "../utils/presets";
 import type {
-  Recipe,
   FermentableAddition,
   HopAddition,
   YeastAddition,
@@ -430,11 +430,49 @@ function mapOthersToUI(xs: OtherAddition[]): OtherIngredient[] {
   }));
 }
 
+type YeastStarterStepExport = {
+  id: string;
+  liters: number;
+  gravity: number;
+  model:
+    | { kind: "white"; aeration: "none" | "shaking" }
+    | { kind: "braukaiser" };
+  dmeGrams: number;
+  endBillion: number;
+};
+
+type YeastStarterExport = {
+  yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
+  packs: number;
+  mfgDate: string;
+  slurryLiters: number;
+  slurryBillionPerMl: number;
+  steps: YeastStarterStepExport[];
+  requiredCellsB: number;
+  cellsAvailableB: number;
+  finalEndB: number;
+  totalStarterL: number;
+  totalDmeG: number;
+};
+
+type WaterTreatmentState = {
+  mashSalts: SaltAdditions;
+  spargeSalts: SaltAdditions;
+  totalSalts: SaltAdditions;
+  totalProfile: WaterProfile;
+  sourceProfile?: WaterProfile;
+  targetProfile?: WaterProfile;
+  sourceProfileCustomName?: string;
+  targetProfileCustomName?: string;
+};
+
 // Yeast starter mapping between UI export shape and canonical YeastStarter
-function mapYeastStarterExportToCanonical(starter: any | null | undefined) {
+function mapYeastStarterExportToCanonical(
+  starter: YeastStarterExport | null | undefined
+): import("../types/recipe").YeastStarter | undefined {
   if (!starter) return undefined;
   const steps = Array.isArray(starter.steps)
-    ? starter.steps.map((s: any) => ({
+    ? starter.steps.map((s: YeastStarterStepExport) => ({
         id: s.id,
         volumeL: typeof s.liters === "number" ? s.liters : 0,
         gravityPoints:
@@ -446,9 +484,9 @@ function mapYeastStarterExportToCanonical(starter: any | null | undefined) {
         agitation:
           s?.model?.kind === "white"
             ? s?.model?.aeration === "shaking"
-              ? "shaking"
-              : "none"
-            : "stir-plate",
+              ? ("shaking" as const)
+              : ("none" as const)
+            : ("stir-plate" as const),
       }))
     : [];
   return {
@@ -462,18 +500,18 @@ function mapYeastStarterExportToCanonical(starter: any | null | undefined) {
 }
 
 function mapCanonicalStarterToYeastPitchInitial(
-  starter: any | null | undefined
+  starter: import("../types/recipe").YeastStarter | null | undefined
 ) {
   if (!starter) return null;
   const steps = Array.isArray(starter.steps)
-    ? starter.steps.map((s: any) => ({
+    ? starter.steps.map((s: import("../types/recipe").StarterStep) => ({
         id: s.id,
-        liters: s.volumeL ?? 0,
+        liters: s.volumeL,
         gravity:
           typeof s.gravityPoints === "number"
             ? 1 + s.gravityPoints / 1000
             : 1.04,
-        model: { kind: "braukaiser" },
+        model: { kind: "braukaiser" as const },
         dmeGrams: 0,
         endBillion: 0,
       }))
@@ -597,12 +635,8 @@ export default function RecipeBuilder() {
   const [hopsAbsorptionLPerKg, setHopsAbsorptionLPerKg] = useState(0.7);
   const [chillerLossL, setChillerLossL] = useState(0);
   // Water treatment capture for persistence
-  const [waterTreatment, setWaterTreatment] = useState<{
-    mashSalts: SaltAdditions;
-    spargeSalts: SaltAdditions;
-    totalSalts: SaltAdditions;
-    totalProfile: WaterProfile;
-  } | null>(null);
+  const [waterTreatment, setWaterTreatment] =
+    useState<WaterTreatmentState | null>(null);
   // UI hydration source for salts on load (avoid relying on async id/recipes lookup)
   const [waterInitialSalts, setWaterInitialSalts] = useState<
     import("../utils/water").SaltAdditions | undefined
@@ -631,28 +665,8 @@ export default function RecipeBuilder() {
   const [carbTempC, setCarbTempC] = useState<number>(4);
   const [carbTempF, setCarbTempF] = useState<number>(38);
   // Yeast starter export snapshot
-  const [yeastStarterExport, setYeastStarterExport] = useState<{
-    yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
-    packs: number;
-    mfgDate: string;
-    slurryLiters: number;
-    slurryBillionPerMl: number;
-    steps: Array<{
-      id: string;
-      liters: number;
-      gravity: number;
-      model:
-        | { kind: "white"; aeration: "none" | "shaking" }
-        | { kind: "braukaiser" };
-      dmeGrams: number;
-      endBillion: number;
-    }>;
-    requiredCellsB: number;
-    cellsAvailableB: number;
-    finalEndB: number;
-    totalStarterL: number;
-    totalDmeG: number;
-  } | null>(null);
+  const [yeastStarterExport, setYeastStarterExport] =
+    useState<YeastStarterExport | null>(null);
   // One-time hydration state for YeastPitchCalc when loading/resetting a recipe
   const [yeastStarterInitial, setYeastStarterInitial] = useState<{
     yeastType: "liquid-100" | "liquid-200" | "dry" | "slurry";
@@ -990,7 +1004,9 @@ export default function RecipeBuilder() {
         yeast?: {
           ingredientRef?: { id?: string };
           overrides?: { attenuationPct?: number };
+          starter?: import("../types/recipe").YeastStarter;
         };
+        water?: import("../types/recipe").WaterTreatment;
         other?: OtherAddition[];
       };
       process?: {
@@ -1033,17 +1049,17 @@ export default function RecipeBuilder() {
       // legacy
       batchVolumeL?: number;
       efficiencyPct?: number;
-      grains?: any[];
-      hops?: any[];
-      yeast?: any;
-      others?: any[];
+      grains?: GrainItem[];
+      hops?: HopItem[];
+      yeast?: YeastItem;
+      others?: OtherIngredient[];
       mash?: { steps?: MashStep[] };
       fermentation?: { steps?: FermentationStep[] };
       water?: Partial<WaterParams> & { chillerLossL?: number };
       targetOG?: number;
       targetFG?: number;
       brewMethod?: "three-vessel" | "biab-full" | "biab-sparge";
-      yeastStarter?: any;
+      yeastStarter?: YeastStarterExport;
     };
     setCurrentRecipeId(rr.id);
     setName(rr.name || "Untitled");
@@ -1068,14 +1084,14 @@ export default function RecipeBuilder() {
       });
       setOtherIngredients(mapOthersToUI(rr.ingredients?.other ?? []));
       // Yeast starter hydration (canonical → YeastPitchCalc initial state)
-      const starterCanonical = (rr.ingredients as any)?.yeast?.starter;
+      const starterCanonical = rr.ingredients?.yeast?.starter;
       const starterInit =
         mapCanonicalStarterToYeastPitchInitial(starterCanonical);
       setYeastStarterExport(starterInit);
       setYeastStarterInitial(starterInit);
 
       // Water salts: seed session state from recipe to ensure Save writes current UI
-      const waterCanonical = (rr.ingredients as any)?.water;
+      const waterCanonical = rr.ingredients?.water;
       if (waterCanonical?.salts) {
         const totalSalts: import("../utils/water").SaltAdditions = {
           gypsum_g: waterCanonical.salts.gypsumG ?? 0,
@@ -1116,12 +1132,10 @@ export default function RecipeBuilder() {
             } as import("../utils/water").WaterProfile),
         };
         // If recipe carries raw profiles, hydrate widget defaults
-        const src: import("../utils/water").WaterProfile | undefined = (
-          waterCanonical as any
-        )?.sourceProfile;
-        const tgt: import("../utils/water").WaterProfile | undefined = (
-          waterCanonical as any
-        )?.targetProfile;
+        const src: import("../utils/water").WaterProfile | undefined =
+          waterCanonical?.sourceProfile;
+        const tgt: import("../utils/water").WaterProfile | undefined =
+          waterCanonical?.targetProfile;
         if (src) setWaterInitialSourceProfile(src);
         if (tgt) setWaterInitialTargetProfile(tgt);
       } else {
@@ -1213,14 +1227,16 @@ export default function RecipeBuilder() {
       // Legacy alpha fallback
       setBatchVolumeL(rr.batchVolumeL ?? 20);
       if (rr.efficiencyPct != null) setEfficiencyPct(rr.efficiencyPct);
-      setGrains((rr.grains ?? []).map((g) => ({ ...g })) as any);
-      setHops((rr.hops ?? []).map((h) => ({ ...h })) as any);
+      setGrains((rr.grains ?? []).map((g) => ({ ...g })) as GrainItem[]);
+      setHops((rr.hops ?? []).map((h) => ({ ...h })) as HopItem[]);
       setYeast(
         rr.yeast
           ? { ...rr.yeast }
           : { name: "SafAle US-05", attenuationPercent: 0.78 }
       );
-      setOtherIngredients((rr.others ?? []).map((x: any) => ({ ...x })));
+      setOtherIngredients(
+        (rr.others ?? []).map((x) => ({ ...x })) as OtherIngredient[]
+      );
       const steps: MashStep[] = (rr.mash?.steps ?? [
         { id: crypto.randomUUID(), type: "infusion", tempC: 66, timeMin: 60 },
       ]) as MashStep[];
@@ -1891,7 +1907,7 @@ export default function RecipeBuilder() {
                   });
                   // Attach latest yeast starter (if present)
                   if (yeastStarterExport) {
-                    (recipe.ingredients.yeast as any).starter =
+                    recipe.ingredients.yeast!.starter =
                       mapYeastStarterExportToCanonical(yeastStarterExport);
                   }
                   // Attach water treatment: prefer current UI state, else none for brand new
@@ -1900,12 +1916,10 @@ export default function RecipeBuilder() {
                     recipe.ingredients.water = {
                       sourceProfileId: undefined,
                       targetProfileId: undefined,
-                      sourceProfile: (wt as any).sourceProfile,
-                      targetProfile: (wt as any).targetProfile,
-                      sourceProfileCustomName: (wt as any)
-                        .sourceProfileCustomName,
-                      targetProfileCustomName: (wt as any)
-                        .targetProfileCustomName,
+                      sourceProfile: wt.sourceProfile,
+                      targetProfile: wt.targetProfile,
+                      sourceProfileCustomName: wt.sourceProfileCustomName,
+                      targetProfileCustomName: wt.targetProfileCustomName,
                       salts: {
                         gypsumG: wt.totalSalts.gypsum_g ?? 0,
                         calciumChlorideG: wt.totalSalts.cacl2_g ?? 0,
@@ -1915,7 +1929,7 @@ export default function RecipeBuilder() {
                       },
                       acids: {},
                       resultingProfile: wt.totalProfile,
-                    } as any;
+                    } as WaterTreatment;
                   }
                   upsert(recipe);
                   setCurrentRecipeId(id);
@@ -1959,7 +1973,7 @@ export default function RecipeBuilder() {
                     });
                     // Attach latest yeast starter (if present)
                     if (yeastStarterExport) {
-                      (recipe.ingredients.yeast as any).starter =
+                      recipe.ingredients.yeast!.starter =
                         mapYeastStarterExportToCanonical(yeastStarterExport);
                     }
                     const wt = waterTreatmentRef.current || waterTreatment;
@@ -1967,11 +1981,13 @@ export default function RecipeBuilder() {
                       recipe.ingredients.water = {
                         sourceProfileId: undefined,
                         targetProfileId: undefined,
-                        sourceProfile: (wt as any).sourceProfile,
-                        targetProfile: (wt as any).targetProfile,
-                        sourceProfileCustomName: (wt as any)
+                        sourceProfile: (wt as WaterTreatmentState)
+                          .sourceProfile,
+                        targetProfile: (wt as WaterTreatmentState)
+                          .targetProfile,
+                        sourceProfileCustomName: (wt as WaterTreatmentState)
                           .sourceProfileCustomName,
-                        targetProfileCustomName: (wt as any)
+                        targetProfileCustomName: (wt as WaterTreatmentState)
                           .targetProfileCustomName,
                         salts: {
                           gypsumG: wt.totalSalts.gypsum_g ?? 0,
@@ -1982,7 +1998,7 @@ export default function RecipeBuilder() {
                         },
                         acids: {},
                         resultingProfile: wt.totalProfile,
-                      } as any;
+                      } as WaterTreatment;
                     }
                     // Overwrite recipe with current UI state always
                     upsert(recipe);
@@ -2020,7 +2036,7 @@ export default function RecipeBuilder() {
                     });
                     // Attach latest yeast starter (if present)
                     if (yeastStarterExport) {
-                      (recipe.ingredients.yeast as any).starter =
+                      recipe.ingredients.yeast!.starter =
                         mapYeastStarterExportToCanonical(yeastStarterExport);
                     }
                     // Attach water treatment if captured in this session
@@ -2029,11 +2045,13 @@ export default function RecipeBuilder() {
                       recipe.ingredients.water = {
                         sourceProfileId: undefined,
                         targetProfileId: undefined,
-                        sourceProfile: (wt as any).sourceProfile,
-                        targetProfile: (wt as any).targetProfile,
-                        sourceProfileCustomName: (wt as any)
+                        sourceProfile: (wt as WaterTreatmentState)
+                          .sourceProfile,
+                        targetProfile: (wt as WaterTreatmentState)
+                          .targetProfile,
+                        sourceProfileCustomName: (wt as WaterTreatmentState)
                           .sourceProfileCustomName,
-                        targetProfileCustomName: (wt as any)
+                        targetProfileCustomName: (wt as WaterTreatmentState)
                           .targetProfileCustomName,
                         salts: {
                           gypsumG: wt.totalSalts.gypsum_g ?? 0,
@@ -2044,7 +2062,7 @@ export default function RecipeBuilder() {
                         },
                         acids: {},
                         resultingProfile: wt.totalProfile,
-                      } as any;
+                      } as WaterTreatment;
                     }
                     upsert(recipe);
                     setCurrentRecipeId(id);
@@ -2162,19 +2180,23 @@ export default function RecipeBuilder() {
                 });
                 // Attach latest yeast starter (if present)
                 if (yeastStarterExport) {
-                  (recipe.ingredients.yeast as any).starter =
+                  recipe.ingredients.yeast!.starter =
                     mapYeastStarterExportToCanonical(yeastStarterExport);
                 }
                 if (waterTreatment) {
                   recipe.ingredients.water = {
                     sourceProfileId: undefined,
                     targetProfileId: undefined,
-                    sourceProfile: (waterTreatment as any).sourceProfile,
-                    targetProfile: (waterTreatment as any).targetProfile,
-                    sourceProfileCustomName: (waterTreatment as any)
-                      .sourceProfileCustomName,
-                    targetProfileCustomName: (waterTreatment as any)
-                      .targetProfileCustomName,
+                    sourceProfile: (waterTreatment as WaterTreatmentState)
+                      .sourceProfile,
+                    targetProfile: (waterTreatment as WaterTreatmentState)
+                      .targetProfile,
+                    sourceProfileCustomName: (
+                      waterTreatment as WaterTreatmentState
+                    ).sourceProfileCustomName,
+                    targetProfileCustomName: (
+                      waterTreatment as WaterTreatmentState
+                    ).targetProfileCustomName,
                     salts: {
                       gypsumG: waterTreatment.totalSalts.gypsum_g ?? 0,
                       calciumChlorideG: waterTreatment.totalSalts.cacl2_g ?? 0,
@@ -2492,7 +2514,6 @@ export default function RecipeBuilder() {
         unit={carbUnit}
         volumes={carbVolumes}
         tempMetricC={carbTempC}
-        tempUsF={carbTempF}
         onChange={({ unit, volumes, tempMetricC, tempUsF }) => {
           setCarbUnit(unit);
           setCarbVolumes(volumes);

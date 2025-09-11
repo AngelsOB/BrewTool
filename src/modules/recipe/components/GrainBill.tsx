@@ -156,7 +156,7 @@ export function GrainBill({
               <div className="text-xs text-muted">Target ABV</div>
               <InputWithSuffix
                 value={targetAbvPct}
-                onChange={(n) => setTargetAbvPct(Math.max(0, n))}
+                onChange={(n: number) => setTargetAbvPct(Math.max(0, n))}
                 suffix=" %"
                 suffixClassName="right-2 text-[10px]"
                 step={0.1}
@@ -200,7 +200,9 @@ export function GrainBill({
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <InputWithSuffix
                       value={g.colorLovibond}
-                      onChange={(n) => onUpdate(i, { ...g, colorLovibond: n })}
+                      onChange={(n: number) =>
+                        onUpdate(i, { ...g, colorLovibond: n })
+                      }
                       suffix=" °L"
                       suffixClassName="right-2 text-[10px]"
                       step={1}
@@ -208,7 +210,9 @@ export function GrainBill({
                     />
                     <InputWithSuffix
                       value={g.potentialGu}
-                      onChange={(n) => onUpdate(i, { ...g, potentialGu: n })}
+                      onChange={(n: number) =>
+                        onUpdate(i, { ...g, potentialGu: n })
+                      }
                       suffix=" GU"
                       suffixClassName="right-2 text-[10px]"
                       step={0.1}
@@ -427,7 +431,7 @@ export function GrainBill({
               <div className="text-xs text-muted mb-1 sm:hidden">Weight</div>
               <DualUnitInput
                 value={g.weightKg}
-                onChange={(n) => onUpdate(i, { ...g, weightKg: n })}
+                onChange={(n: number) => onUpdate(i, { ...g, weightKg: n })}
                 unitType="weight"
                 step={0.01}
                 placeholder="0.00"
@@ -440,7 +444,7 @@ export function GrainBill({
               </div>
               <InputWithSuffix
                 value={percentById[g.id] ?? 0}
-                onChange={(n) =>
+                onChange={(n: number) =>
                   setPercentById((prev) => ({
                     ...prev,
                     [g.id]: Math.max(0, n),
@@ -525,7 +529,7 @@ export function GrainBill({
               <div className="text-xs text-muted">ABV</div>
               <InputWithSuffix
                 value={targetAbvPct}
-                onChange={(n) => setTargetAbvPct(Math.max(0, n))}
+                onChange={(n: number) => setTargetAbvPct(Math.max(0, n))}
                 suffix=" %"
                 suffixClassName="right-2 text-[10px]"
                 step={0.1}
@@ -564,7 +568,7 @@ export function GrainBill({
               <div className="grid grid-cols-2 gap-2">
                 <InputWithSuffix
                   value={newGrainDraft.colorLovibond}
-                  onChange={(n) =>
+                  onChange={(n: number) =>
                     setNewGrainDraft((d) => ({ ...d, colorLovibond: n }))
                   }
                   suffix=" °L"
@@ -574,7 +578,7 @@ export function GrainBill({
                 />
                 <InputWithSuffix
                   value={newGrainDraft.potentialGu}
-                  onChange={(n) =>
+                  onChange={(n: number) =>
                     setNewGrainDraft((d) => ({ ...d, potentialGu: n }))
                   }
                   suffix=" GU"

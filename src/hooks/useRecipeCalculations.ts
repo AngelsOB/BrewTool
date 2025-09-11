@@ -248,6 +248,9 @@ export function useRecipeCalculations(params: {
     mashWaterL,
     spargeWaterL,
     batchVolumeL,
+    waterParams.grainAbsorptionLPerKg,
+    waterParams.mashTunCapacityL,
+    waterParams.mashTunDeadspaceL,
   ]);
 
   // Hops flavor + flags

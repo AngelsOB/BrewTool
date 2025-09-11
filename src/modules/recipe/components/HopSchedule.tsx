@@ -301,7 +301,7 @@ export function HopSchedule({
               <div className="text-xs text-muted mb-1 sm:hidden">Amount</div>
               <DualUnitInput
                 value={h.grams}
-                onChange={(n) => onUpdate(i, { ...h, grams: n })}
+                onChange={(n: number) => onUpdate(i, { ...h, grams: n })}
                 unitType="weightSmall"
                 step={0.1}
                 placeholder="10"
@@ -312,7 +312,9 @@ export function HopSchedule({
               <div className="text-xs text-muted mb-1 sm:hidden">Alpha %</div>
               <InlineEditableNumber
                 value={h.alphaAcidPercent}
-                onChange={(n) => onUpdate(i, { ...h, alphaAcidPercent: n })}
+                onChange={(n: number) =>
+                  onUpdate(i, { ...h, alphaAcidPercent: n })
+                }
                 suffix="%"
                 suffixClassName="left-9 right-0.5 text-[10px]"
                 step={0.1}
@@ -327,7 +329,7 @@ export function HopSchedule({
                   <span className="text-xs text-muted shrink-0">on</span>
                   <InputWithSuffix
                     value={h.dryHopStartDay ?? 0}
-                    onChange={(n) =>
+                    onChange={(n: number) =>
                       onUpdate(i, {
                         ...h,
                         dryHopStartDay: Math.max(0, n),
@@ -342,7 +344,9 @@ export function HopSchedule({
               ) : h.type === "whirlpool" ? (
                 <DualUnitInput
                   value={h.whirlpoolTempC ?? 80}
-                  onChange={(n) => onUpdate(i, { ...h, whirlpoolTempC: n })}
+                  onChange={(n: number) =>
+                    onUpdate(i, { ...h, whirlpoolTempC: n })
+                  }
                   unitType="temperature"
                   step={0.1}
                   placeholder="80"
@@ -350,7 +354,7 @@ export function HopSchedule({
               ) : (
                 <InputWithSuffix
                   value={h.timeMin ?? 0}
-                  onChange={(n) => onUpdate(i, { ...h, timeMin: n })}
+                  onChange={(n: number) => onUpdate(i, { ...h, timeMin: n })}
                   suffix=" min"
                   suffixClassName="right-3 text-[10px]"
                   step={1}
@@ -369,7 +373,9 @@ export function HopSchedule({
                     <span className="text-xs text-muted shrink-0">for</span>
                     <InputWithSuffix
                       value={h.dryHopDays ?? 3}
-                      onChange={(n) => onUpdate(i, { ...h, dryHopDays: n })}
+                      onChange={(n: number) =>
+                        onUpdate(i, { ...h, dryHopDays: n })
+                      }
                       suffix=" days"
                       suffixClassName="right-3 text-[10px]"
                       step={0.5}
@@ -379,7 +385,9 @@ export function HopSchedule({
                 ) : h.type === "whirlpool" ? (
                   <InputWithSuffix
                     value={h.whirlpoolTimeMin ?? 15}
-                    onChange={(n) => onUpdate(i, { ...h, whirlpoolTimeMin: n })}
+                    onChange={(n: number) =>
+                      onUpdate(i, { ...h, whirlpoolTimeMin: n })
+                    }
                     suffix=" min"
                     suffixClassName="right-3 text-[10px]"
                     step={1}
@@ -450,7 +458,7 @@ export function HopSchedule({
               <div className="grid grid-cols-1 gap-2">
                 <InputWithSuffix
                   value={newHopDraft.alphaAcidPercent}
-                  onChange={(n) =>
+                  onChange={(n: number) =>
                     setNewHopDraft((d) => ({ ...d, alphaAcidPercent: n }))
                   }
                   suffix=" % AA"

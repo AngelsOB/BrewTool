@@ -165,7 +165,7 @@ export default function OtherIngredients({
               <div className="text-xs text-muted mb-1 sm:hidden">Amount</div>
               <InputWithSuffix
                 value={ing.amount}
-                onChange={(n) => {
+                onChange={(n: number) => {
                   const isDiscrete = ["tablet", "packet", "capsule"].includes(
                     ing.unit
                   );

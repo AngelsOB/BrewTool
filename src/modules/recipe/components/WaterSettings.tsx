@@ -43,7 +43,7 @@ export default function WaterSettings({
             <div className="text-sm text-neutral-700 mb-1">Mash Thickness</div>
             <InputWithSuffix
               value={state.mashThicknessLPerKg}
-              onChange={(n) => onChange({ mashThicknessLPerKg: n })}
+              onChange={(n: number) => onChange({ mashThicknessLPerKg: n })}
               suffix=" L/kg"
               suffixClassName="right-3 text-[10px]"
               step={0.1}
@@ -73,7 +73,7 @@ export default function WaterSettings({
             </div>
             <InputWithSuffix
               value={state.grainAbsorptionLPerKg}
-              onChange={(n) => onChange({ grainAbsorptionLPerKg: n })}
+              onChange={(n: number) => onChange({ grainAbsorptionLPerKg: n })}
               suffix=" L/kg"
               suffixClassName="right-3 text-[10px]"
               step={0.1}
@@ -86,7 +86,7 @@ export default function WaterSettings({
             </div>
             <InputWithSuffix
               value={state.mashTunDeadspaceL}
-              onChange={(n) => onChange({ mashTunDeadspaceL: n })}
+              onChange={(n: number) => onChange({ mashTunDeadspaceL: n })}
               suffix=" L"
               suffixClassName="right-3 text-[10px]"
               step={0.1}
@@ -99,7 +99,7 @@ export default function WaterSettings({
             </div>
             <InputWithSuffix
               value={state.mashTunCapacityL ?? 0}
-              onChange={(n) =>
+              onChange={(n: number) =>
                 onChange({
                   mashTunCapacityL: Number.isFinite(n) && n > 0 ? n : undefined,
                 })
@@ -114,7 +114,7 @@ export default function WaterSettings({
             <div className="text-sm text-neutral-700 mb-1">Boil Time</div>
             <InputWithSuffix
               value={state.boilTimeMin}
-              onChange={(n) => onChange({ boilTimeMin: n })}
+              onChange={(n: number) => onChange({ boilTimeMin: n })}
               suffix=" min"
               suffixClassName="right-3 text-[10px]"
               step={5}
@@ -125,7 +125,7 @@ export default function WaterSettings({
             <div className="text-sm text-neutral-700 mb-1">Boil-off Rate</div>
             <InputWithSuffix
               value={state.boilOffRateLPerHour}
-              onChange={(n) => onChange({ boilOffRateLPerHour: n })}
+              onChange={(n: number) => onChange({ boilOffRateLPerHour: n })}
               suffix=" L/hr"
               suffixClassName="right-3 text-[10px]"
               step={0.1}
@@ -138,7 +138,7 @@ export default function WaterSettings({
             </div>
             <InlineEditableNumber
               value={state.coolingShrinkagePercent}
-              onChange={(n) => onChange({ coolingShrinkagePercent: n })}
+              onChange={(n: number) => onChange({ coolingShrinkagePercent: n })}
               suffix="%"
               suffixClassName="left-9 right-0.5 text-[10px]"
               step={0.1}
@@ -149,7 +149,7 @@ export default function WaterSettings({
             <div className="text-sm text-neutral-700 mb-1">Hop Absorption</div>
             <InputWithSuffix
               value={state.hopsAbsorptionLPerKg ?? 0.7}
-              onChange={(n) => onChange({ hopsAbsorptionLPerKg: n })}
+              onChange={(n: number) => onChange({ hopsAbsorptionLPerKg: n })}
               suffix=" L/kg"
               suffixClassName="right-3 text-[10px]"
               step={0.1}
@@ -160,7 +160,7 @@ export default function WaterSettings({
             <div className="text-sm text-neutral-700 mb-1">Kettle Loss</div>
             <InputWithSuffix
               value={state.kettleLossL}
-              onChange={(n) => onChange({ kettleLossL: n })}
+              onChange={(n: number) => onChange({ kettleLossL: n })}
               suffix=" L"
               suffixClassName="right-3 text-[10px]"
               step={0.1}
@@ -171,7 +171,7 @@ export default function WaterSettings({
             <div className="text-sm text-neutral-700 mb-1">Chiller Loss</div>
             <InputWithSuffix
               value={state.chillerLossL}
-              onChange={(n) => onChange({ chillerLossL: n })}
+              onChange={(n: number) => onChange({ chillerLossL: n })}
               suffix=" L"
               suffixClassName="right-3 text-[10px]"
               step={0.1}

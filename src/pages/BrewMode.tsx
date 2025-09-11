@@ -442,7 +442,7 @@ export default function BrewMode() {
       timerRef.current = null;
     }
     startMsRef.current = null;
-  }, [currentIndex]);
+  }, [currentIndex, allSteps]);
 
   useEffect(() => {
     if (!running) return;
