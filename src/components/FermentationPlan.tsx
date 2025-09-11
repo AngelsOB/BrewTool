@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import type { FermentationStep } from "../modules/recipe/types";
 import InputWithSuffix from "./InputWithSuffix";
+import DualUnitInput from "./DualUnitInput";
 import InlineEditableNumber from "./InlineEditableNumber";
 
 type Props = {
@@ -352,12 +353,11 @@ function FermentationRow({
       </label>
       <label className="flex flex-col">
         <div className="text-xs text-muted mb-1 sm:hidden">Temp</div>
-        <InputWithSuffix
+        <DualUnitInput
           value={s.tempC}
           onChange={(n) => setStep(i, { tempC: n })}
           step={0.5}
-          suffix="°C"
-          suffixClassName="right-3 text-[10px]"
+          unitType="temperature"
         />
       </label>
       <label className="flex flex-col">

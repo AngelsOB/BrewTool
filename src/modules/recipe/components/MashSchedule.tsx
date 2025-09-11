@@ -1,4 +1,5 @@
 import InputWithSuffix from "../../../components/InputWithSuffix";
+import DualUnitInput from "../../../components/DualUnitInput";
 import type { CSSProperties } from "react";
 import {
   DndContext,
@@ -157,12 +158,11 @@ function MashStepRow({
       </label>
       <label className="block">
         <div className="text-xs text-muted mb-1 sm:hidden">Temp</div>
-        <InputWithSuffix
+        <DualUnitInput
           value={step.tempC}
           onChange={(n) => onUpdate(index, { ...step, tempC: n })}
           step={0.5}
-          suffix="°C"
-          suffixClassName="right-3 text-[10px]"
+          unitType="temperature"
         />
       </label>
       <label className="block">

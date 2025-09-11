@@ -36,6 +36,13 @@ const router = createBrowserRouter(
             Component: (await import("./pages/BrewMode.tsx")).default,
           }),
         },
+        {
+          path: "test",
+          lazy: async () => ({
+            Component: (await import("./components/DualUnitInputTest.tsx"))
+              .default,
+          }),
+        },
       ],
     },
   ],

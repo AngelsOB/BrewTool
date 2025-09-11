@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import InputWithSuffix from "./InputWithSuffix";
+import DualUnitInput from "./DualUnitInput";
 import { getBjcpStyleSpec } from "../utils/bjcpSpecs";
 
 type UnitSystem = "metric" | "us";
@@ -11,7 +12,6 @@ type Props = {
   unit?: UnitSystem;
   volumes?: number;
   tempMetricC?: number;
-  tempUsF?: number;
   onChange?: (state: {
     unit: UnitSystem;
     volumes: number;
@@ -44,10 +44,6 @@ function cToF(c: number): number {
   return (c * 9) / 5 + 32;
 }
 
-function fToC(f: number): number {
-  return ((f - 32) * 5) / 9;
-}
-
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
@@ -59,57 +55,35 @@ export default function CarbonationCalculator({
   unit: unitProp,
   volumes: volumesProp,
   tempMetricC: tempMetricCProp,
-  tempUsF: tempUsFProp,
   onChange,
 }: Props) {
   // Internal state with controlled-prop fallbacks
   const [unit, setUnit] = useState<UnitSystem>("metric");
   const [volumes, setVolumes] = useState<number>(2.2);
   const [tempMetricC, setTempMetricC] = useState<number>(4); // default 4°C ≈ 39.2°F
-  const [tempUsF, setTempUsF] = useState<number>(38);
 
   const unitValue = unitProp ?? unit;
   const volumesValue = volumesProp ?? volumes;
   const tempMetricCValue = tempMetricCProp ?? tempMetricC;
-  const tempUsFValue = tempUsFProp ?? tempUsF;
 
   const update = (
     patch: Partial<{
       unit: UnitSystem;
       volumes: number;
       tempMetricC: number;
-      tempUsF: number;
     }>
   ) => {
     // Establish next values based on current + patch
     const nextUnit = patch.unit ?? unitValue;
     let nextVolumes = patch.volumes ?? volumesValue;
     let nextTempC = patch.tempMetricC ?? tempMetricCValue;
-    let nextTempF = patch.tempUsF ?? tempUsFValue;
-
-    // If a temperature is explicitly updated, keep the other in sync
-    if (patch.tempMetricC !== undefined && patch.tempUsF === undefined) {
-      nextTempF = cToF(patch.tempMetricC);
-    }
-    if (patch.tempUsF !== undefined && patch.tempMetricC === undefined) {
-      nextTempC = fToC(patch.tempUsF);
-    }
-
-    // If unit toggled, convert temperature so displayed number represents same physical temp
-    if (patch.unit !== undefined && patch.unit !== unitValue) {
-      if (patch.unit === "us") {
-        // switching to US: derive F from current C
-        nextTempF = cToF(nextTempC);
-      } else {
-        // switching to Metric: derive C from current F
-        nextTempC = fToC(nextTempF);
-      }
-    }
 
     // Final rounding to one decimal place to avoid FP artifacts like 2.000000000000001
     nextVolumes = round1(nextVolumes);
     nextTempC = round1(nextTempC);
-    nextTempF = round1(nextTempF);
+
+    // Calculate Fahrenheit from Celsius for the onChange callback
+    const nextTempF = round1(cToF(nextTempC));
 
     if (onChange) {
       onChange({
@@ -122,19 +96,14 @@ export default function CarbonationCalculator({
       setUnit(nextUnit);
       setVolumes(nextVolumes);
       setTempMetricC(nextTempC);
-      setTempUsF(nextTempF);
     }
   };
 
-  const tempF = useMemo(
-    () => (unitValue === "metric" ? cToF(tempMetricCValue) : tempUsFValue),
-    [unitValue, tempMetricCValue, tempUsFValue]
-  );
+  const tempF = useMemo(() => cToF(tempMetricCValue), [tempMetricCValue]);
   const psi = useMemo(
     () => calculatePsiFromTempFAndVolumes(tempF, volumesValue),
     [tempF, volumesValue]
   );
-  const bar = useMemo(() => psi * 0.0689475729, [psi]);
   const suggestion = useMemo(() => {
     if (styleCode) {
       const spec = getBjcpStyleSpec(styleCode);
@@ -149,27 +118,14 @@ export default function CarbonationCalculator({
     <section className="section-soft space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-medium">Carbonation</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-white/60">Units</span>
-          <select
-            className="rounded-md border px-2 py-1 bg-black/20"
-            value={unitValue}
-            onChange={(e) =>
-              update({ unit: e.currentTarget.value as UnitSystem })
-            }
-          >
-            <option value="metric">Metric (°C, bar)</option>
-            <option value="us">US (°F, psi)</option>
-          </select>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <label className="block sm:col-span-1">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <label className="block">
           <div className="text-sm text-white/50 mb-1">Target CO₂ Volumes</div>
           <InputWithSuffix
             value={volumesValue}
-            onChange={(n) => update({ volumes: n })}
+            onChange={(n: number) => update({ volumes: n })}
             suffix=" vols"
             suffixClassName="right-3 text-xs"
             step={0.1}
@@ -179,54 +135,29 @@ export default function CarbonationCalculator({
           />
         </label>
 
-        {unitValue === "metric" ? (
-          <label className="block sm:col-span-1">
-            <div className="text-sm text-white/50 mb-1">Beer Temp</div>
-            <InputWithSuffix
-              value={tempMetricCValue}
-              onChange={(n) => update({ tempMetricC: n })}
-              suffix=" °C"
-              suffixClassName="right-3 text-[10px]"
-              step={0.1}
-              min={-1}
-              max={30}
-              placeholder="4.0"
-            />
-          </label>
-        ) : (
-          <label className="block sm:col-span-1">
-            <div className="text-sm text-white/50 mb-1">Beer Temp</div>
-            <InputWithSuffix
-              value={tempUsFValue}
-              onChange={(n) => update({ tempUsF: n })}
-              suffix=" °F"
-              suffixClassName="right-3 text-[10px]"
-              step={1}
-              min={28}
-              max={90}
-              placeholder="38"
-            />
-          </label>
-        )}
+        <label className="block">
+          <div className="text-sm text-white/50 mb-1">Beer Temp</div>
+          <DualUnitInput
+            value={tempMetricCValue}
+            onChange={(n) => update({ tempMetricC: n })}
+            unitType="temperature"
+            step={0.1}
+            min={-1}
+            max={30}
+            placeholder="4.0"
+          />
+        </label>
 
-        <div className="sm:col-span-2">
-          <div className="rounded-md border border-white/10 bg-black/30 p-3">
-            <div className="text-sm text-white/60">Regulator Setting</div>
-            <div className="text-xl font-semibold">
-              {unitValue === "us" ? (
-                <>
-                  {psi.toFixed(1)}{" "}
-                  <span className="text-sm font-normal">psi</span>
-                </>
-              ) : (
-                <>
-                  {bar.toFixed(2)}{" "}
-                  <span className="text-sm font-normal">bar</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <label className="block">
+          <div className="text-sm text-white/50 mb-1">Regulator Setting</div>
+          <DualUnitInput
+            value={psi}
+            onChange={() => {}} // Read-only display
+            unitType="pressure"
+            readOnly={true}
+            placeholder="12.5"
+          />
+        </label>
       </div>
       {suggestion && (
         <div className="flex flex-col gap-2">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import InputWithSuffix from "../../../components/InputWithSuffix";
+import DualUnitInput from "../../../components/DualUnitInput";
 import type { GrainItem } from "../types";
 import {
   addCustomGrain,
@@ -423,14 +424,11 @@ export function GrainBill({
           </label>
           {mode === "amount" ? (
             <label className="flex flex-col">
-              <div className="text-xs text-muted mb-1 sm:hidden">
-                Weight (kg)
-              </div>
-              <InputWithSuffix
+              <div className="text-xs text-muted mb-1 sm:hidden">Weight</div>
+              <DualUnitInput
                 value={g.weightKg}
                 onChange={(n) => onUpdate(i, { ...g, weightKg: n })}
-                suffix=" kg"
-                suffixClassName="right-3 text-[10px]"
+                unitType="weight"
                 step={0.01}
                 placeholder="0.00"
               />

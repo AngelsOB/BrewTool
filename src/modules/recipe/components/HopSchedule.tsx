@@ -1,5 +1,6 @@
 import { useState } from "react";
 import InputWithSuffix from "../../../components/InputWithSuffix";
+import DualUnitInput from "../../../components/DualUnitInput";
 import InlineEditableNumber from "../../../components/InlineEditableNumber";
 import Collapsible from "../../../components/Collapsible";
 import FlavorGraphs from "../../../components/FlavorGraphs";
@@ -297,12 +298,11 @@ export function HopSchedule({
             </label>
 
             <label className="flex flex-col sm:order-6">
-              <div className="text-xs text-muted mb-1 sm:hidden">Grams</div>
-              <InputWithSuffix
+              <div className="text-xs text-muted mb-1 sm:hidden">Amount</div>
+              <DualUnitInput
                 value={h.grams}
                 onChange={(n) => onUpdate(i, { ...h, grams: n })}
-                suffix=" g"
-                suffixClassName="right-3 text-[10px]"
+                unitType="weightSmall"
                 step={0.1}
                 placeholder="10"
               />
@@ -340,11 +340,10 @@ export function HopSchedule({
                   />
                 </div>
               ) : h.type === "whirlpool" ? (
-                <InputWithSuffix
+                <DualUnitInput
                   value={h.whirlpoolTempC ?? 80}
                   onChange={(n) => onUpdate(i, { ...h, whirlpoolTempC: n })}
-                  suffix="°C"
-                  suffixClassName="right-3 text-[10px]"
+                  unitType="temperature"
                   step={0.1}
                   placeholder="80"
                 />

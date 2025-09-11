@@ -506,6 +506,7 @@ import StyleSelector from "../modules/recipe/components/StyleSelector";
 import YeastSection from "../modules/recipe/components/YeastSection";
 import BatchSummary from "../modules/recipe/components/SummaryStickyHeader";
 import WaterSettings from "../modules/recipe/components/WaterSettings";
+import DualUnitInput from "../components/DualUnitInput";
 import InputWithSuffix from "../components/InputWithSuffix";
 import CarbonationCalculator from "../components/CarbonationCalculator";
 
@@ -2210,15 +2211,11 @@ export default function RecipeBuilder() {
           </label>
         </div>
         <label className="block">
-          <div className="text-sm  text-white/50 mb-1">
-            Target Batch Volume (L)
-          </div>
-          <InputWithSuffix
+          <div className="text-sm  text-white/50 mb-1">Target Batch Volume</div>
+          <DualUnitInput
             value={batchVolumeL}
             onChange={(n) => setBatchVolumeL(n)}
-            suffix=" L"
-            suffixClassName="right-3 text-[10px]"
-            step={0.1}
+            unitType="volume"
             placeholder="20.0"
           />
         </label>

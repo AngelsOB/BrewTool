@@ -2,12 +2,12 @@ import { loadJson, saveJson } from "../utils/storage";
 import type { BrewingDataStore, Recipe, EquipmentProfile } from "./recipe";
 import type { SavedWaterProfile } from "../utils/water";
 
-const RECIPES_KEY = "beerapp.v2.recipes";
-const EQUIPMENT_KEY = "beerapp.v2.equipment";
-const FERMENTABLES_KEY = "beerapp.v2.ingredients.fermentables";
-const HOPS_KEY = "beerapp.v2.ingredients.hops";
-const YEASTS_KEY = "beerapp.v2.ingredients.yeasts";
-const WATER_PROFILES_KEY = "beerapp.waterProfiles"; // reuse existing
+const RECIPES_KEY = "beerapp.recipes";
+const EQUIPMENT_KEY = "beerapp.equipment";
+const FERMENTABLES_KEY = "beerapp.ingredients.fermentables";
+const HOPS_KEY = "beerapp.ingredients.hops";
+const YEASTS_KEY = "beerapp.ingredients.yeasts";
+const WATER_PROFILES_KEY = "beerapp.waterProfiles";
 
 // Minimal localStorage-backed store. Not reactive; callers should wrap as needed.
 export function createLocalBrewingDataStore(): BrewingDataStore {
