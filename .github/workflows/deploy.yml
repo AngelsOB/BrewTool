@@ -1,5 +1,4 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [main]
@@ -32,6 +31,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Add CNAME
+        run: echo "brewing.it.com" > dist/CNAME
 
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
