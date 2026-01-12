@@ -58,7 +58,8 @@ export default function YeastSection() {
     const newYeast: Yeast = {
       id: crypto.randomUUID(),
       name: preset.name,
-      attenuation: preset.attenuationPercent / 100,
+      // attenuationPercent in presets is stored as decimal (0.78 for 78%)
+      attenuation: preset.attenuationPercent || 0.75,
       laboratory: preset.category,
     };
     setYeast(newYeast);
@@ -598,7 +599,9 @@ export default function YeastSection() {
                           >
                             <span className="font-medium">{preset.name}</span>
                             <span className="text-sm text-gray-600">
-                              {preset.attenuationPercent}% attenuation
+                              {preset.attenuationPercent
+                                ? `${(preset.attenuationPercent * 100).toFixed(0)}% attenuation`
+                                : "Unknown attenuation"}
                             </span>
                           </button>
                         ))}
