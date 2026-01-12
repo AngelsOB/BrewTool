@@ -7,6 +7,7 @@
  */
 
 import type { Recipe, RecipeCalculations, Fermentable, Hop } from '../models/Recipe';
+import { volumeCalculationService } from './VolumeCalculationService';
 
 export class RecipeCalculationService {
   /**
@@ -19,7 +20,23 @@ export class RecipeCalculationService {
     const ibu = this.calculateIBU(recipe, og);
     const srm = this.calculateSRM(recipe);
 
-    return { og, fg, abv, ibu, srm };
+    // Volume calculations
+    const preBoilVolumeL = volumeCalculationService.calculatePreBoilVolume(recipe);
+    const mashWaterL = volumeCalculationService.calculateMashWater(recipe);
+    const spargeWaterL = volumeCalculationService.calculateSpargeWater(recipe);
+    const totalWaterL = volumeCalculationService.calculateTotalWater(recipe);
+
+    return {
+      og,
+      fg,
+      abv,
+      ibu,
+      srm,
+      preBoilVolumeL,
+      mashWaterL,
+      spargeWaterL,
+      totalWaterL,
+    };
   }
 
   /**

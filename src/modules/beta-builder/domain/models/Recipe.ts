@@ -42,7 +42,7 @@ export type Recipe = {
   /** Target batch volume in liters (into fermenter) */
   batchVolumeL: number;
 
-  /** Equipment settings - simplified for now */
+  /** Equipment settings */
   equipment: {
     /** Boil time in minutes */
     boilTimeMin: number;
@@ -50,6 +50,22 @@ export type Recipe = {
     boilOffRateLPerHour: number;
     /** Mash efficiency percentage */
     mashEfficiencyPercent: number;
+    /** Mash thickness in liters per kilogram (typical: 3.0) */
+    mashThicknessLPerKg: number;
+    /** Grain absorption in liters per kilogram (typical: 1.04) */
+    grainAbsorptionLPerKg: number;
+    /** Mash tun deadspace in liters (typical: 2.0) */
+    mashTunDeadspaceLiters: number;
+    /** Kettle/trub loss in liters (typical: 1.0) */
+    kettleLossLiters: number;
+    /** Hop absorption in liters per kilogram (typical: 0.7) - NO LONGER OPTIONAL! */
+    hopsAbsorptionLPerKg: number;
+    /** Chiller loss in liters (typical: 0.5) */
+    chillerLossLiters: number;
+    /** Fermenter loss in liters (typical: 0.5) */
+    fermenterLossLiters: number;
+    /** Cooling shrinkage percentage (typical: 4.0) */
+    coolingShrinkagePercent: number;
   };
 
   /** Ingredients */
@@ -76,4 +92,12 @@ export type RecipeCalculations = {
   ibu: number;
   /** Standard Reference Method color */
   srm: number;
+  /** Pre-boil volume in liters */
+  preBoilVolumeL: number;
+  /** Mash water volume in liters */
+  mashWaterL: number;
+  /** Sparge water volume in liters */
+  spargeWaterL: number;
+  /** Total water needed in liters */
+  totalWaterL: number;
 };

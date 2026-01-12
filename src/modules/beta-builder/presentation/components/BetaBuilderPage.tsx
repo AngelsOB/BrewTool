@@ -10,6 +10,7 @@ import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
 import FermentableSection from './FermentableSection';
 import HopSection from './HopSection';
+import VolumeDisplay from './VolumeDisplay';
 
 export default function BetaBuilderPage() {
   const {
@@ -57,8 +58,10 @@ export default function BetaBuilderPage() {
 
         {/* Equipment Settings */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Equipment</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <h2 className="text-xl font-semibold mb-4">Equipment & Volumes</h2>
+
+          {/* Basic Settings */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Batch Volume (L)
@@ -112,6 +115,187 @@ export default function BetaBuilderPage() {
               />
             </div>
           </div>
+
+          {/* Advanced Settings - Collapsible */}
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-800 mb-4">
+              Advanced Equipment Settings
+            </summary>
+
+            <div className="grid grid-cols-3 gap-4 pl-4 border-l-2 border-blue-200">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Boil-Off Rate (L/hr)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.boilOffRateLPerHour}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        boilOffRateLPerHour: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Mash Thickness (L/kg)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.mashThicknessLPerKg}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        mashThicknessLPerKg: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Grain Absorption (L/kg)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.grainAbsorptionLPerKg}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        grainAbsorptionLPerKg: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Mash Tun Deadspace (L)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.mashTunDeadspaceLiters}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        mashTunDeadspaceLiters: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Kettle Loss (L)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.kettleLossLiters}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        kettleLossLiters: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Hop Absorption (L/kg)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.hopsAbsorptionLPerKg}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        hopsAbsorptionLPerKg: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Chiller Loss (L)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.chillerLossLiters}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        chillerLossLiters: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Fermenter Loss (L)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.fermenterLossLiters}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        fermenterLossLiters: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Cooling Shrinkage (%)
+                </label>
+                <input
+                  type="number"
+                  value={currentRecipe.equipment.coolingShrinkagePercent}
+                  onChange={(e) =>
+                    updateRecipe({
+                      equipment: {
+                        ...currentRecipe.equipment,
+                        coolingShrinkagePercent: parseFloat(e.target.value) || 0,
+                      },
+                    })
+                  }
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  step="0.1"
+                />
+              </div>
+            </div>
+          </details>
         </div>
 
         {/* Fermentables - Now using dedicated component with preset picker */}
@@ -119,6 +303,9 @@ export default function BetaBuilderPage() {
 
         {/* Hops - Phase 3 addition */}
         <HopSection />
+
+        {/* Volume Display - Phase 4 addition */}
+        <VolumeDisplay calculations={calculations} />
 
         {/* Calculations Display */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-6 mb-6">
