@@ -8,7 +8,7 @@
 import { useEffect } from 'react';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
-import type { Fermentable } from '../../domain/models/Recipe';
+import FermentableSection from './FermentableSection';
 
 export default function BetaBuilderPage() {
   const {
@@ -16,8 +16,6 @@ export default function BetaBuilderPage() {
     createNewRecipe,
     updateRecipe,
     saveCurrentRecipe,
-    addFermentable,
-    removeFermentable,
   } = useRecipeStore();
 
   const calculations = useRecipeCalculations(currentRecipe);
@@ -29,18 +27,7 @@ export default function BetaBuilderPage() {
     }
   }, [currentRecipe, createNewRecipe]);
 
-  // Handler to add a sample fermentable
-  const handleAddFermentable = () => {
-    const newFermentable: Fermentable = {
-      id: crypto.randomUUID(),
-      name: '2-Row Pale Malt',
-      weightKg: 5,
-      colorLovibond: 2,
-      ppg: 37,
-      efficiencyPercent: 75,
-    };
-    addFermentable(newFermentable);
-  };
+  // Removed hard-coded fermentable handler - now using FermentableSection with presets
 
   if (!currentRecipe) {
     return <div className="p-8">Loading...</div>;
@@ -132,46 +119,8 @@ export default function BetaBuilderPage() {
           </div>
         </div>
 
-        {/* Fermentables */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Fermentables</h2>
-            <button
-              onClick={handleAddFermentable}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Add Fermentable
-            </button>
-          </div>
-
-          {currentRecipe.fermentables.length === 0 ? (
-            <p className="text-gray-500 italic">
-              No fermentables yet. Click "Add Fermentable" to get started.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {currentRecipe.fermentables.map((fermentable) => (
-                <div
-                  key={fermentable.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200"
-                >
-                  <div>
-                    <span className="font-medium">{fermentable.name}</span>
-                    <span className="text-gray-600 ml-3">
-                      {fermentable.weightKg} kg
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => removeFermentable(fermentable.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Fermentables - Now using dedicated component with preset picker */}
+        <FermentableSection />
 
         {/* Calculations Display */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-6 mb-6">
