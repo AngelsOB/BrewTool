@@ -31,6 +31,16 @@ const router = createBrowserRouter(
           }),
         },
         {
+          path: "beta-builder",
+          lazy: async () => ({
+            Component: (
+              await import(
+                "./modules/beta-builder/presentation/components/BetaBuilderPage.tsx"
+              )
+            ).default,
+          }),
+        },
+        {
           path: "brew/:id",
           lazy: async () => ({
             Component: (await import("./pages/BrewMode.tsx")).default,

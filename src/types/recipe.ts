@@ -21,7 +21,7 @@ export type Recipe = {
     srm?: number;
   };
 
-  // Equipment reference with snapshot (BrewersFriend approach)
+  // Equipment reference with snapshot
   equipment: {
     profileId: string;
     snapshotAt: string;

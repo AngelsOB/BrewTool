@@ -13,9 +13,15 @@ export default function Home() {
               Fast calculators, a clean recipe builder, and opinionated defaults
               so you can focus on the craft.
             </p>
-            <div className="mt-5 flex items-center gap-2">
+            <div className="mt-5 flex flex-wrap items-center gap-2">
               <Link to="/recipes" className="btn-neon">
                 Start a Recipe
+              </Link>
+              <Link
+                to="/beta-builder"
+                className="rounded-xl border border-blue-400/40 bg-blue-500/20 px-5 py-2.5 text-sm font-medium text-blue-100 shadow-soft hover:bg-blue-500/30 hover:border-blue-400/60 transition-colors"
+              >
+                🚀 Beta Builder (New!)
               </Link>
               <Link
                 to="/calculators"
