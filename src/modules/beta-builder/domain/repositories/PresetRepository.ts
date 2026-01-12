@@ -19,6 +19,7 @@ import {
   type FermentableGroup,
 } from "../../data/fermentablePresets";
 import { HOP_PRESETS, groupHops, type HopCategory } from "../../data/hopPresets";
+import { YEAST_PRESETS, groupYeasts, type YeastCategory } from "../../data/yeastPresets";
 
 // Storage keys for custom presets
 const CUSTOM_FERMENTABLES_KEY = "beta-custom-fermentables-v1";
@@ -208,27 +209,86 @@ export class PresetRepository {
 
   /**
    * Load all yeast presets (generated + custom)
-   *
-   * Placeholder for Phase 5 - Yeast
    */
   loadYeastPresets(): YeastPreset[] {
+    // Return cached if available
     if (this.yeastPresetsCache) {
       return this.yeastPresetsCache;
     }
 
-    // TODO: Phase 5 - Load yeast presets
-    this.yeastPresetsCache = [];
+    // Load custom presets from localStorage
+    const custom = this.loadCustomYeasts();
+
+    // Merge generated + custom, deduplicating by name (custom overrides generated)
+    const byName = new Map<string, YeastPreset>();
+
+    // Add generated presets first
+    for (const preset of YEAST_PRESETS) {
+      byName.set(preset.name, preset);
+    }
+
+    // Add custom presets (will override if same name)
+    for (const preset of custom) {
+      byName.set(preset.name, preset);
+    }
+
+    // Convert back to array and cache
+    this.yeastPresetsCache = Array.from(byName.values());
+
     return this.yeastPresetsCache;
   }
 
   /**
+   * Load yeast presets grouped by category
+   */
+  loadYeastPresetsGrouped(): Array<{
+    label: YeastCategory;
+    items: YeastPreset[];
+  }> {
+    const presets = this.loadYeastPresets();
+    return groupYeasts(presets);
+  }
+
+  /**
+   * Load custom yeasts from localStorage
+   */
+  private loadCustomYeasts(): YeastPreset[] {
+    try {
+      const json = localStorage.getItem(CUSTOM_YEASTS_KEY);
+      if (!json) return [];
+
+      const parsed = JSON.parse(json);
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed;
+    } catch (error) {
+      console.error("Error loading custom yeasts:", error);
+      return [];
+    }
+  }
+
+  /**
    * Save a custom yeast preset
-   *
-   * Placeholder for Phase 5 - Yeast
    */
   saveYeastPreset(preset: YeastPreset): void {
-    // TODO: Phase 5 - Implement yeast preset saving
-    console.log("saveYeastPreset not yet implemented:", preset);
+    const custom = this.loadCustomYeasts();
+
+    // Check if already exists
+    const index = custom.findIndex((p) => p.name === preset.name);
+
+    if (index >= 0) {
+      // Update existing
+      custom[index] = preset;
+    } else {
+      // Add new
+      custom.push(preset);
+    }
+
+    // Save to localStorage
+    localStorage.setItem(CUSTOM_YEASTS_KEY, JSON.stringify(custom));
+
+    // Clear cache to force reload next time
+    this.yeastPresetsCache = null;
   }
 
   /**

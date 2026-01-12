@@ -10,6 +10,7 @@ import type { FermentablePreset, HopPreset, YeastPreset } from "../../domain/mod
 import { presetRepository } from "../../domain/repositories/PresetRepository";
 import type { FermentableGroup } from "../../data/fermentablePresets";
 import type { HopCategory } from "../../data/hopPresets";
+import type { YeastCategory } from "../../data/yeastPresets";
 
 type PresetStore = {
   // State
@@ -18,6 +19,7 @@ type PresetStore = {
   hopPresets: HopPreset[];
   hopPresetsGrouped: Array<{ label: HopCategory; items: HopPreset[] }>;
   yeastPresets: YeastPreset[];
+  yeastPresetsGrouped: Array<{ label: YeastCategory; items: YeastPreset[] }>;
   isLoading: boolean;
   error: string | null;
 
@@ -38,6 +40,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
   hopPresets: [],
   hopPresetsGrouped: [],
   yeastPresets: [],
+  yeastPresetsGrouped: [],
   isLoading: false,
   error: null,
 
@@ -77,8 +80,9 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
     }
   },
 
-  // Load yeast presets (Phase 5)
+  // Load yeast presets
   loadYeastPresets: () => {
+    // Skip if already loaded
     if (get().yeastPresets.length > 0) {
       return;
     }
@@ -86,7 +90,8 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const yeastPresets = presetRepository.loadYeastPresets();
-      set({ yeastPresets, isLoading: false });
+      const yeastPresetsGrouped = presetRepository.loadYeastPresetsGrouped();
+      set({ yeastPresets, yeastPresetsGrouped, isLoading: false });
     } catch (error) {
       set({ error: "Failed to load yeast presets", isLoading: false });
       console.error("Error loading yeast presets:", error);
@@ -124,13 +129,13 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
     }
   },
 
-  // Save a custom yeast preset (Phase 5)
+  // Save a custom yeast preset
   saveYeastPreset: (preset: YeastPreset) => {
     try {
       presetRepository.saveYeastPreset(preset);
       // Reload presets
       presetRepository.clearCache();
-      set({ yeastPresets: [] });
+      set({ yeastPresets: [], yeastPresetsGrouped: [] });
       get().loadYeastPresets();
     } catch (error) {
       set({ error: "Failed to save yeast preset" });
@@ -147,6 +152,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       hopPresets: [],
       hopPresetsGrouped: [],
       yeastPresets: [],
+      yeastPresetsGrouped: [],
     });
   },
 }));
