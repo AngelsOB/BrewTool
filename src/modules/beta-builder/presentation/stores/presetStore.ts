@@ -9,12 +9,14 @@ import { create } from "zustand";
 import type { FermentablePreset, HopPreset, YeastPreset } from "../../domain/models/Presets";
 import { presetRepository } from "../../domain/repositories/PresetRepository";
 import type { FermentableGroup } from "../../data/fermentablePresets";
+import type { HopCategory } from "../../data/hopPresets";
 
 type PresetStore = {
   // State
   fermentablePresets: FermentablePreset[];
   fermentablePresetsGrouped: Array<{ label: FermentableGroup; items: FermentablePreset[] }>;
   hopPresets: HopPreset[];
+  hopPresetsGrouped: Array<{ label: HopCategory; items: HopPreset[] }>;
   yeastPresets: YeastPreset[];
   isLoading: boolean;
   error: string | null;
@@ -34,6 +36,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
   fermentablePresets: [],
   fermentablePresetsGrouped: [],
   hopPresets: [],
+  hopPresetsGrouped: [],
   yeastPresets: [],
   isLoading: false,
   error: null,
@@ -56,8 +59,9 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
     }
   },
 
-  // Load hop presets (Phase 3)
+  // Load hop presets
   loadHopPresets: () => {
+    // Skip if already loaded
     if (get().hopPresets.length > 0) {
       return;
     }
@@ -65,7 +69,8 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const hopPresets = presetRepository.loadHopPresets();
-      set({ hopPresets, isLoading: false });
+      const hopPresetsGrouped = presetRepository.loadHopPresetsGrouped();
+      set({ hopPresets, hopPresetsGrouped, isLoading: false });
     } catch (error) {
       set({ error: "Failed to load hop presets", isLoading: false });
       console.error("Error loading hop presets:", error);
@@ -105,13 +110,13 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
     }
   },
 
-  // Save a custom hop preset (Phase 3)
+  // Save a custom hop preset
   saveHopPreset: (preset: HopPreset) => {
     try {
       presetRepository.saveHopPreset(preset);
       // Reload presets
       presetRepository.clearCache();
-      set({ hopPresets: [] });
+      set({ hopPresets: [], hopPresetsGrouped: [] });
       get().loadHopPresets();
     } catch (error) {
       set({ error: "Failed to save hop preset" });
@@ -140,6 +145,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       fermentablePresets: [],
       fermentablePresetsGrouped: [],
       hopPresets: [],
+      hopPresetsGrouped: [],
       yeastPresets: [],
     });
   },

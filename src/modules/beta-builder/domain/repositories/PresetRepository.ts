@@ -18,6 +18,7 @@ import {
   groupFermentables,
   type FermentableGroup,
 } from "../../data/fermentablePresets";
+import { HOP_PRESETS, groupHops, type HopCategory } from "../../data/hopPresets";
 
 // Storage keys for custom presets
 const CUSTOM_FERMENTABLES_KEY = "beta-custom-fermentables-v1";
@@ -123,27 +124,86 @@ export class PresetRepository {
 
   /**
    * Load all hop presets (generated + custom)
-   *
-   * Placeholder for Phase 3 - Hops
    */
   loadHopPresets(): HopPreset[] {
+    // Return cached if available
     if (this.hopPresetsCache) {
       return this.hopPresetsCache;
     }
 
-    // TODO: Phase 3 - Load hop presets
-    this.hopPresetsCache = [];
+    // Load custom presets from localStorage
+    const custom = this.loadCustomHops();
+
+    // Merge generated + custom, deduplicating by name (custom overrides generated)
+    const byName = new Map<string, HopPreset>();
+
+    // Add generated presets first
+    for (const preset of HOP_PRESETS) {
+      byName.set(preset.name, preset);
+    }
+
+    // Add custom presets (will override if same name)
+    for (const preset of custom) {
+      byName.set(preset.name, preset);
+    }
+
+    // Convert back to array and cache
+    this.hopPresetsCache = Array.from(byName.values());
+
     return this.hopPresetsCache;
   }
 
   /**
+   * Load hop presets grouped by category
+   */
+  loadHopPresetsGrouped(): Array<{
+    label: HopCategory;
+    items: HopPreset[];
+  }> {
+    const presets = this.loadHopPresets();
+    return groupHops(presets);
+  }
+
+  /**
+   * Load custom hops from localStorage
+   */
+  private loadCustomHops(): HopPreset[] {
+    try {
+      const json = localStorage.getItem(CUSTOM_HOPS_KEY);
+      if (!json) return [];
+
+      const parsed = JSON.parse(json);
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed;
+    } catch (error) {
+      console.error("Error loading custom hops:", error);
+      return [];
+    }
+  }
+
+  /**
    * Save a custom hop preset
-   *
-   * Placeholder for Phase 3 - Hops
    */
   saveHopPreset(preset: HopPreset): void {
-    // TODO: Phase 3 - Implement hop preset saving
-    console.log("saveHopPreset not yet implemented:", preset);
+    const custom = this.loadCustomHops();
+
+    // Check if already exists
+    const index = custom.findIndex((p) => p.name === preset.name);
+
+    if (index >= 0) {
+      // Update existing
+      custom[index] = preset;
+    } else {
+      // Add new
+      custom.push(preset);
+    }
+
+    // Save to localStorage
+    localStorage.setItem(CUSTOM_HOPS_KEY, JSON.stringify(custom));
+
+    // Clear cache to force reload next time
+    this.hopPresetsCache = null;
   }
 
   /**

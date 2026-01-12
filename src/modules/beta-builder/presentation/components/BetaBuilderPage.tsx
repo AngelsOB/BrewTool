@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
 import FermentableSection from './FermentableSection';
+import HopSection from './HopSection';
 
 export default function BetaBuilderPage() {
   const {
@@ -37,14 +38,8 @@ export default function BetaBuilderPage() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-blue-900 mb-2">
-            Beta Builder - Clean Architecture
-          </h1>
-          <p className="text-blue-700">
-            This is the new refactored version using SwiftUI-style architecture:
-            Domain Services (Managers) + Repositories (Data Layer) + Presentation (Views)
-          </p>
+        <div className="bg-white border-b border-gray-200 pb-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Recipe Builder</h1>
         </div>
 
         {/* Recipe Name */}
@@ -122,6 +117,9 @@ export default function BetaBuilderPage() {
         {/* Fermentables - Now using dedicated component with preset picker */}
         <FermentableSection />
 
+        {/* Hops - Phase 3 addition */}
+        <HopSection />
+
         {/* Calculations Display */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
@@ -171,42 +169,8 @@ export default function BetaBuilderPage() {
             onClick={saveCurrentRecipe}
             className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors"
           >
-            Save Recipe to localStorage
+            Save Recipe
           </button>
-          <p className="text-sm text-gray-600 mt-2 text-center">
-            Saved recipes use key: "beta-recipes-v1" (separate from old builder)
-          </p>
-        </div>
-
-        {/* Architecture Notes */}
-        <div className="mt-8 bg-gray-100 rounded-lg p-6">
-          <h3 className="font-semibold mb-2 text-gray-800">
-            Architecture Notes:
-          </h3>
-          <ul className="text-sm text-gray-700 space-y-1">
-            <li>
-              <strong>Models:</strong> Recipe, Fermentable, Hop types (your Swift
-              structs)
-            </li>
-            <li>
-              <strong>Services:</strong> RecipeCalculationService (your Manager -
-              all calculation logic)
-            </li>
-            <li>
-              <strong>Repository:</strong> RecipeRepository (your Data Layer -
-              localStorage)
-            </li>
-            <li>
-              <strong>Store:</strong> useRecipeStore (your @Published properties)
-            </li>
-            <li>
-              <strong>Hooks:</strong> useRecipeCalculations (adapter - makes service
-              reactive)
-            </li>
-            <li>
-              <strong>Components:</strong> This page (your SwiftUI View - pure UI)
-            </li>
-          </ul>
         </div>
       </div>
     </div>
