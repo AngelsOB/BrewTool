@@ -10,6 +10,7 @@ import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
 import FermentableSection from './FermentableSection';
 import HopSection from './HopSection';
+import YeastSection from './YeastSection';
 import VolumeDisplay from './VolumeDisplay';
 
 export default function BetaBuilderPage() {
@@ -303,6 +304,9 @@ export default function BetaBuilderPage() {
 
         {/* Hops - Phase 3 addition */}
         <HopSection />
+
+        {/* Yeast - Phase 5 addition */}
+        <YeastSection />
 
         {/* Volume Display - Phase 4 addition */}
         <VolumeDisplay calculations={calculations} />

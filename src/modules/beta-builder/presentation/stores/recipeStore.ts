@@ -7,7 +7,7 @@
  */
 
 import { create } from 'zustand';
-import type { Recipe, RecipeId, Fermentable, Hop } from '../../domain/models/Recipe';
+import type { Recipe, RecipeId, Fermentable, Hop, Yeast } from '../../domain/models/Recipe';
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 
 type RecipeStore = {
@@ -33,6 +33,8 @@ type RecipeStore = {
   addHop: (hop: Hop) => void;
   updateHop: (id: string, updates: Partial<Hop>) => void;
   removeHop: (id: string) => void;
+  setYeast: (yeast: Yeast) => void;
+  clearYeast: () => void;
 };
 
 export const useRecipeStore = create<RecipeStore>((set, get) => ({
@@ -85,6 +87,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       },
       fermentables: [],
       hops: [],
+      yeast: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -216,6 +219,32 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     const updated = {
       ...current,
       hops: current.hops.filter((h) => h.id !== id),
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Set yeast
+  setYeast: (yeast: Yeast) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      yeast,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Clear yeast
+  clearYeast: () => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      yeast: null,
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: updated });

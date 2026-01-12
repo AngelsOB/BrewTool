@@ -15,7 +15,7 @@ export class RecipeCalculationService {
    */
   calculate(recipe: Recipe): RecipeCalculations {
     const og = this.calculateOG(recipe);
-    const fg = this.calculateFG(og);
+    const fg = this.calculateFG(og, recipe);
     const abv = this.calculateABV(og, fg);
     const ibu = this.calculateIBU(recipe, og);
     const srm = this.calculateSRM(recipe);
@@ -65,11 +65,10 @@ export class RecipeCalculationService {
 
   /**
    * Calculate Final Gravity
-   * For now, using a simple 75% attenuation estimate
-   * TODO: Add yeast attenuation, mash temp adjustments
+   * Uses yeast attenuation if available, otherwise defaults to 75%
    */
-  calculateFG(og: number): number {
-    const attenuation = 0.75; // 75% attenuation
+  calculateFG(og: number, recipe: Recipe): number {
+    const attenuation = recipe.yeast?.attenuation || 0.75;
     const gravityPoints = (og - 1) * 1000;
     const attenuatedPoints = gravityPoints * (1 - attenuation);
     return 1 + attenuatedPoints / 1000;

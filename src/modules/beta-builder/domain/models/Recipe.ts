@@ -35,6 +35,44 @@ export type Hop = {
   temperatureC?: number;
 };
 
+export type YeastType = "liquid-100" | "liquid-200" | "dry" | "slurry";
+
+export type StarterStep = {
+  id: string;
+  /** Starter volume in liters */
+  liters: number;
+  /** Starter gravity (e.g., 1.036) */
+  gravity: number;
+  /** Growth model */
+  model: { kind: "white"; aeration: "none" | "shaking" } | { kind: "braukaiser" };
+};
+
+export type StarterInfo = {
+  /** Package type */
+  yeastType: YeastType;
+  /** Number of packages/packs */
+  packs: number;
+  /** Manufacturing date (for viability calculation) */
+  mfgDate?: string;
+  /** Slurry volume in liters (for slurry type) */
+  slurryLiters?: number;
+  /** Slurry density in billion cells per mL (for slurry type) */
+  slurryBillionPerMl?: number;
+  /** Starter steps (up to 3) */
+  steps: StarterStep[];
+};
+
+export type Yeast = {
+  id: string;
+  name: string;
+  /** Attenuation percentage (e.g., 0.75 for 75% attenuation) */
+  attenuation: number;
+  /** Laboratory/manufacturer (e.g., "Wyeast", "White Labs") */
+  laboratory?: string;
+  /** Starter information (optional) */
+  starter?: StarterInfo;
+};
+
 export type Recipe = {
   id: RecipeId;
   name: string;
@@ -71,6 +109,7 @@ export type Recipe = {
   /** Ingredients */
   fermentables: Fermentable[];
   hops: Hop[];
+  yeast: Yeast | null;
 
   /** Timestamps */
   createdAt: string;
