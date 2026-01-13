@@ -1,13 +1,27 @@
 @import "tailwindcss";
 
+/* Force dark mode to work with .dark class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+/* ========================================
+   THEME SYSTEM
+   Light theme = default (:root)
+   Dark theme = .dark class
+   ======================================== */
+
 :root {
-  --bg: 12 12 14;
-  --surface: 20 20 24;
-  --card: 26 27 32;
-  --text: 237 238 240;
-  --muted: 160 174 192;
-  --accent: 251 146 60; /* orange-400 */
-  --glow: 249 115 22; /* orange-500 */
+  /* Light theme - clean and readable */
+  --bg: 249 250 251;          /* gray-50 */
+  --surface: 255 255 255;     /* white */
+  --card: 255 255 255;        /* white */
+  --text: 0 0 0;              /* black */
+  --text-muted: 75 85 99;     /* gray-600 */
+  --border: 209 213 219;      /* gray-300 */
+  
+  /* Accent colors (shared) */
+  --accent: 251 146 60;       /* orange-400 */
+  --glow: 249 115 22;         /* orange-500 */
 
   /* Coral theme (OKLCH) */
   --coral-50: oklch(96.75% 0.017 44.86);
@@ -22,19 +36,22 @@
   --coral-900: oklch(24.44% 0.058 58.7);
   --coral-950: oklch(19.22% 0.046 58.17);
 
-  /* Semantic text */
-  --fg-strong: oklch(96% 0.01 240);
-  --fg-muted: oklch(82% 0.01 240);
+  /* Semantic text (light theme) */
+  --fg-strong: oklch(15% 0.01 240);
+  --fg-muted: oklch(45% 0.01 240);
 }
 
 .dark {
+  /* Dark theme - existing design */
   --bg: 10 10 12;
   --surface: 18 19 23;
   --card: 22 23 28;
   --text: 240 241 245;
-  --muted: 148 163 184;
+  --text-muted: 148 163 184;  /* slate-400 */
+  --border: 55 65 81;         /* gray-700 */
+  
   --accent: 251 146 60;
-  --glow: 234 88 12; /* orange-600 */
+  --glow: 234 88 12;          /* orange-600 */
 
   /* repeat coral theme for dark */
   --coral-50: oklch(96.75% 0.017 44.86);
@@ -52,6 +69,7 @@
   --fg-strong: oklch(97% 0.006 240);
   --fg-muted: oklch(84% 0.008 240);
 }
+
 
 @layer utilities {
   .bg-dashboard {

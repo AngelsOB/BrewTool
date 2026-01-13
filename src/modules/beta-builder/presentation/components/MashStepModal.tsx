@@ -12,6 +12,7 @@
 import { useState, useEffect } from "react";
 import type { MashStep, MashStepType, Recipe } from "../../domain/models/Recipe";
 import { mashScheduleService } from "../../domain/services/MashScheduleService";
+import ModalOverlay from "./ModalOverlay";
 
 type MashStepModalProps = {
   isOpen: boolean;
@@ -141,16 +142,13 @@ export default function MashStepModal({
     setInfusionVolume(null);
   };
 
-  if (!isOpen) return null;
-
   const infusionTempDisplay = calculatedInfusionTemp();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <ModalOverlay isOpen={isOpen} onClose={handleClose} size="2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="sticky top-0 bg-[rgb(var(--card))] border-b border-[rgb(var(--border))] px-6 py-4">
+          <h2 className="text-xl font-semibold">
             {existingStep ? "Edit Mash Step" : "Add Mash Step"}
           </h2>
         </div>
@@ -159,7 +157,7 @@ export default function MashStepModal({
         <div className="px-6 py-4 space-y-4">
           {/* Step Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Step Name *
             </label>
             <input
@@ -167,25 +165,25 @@ export default function MashStepModal({
               value={stepName}
               onChange={(e) => setStepName(e.target.value)}
               placeholder="e.g., Saccharification, Protein Rest, Mash Out"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Step Type */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Step Type *
             </label>
             <select
               value={stepType}
               onChange={(e) => setStepType(e.target.value as MashStepType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500"
             >
               <option value="infusion">Infusion - Add hot water (changes volume)</option>
               <option value="temperature">Temperature - Rest at temp (no water added)</option>
               <option value="decoction">Decoction - Boil portion of mash</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs mt-1">
               {stepType === "infusion" && "Adds hot water to raise mash temperature. Water volume auto-calculated based on your grain bill."}
               {stepType === "temperature" && "Rests at target temperature using direct heat or insulation. No water added."}
               {stepType === "decoction" && "Remove portion of mash, boil it, return to raise temperature."}
@@ -195,14 +193,14 @@ export default function MashStepModal({
           <div className="grid grid-cols-2 gap-4">
             {/* Temperature */}
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 Temperature (°C) *
               </label>
               <input
                 type="number"
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500"
                 step="0.5"
                 min="0"
                 max="100"
@@ -211,14 +209,14 @@ export default function MashStepModal({
 
             {/* Duration */}
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 Duration (minutes) *
               </label>
               <input
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500"
                 step="1"
                 min="1"
               />
@@ -228,7 +226,7 @@ export default function MashStepModal({
           {/* Infusion Volume (for infusion steps only) */}
           {stepType === "infusion" && (
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 Infusion Volume (Liters) - Optional
               </label>
               <input
@@ -236,11 +234,11 @@ export default function MashStepModal({
                 value={infusionVolume ?? ""}
                 onChange={(e) => setInfusionVolume(e.target.value ? parseFloat(e.target.value) : null)}
                 placeholder={`Auto: ${defaultInfusionVolume.toFixed(1)} L (based on mash thickness)`}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500"
                 step="0.1"
                 min="0"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs mt-1">
                 💡 Leave empty for auto-calculation. Only override if you're doing a specific step mash regimen.
               </p>
             </div>
@@ -269,8 +267,8 @@ export default function MashStepModal({
           )}
 
           {/* Common Presets */}
-          <div className="border-t border-gray-200 pt-4">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Common Mash Steps:</p>
+          <div className="border-t border-[rgb(var(--border))] pt-4">
+            <p className="text-sm font-semibold mb-2">Common Mash Steps:</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
@@ -321,10 +319,10 @@ export default function MashStepModal({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+        <div className="sticky bottom-0 bg-[rgb(var(--bg))] border-t border-[rgb(var(--border))] px-6 py-4 flex gap-3 justify-end">
           <button
             onClick={handleClose}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100"
+            className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-gray-100"
           >
             Cancel
           </button>
@@ -335,7 +333,6 @@ export default function MashStepModal({
             {existingStep ? "Update Step" : "Add Step"}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalOverlay>
   );
 }

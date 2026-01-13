@@ -99,20 +99,20 @@ export default function MashScheduleSection() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Mash Schedule</h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm">
             Total Time: {totalMashTime} min | Water: {totalInfusionWater.toFixed(1)} L | Final Volume: {finalMashVolume.toFixed(1)} L
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleGenerateSingleInfusion}
-            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+            className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
           >
             Single Infusion
           </button>
           <button
             onClick={handleGenerateMultiStep}
-            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+            className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
           >
             Multi-Step
           </button>
@@ -121,7 +121,7 @@ export default function MashScheduleSection() {
 
       {/* Mash Steps List */}
       {currentRecipe.mashSteps.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded">
+        <div className="text-center py-8 border-2 border-dashed border-[rgb(var(--border))] rounded">
           <p>No mash steps added yet.</p>
           <p className="text-sm">Use the buttons above to generate a default schedule, or add steps manually below.</p>
         </div>
@@ -130,10 +130,10 @@ export default function MashScheduleSection() {
           {currentRecipe.mashSteps.map((step, index) => (
             <div
               key={step.id}
-              className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center gap-3 p-3 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded shadow-sm hover:shadow-md transition-shadow"
             >
               {/* Step Number */}
-              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full font-semibold">
                 {index + 1}
               </div>
 
@@ -141,28 +141,28 @@ export default function MashScheduleSection() {
               <div className="flex-1 grid grid-cols-5 gap-3 items-center">
                 {/* Name & Type */}
                 <div className="col-span-2">
-                  <div className="font-semibold text-gray-900">{step.name}</div>
-                  <div className="text-xs text-gray-500 capitalize">{step.type}</div>
+                  <div className="font-semibold">{step.name}</div>
+                  <div className="text-xs capitalize">{step.type}</div>
                 </div>
 
                 {/* Temperature */}
                 <div>
-                  <div className="text-xs text-gray-500">Target Temp</div>
-                  <div className="font-semibold text-gray-900">{step.temperatureC}°C</div>
+                  <div className="text-xs">Target Temp</div>
+                  <div className="font-semibold">{step.temperatureC}°C</div>
                 </div>
 
                 {/* Duration */}
                 <div>
-                  <div className="text-xs text-gray-500">Duration</div>
-                  <div className="font-semibold text-gray-900">{step.durationMinutes} min</div>
+                  <div className="text-xs">Duration</div>
+                  <div className="font-semibold">{step.durationMinutes} min</div>
                 </div>
 
                 {/* Infusion Info (for infusion steps) */}
                 <div>
                   {step.type === "infusion" && step.infusionVolumeLiters && step.infusionTempC && (
                     <div>
-                      <div className="text-xs text-gray-500">Infusion</div>
-                      <div className="text-sm font-semibold text-blue-700">
+                      <div className="text-xs">Infusion</div>
+                      <div className="text-sm font-semibold text-blue-700 dark:text-blue-300">
                         {step.infusionVolumeLiters.toFixed(1)} L @ {step.infusionTempC.toFixed(1)}°C
                       </div>
                     </div>
@@ -174,13 +174,13 @@ export default function MashScheduleSection() {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleOpenEditModal(step)}
-                  className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                  className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => removeMashStep(step.id)}
-                  className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+                  className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                 >
                   Remove
                 </button>
@@ -200,7 +200,7 @@ export default function MashScheduleSection() {
 
       {/* Warning if no grains */}
       {totalGrainKg === 0 && (
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-200">
           ⚠️ Add fermentables first to enable mash calculations
         </div>
       )}

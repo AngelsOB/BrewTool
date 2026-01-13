@@ -15,6 +15,7 @@ import { fermentableCalculationService } from "../../domain/services/Fermentable
 import type { Fermentable } from "../../domain/models/Recipe";
 import type { FermentablePreset } from "../../domain/models/Presets";
 import CustomFermentableModal from "./CustomFermentableModal";
+import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
 
 export default function FermentableSection() {
   const { currentRecipe, addFermentable, updateFermentable, removeFermentable } =
@@ -29,6 +30,13 @@ export default function FermentableSection() {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  // Advanced Filters State
+  const [activeFilters, setActiveFilters] = useState({
+    origins: [] as string[],
+    types: [] as string[], // 'grain', 'extract', 'sugar', 'adjunct'
+    colors: [] as string[], // 'light', 'amber', 'dark', 'roasted'
+  });
+  const [showFilters, setShowFilters] = useState(false);
   const [mode, setMode] = useState<"amount" | "percent">("amount");
   const [targetABV, setTargetABV] = useState(5.0);
   const [percentById, setPercentById] = useState<Record<string, number>>({});
@@ -48,6 +56,7 @@ export default function FermentableSection() {
       ppg: preset.potentialGu,
       efficiencyPercent:
         preset.type === "extract" || preset.type === "sugar" ? 100 : 75,
+      originCode: preset.originCode,
     };
     addFermentable(newFermentable);
     setIsPickerOpen(false);
@@ -60,12 +69,74 @@ export default function FermentableSection() {
   };
 
   // Filter presets by search query
-  const filteredGrouped = fermentablePresetsGrouped.map((group) => ({
-    ...group,
-    items: group.items.filter((preset) =>
-      preset.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-  })).filter((group) => group.items.length > 0);
+  // Get unique origins for filter
+  const availableOrigins = useMemo(() => {
+    const origins = new Set<string>();
+    fermentablePresetsGrouped.forEach((group) => {
+      group.items.forEach((item) => {
+        if (item.originCode) origins.add(item.originCode);
+      });
+    });
+    return Array.from(origins).sort();
+  }, [fermentablePresetsGrouped]);
+
+  // Filter presets by search query and active filters
+  const filteredGrouped = useMemo(() => {
+    return fermentablePresetsGrouped
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((preset) => {
+          // 1. Search Query
+          const matchesSearch = preset.name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase());
+
+          // 2. Origin Filter (OR logic within origins)
+          const matchesOrigin =
+            activeFilters.origins.length === 0 ||
+            (preset.originCode && activeFilters.origins.includes(preset.originCode));
+
+          // 3. Type Filter
+          // Map preset properties to filter types
+          let presetType: string = preset.type;
+          // Heuristic: grain with "adjunct" or "flake" or "torrified" in name is practically an adjunct
+          if (preset.type === 'grain' && 
+              (preset.name.toLowerCase().includes('adjunct') || 
+               preset.name.toLowerCase().includes('flak') || 
+               preset.name.toLowerCase().includes('torrified'))) {
+             presetType = 'adjunct_mashable';
+          }
+          
+          const matchesType =
+            activeFilters.types.length === 0 ||
+            activeFilters.types.includes(presetType);
+
+          // 4. Color Filter
+          // 'light' < 10, 'amber' 10-50, 'dark' 50-200, 'roasted' > 200
+          let colorCategory = "light";
+          if (preset.colorLovibond >= 10 && preset.colorLovibond < 50) colorCategory = "amber";
+          else if (preset.colorLovibond >= 50 && preset.colorLovibond < 200) colorCategory = "dark";
+          else if (preset.colorLovibond >= 200) colorCategory = "roasted";
+
+          const matchesColor =
+            activeFilters.colors.length === 0 ||
+            activeFilters.colors.includes(colorCategory);
+
+          return matchesSearch && matchesOrigin && matchesType && matchesColor;
+        }),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [fermentablePresetsGrouped, searchQuery, activeFilters]);
+
+  const toggleFilter = (category: keyof typeof activeFilters, value: string) => {
+    setActiveFilters(prev => {
+      const current = prev[category];
+      const next = current.includes(value)
+        ? current.filter(item => item !== value)
+        : [...current, value];
+      return { ...prev, [category]: next };
+    });
+  };
 
   // Calculate total grain weight
   const totalGrainKg =
@@ -119,16 +190,16 @@ export default function FermentableSection() {
   }, [mode, currentRecipe?.fermentables, percentById]);
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
+    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-blue-500">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Fermentables</h2>
           {/* Mode Toggle */}
-          <div className="flex items-center rounded-md border border-gray-300 overflow-hidden text-xs">
+          <div className="flex items-center rounded-md border border-[rgb(var(--border))] overflow-hidden text-xs">
             <button
               type="button"
               className={`px-3 py-1.5 ${
-                mode === "amount" ? "bg-blue-100 font-semibold" : "bg-white"
+                mode === "amount" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 font-semibold" : "bg-[rgb(var(--card))]"
               }`}
               onClick={() => setMode("amount")}
             >
@@ -137,7 +208,7 @@ export default function FermentableSection() {
             <button
               type="button"
               className={`px-3 py-1.5 ${
-                mode === "percent" ? "bg-blue-100 font-semibold" : "bg-white"
+                mode === "percent" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 font-semibold" : "bg-[rgb(var(--card))]"
               }`}
               onClick={() => setMode("percent")}
             >
@@ -147,17 +218,17 @@ export default function FermentableSection() {
           {/* Target ABV input (percent mode only) */}
           {mode === "percent" && (
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-gray-700">Target ABV</label>
+              <label className="text-xs font-semibold">Target ABV</label>
               <input
                 type="number"
                 value={targetABV}
                 onChange={(e) => setTargetABV(parseFloat(e.target.value) || 0)}
-                className="w-20 px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded"
+                className="w-20 px-2 py-1 text-sm border border-[rgb(var(--border))] rounded"
                 step="0.1"
                 min="0"
               />
-              <span className="text-xs text-gray-700">%</span>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs">%</span>
+              <span className="text-xs">
                 (sum: {totalPercent.toFixed(1)}%)
               </span>
             </div>
@@ -173,7 +244,7 @@ export default function FermentableSection() {
 
       {/* Fermentable List */}
       {!currentRecipe?.fermentables.length ? (
-        <p className="text-gray-700 italic">
+        <p className="text-gray-500 dark:text-gray-400 italic">
           No fermentables yet. Click "Add Fermentable" to select from preset database.
         </p>
       ) : (
@@ -186,11 +257,18 @@ export default function FermentableSection() {
             return (
               <div
                 key={fermentable.id}
-                className="grid grid-cols-12 gap-2 items-center p-3 bg-gray-50 rounded border border-gray-200 hover:bg-gray-100 transition-colors"
+                className="grid grid-cols-12 gap-2 items-center p-3 bg-[rgb(var(--card))] rounded border border-[rgb(var(--border))] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
               >
                 {/* Name */}
                 <div className="col-span-4">
-                  <span className="font-medium">{fermentable.name}</span>
+                  <span className="font-medium flex items-center gap-2">
+                    {fermentable.originCode && (
+                      <span className="text-lg" title={fermentable.originCode}>
+                        {getCountryFlag(fermentable.originCode)}
+                      </span>
+                    )}
+                    {fermentable.name}
+                  </span>
                 </div>
 
                 {/* Weight/Percent - Inline Editable */}
@@ -205,11 +283,11 @@ export default function FermentableSection() {
                             weightKg: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                         step="0.1"
                         min="0"
                       />
-                      <span className="text-xs font-medium text-gray-700">kg</span>
+                      <span className="text-xs font-medium">kg</span>
                     </>
                   ) : (
                     <>
@@ -222,12 +300,12 @@ export default function FermentableSection() {
                             [fermentable.id]: parseFloat(e.target.value) || 0,
                           }))
                         }
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                         step="0.1"
                         min="0"
                         max="100"
                       />
-                      <span className="text-xs font-medium text-gray-700">%</span>
+                      <span className="text-xs font-medium">%</span>
                     </>
                   )}
                 </div>
@@ -242,11 +320,11 @@ export default function FermentableSection() {
                         colorLovibond: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     step="1"
                     min="0"
                   />
-                  <span className="text-xs font-medium text-gray-700">°L</span>
+                  <span className="text-xs font-medium">°L</span>
                 </div>
 
                 {/* PPG - Inline Editable */}
@@ -259,21 +337,21 @@ export default function FermentableSection() {
                         ppg: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     step="0.1"
                     min="0"
                   />
-                  <span className="text-xs font-medium text-gray-700">PPG</span>
+                  <span className="text-xs font-medium">PPG</span>
                 </div>
 
                 {/* Percentage or Weight (depends on mode) */}
                 <div className="col-span-1 text-right">
                   {mode === "amount" ? (
-                    <span className="text-sm font-medium text-gray-800">
+                    <span className="text-sm font-medium">
                       {percentage.toFixed(1)}%
                     </span>
                   ) : (
-                    <span className="text-sm font-medium text-gray-800">
+                    <span className="text-sm font-medium">
                       {fermentable.weightKg.toFixed(2)} kg
                     </span>
                   )}
@@ -293,7 +371,7 @@ export default function FermentableSection() {
           })}
 
           {/* Total */}
-          <div className="flex justify-between items-center pt-2 border-t border-gray-300 mt-2">
+          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--border))] mt-2">
             <span className="font-semibold">Total</span>
             <span className="font-semibold">{totalGrainKg.toFixed(2)} kg</span>
           </div>
@@ -311,11 +389,11 @@ export default function FermentableSection() {
           }}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col"
+            className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-[rgb(var(--border))]">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold">Select Fermentable</h3>
                 <button
@@ -323,45 +401,130 @@ export default function FermentableSection() {
                     setIsPickerOpen(false);
                     setSearchQuery("");
                   }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
                 >
                   ×
                 </button>
               </div>
 
               {/* Search */}
-              <input
-                type="text"
-                placeholder="Search fermentables..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                autoFocus
-              />
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  placeholder="Search fermentables..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  autoFocus
+                />
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-3 py-2 rounded-md border transition-colors ${
+                    showFilters
+                      ? "bg-blue-100 text-blue-600 border-blue-300 dark:bg-blue-900/60 dark:text-blue-200 dark:border-blue-700"
+                      : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                  }`}
+                  title="Toggle Filters"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </button>
+              </div>
+
+              {/* Advanced Filters */}
+              {showFilters && (
+                <div className="space-y-3 mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                {/* Type Filters */}
+                <div className="flex flex-wrap gap-2 text-xs">
+                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">Type:</span>
+                   {["grain", "extract", "sugar", "adjunct_mashable"].map(type => (
+                      <button
+                        key={type}
+                        onClick={() => toggleFilter("types", type)}
+                        className={`px-3 py-1 rounded-full border transition-colors ${
+                          activeFilters.types.includes(type)
+                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
+                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                        }`}
+                      >
+                        {type === "adjunct_mashable" ? "Adjunct" : type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                   ))}
+                </div>
+
+                {/* Color Filters */}
+                <div className="flex flex-wrap gap-2 text-xs">
+                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">Color:</span>
+                   {[
+                     { id: "light", label: "Light (<10°L)", color: "bg-yellow-50 border-yellow-200 text-yellow-800" },
+                     { id: "amber", label: "Amber (10-50°L)", color: "bg-orange-50 border-orange-200 text-orange-800" },
+                     { id: "dark", label: "Dark (50-200°L)", color: "bg-amber-900/10 border-amber-900/20 text-amber-900 dark:text-amber-100" },
+                     { id: "roasted", label: "Roasted (>200°L)", color: "bg-gray-900/10 border-gray-900/20 text-gray-900 dark:bg-gray-100/10 dark:text-gray-100" }
+                   ].map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => toggleFilter("colors", opt.id)}
+                        className={`px-3 py-1 rounded-full border transition-colors ${
+                          activeFilters.colors.includes(opt.id)
+                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700 ring-1 ring-blue-500"
+                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                   ))}
+                </div>
+
+                {/* Origin Filters */}
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
+                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">Origin:</span>
+                   {availableOrigins.map((code) => (
+                      <button
+                        key={code}
+                        onClick={() => toggleFilter("origins", code)}
+                        className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border flex items-center gap-1 ${
+                          activeFilters.origins.includes(code)
+                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
+                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                        }`}
+                      >
+                        <span>{getCountryFlag(code)}</span>
+                        {BREWING_ORIGINS[code] || code}
+                      </button>
+                   ))}
+                </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Body - Scrollable List */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto pb-4">
               {presetsLoading ? (
-                <p className="text-gray-500">Loading presets...</p>
+                <p className="text-gray-500 dark:text-gray-400">Loading presets...</p>
               ) : filteredGrouped.length === 0 ? (
-                <p className="text-gray-500">No fermentables found</p>
+                <p className="text-gray-500 dark:text-gray-400 px-6 py-8 text-center">No fermentables found</p>
               ) : (
                 <div className="space-y-6">
                   {filteredGrouped.map((group) => (
                     <div key={group.label}>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase">
+                      <h4 className="text-sm font-semibold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--card))] px-6 py-2 border-b border-[rgb(var(--border))]">
                         {group.label}
                       </h4>
-                      <div className="space-y-1">
+                      <div className="space-y-1 px-6">
                         {group.items.map((preset) => (
                           <button
                             key={preset.name}
                             onClick={() => handleAddFromPreset(preset)}
-                            className="w-full text-left px-4 py-2 rounded hover:bg-blue-50 transition-colors flex justify-between items-center"
+                            className="w-full text-left px-4 py-2 rounded hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors flex justify-between items-center"
                           >
-                            <span className="font-medium">{preset.name}</span>
-                            <span className="text-sm font-medium text-gray-800">
+                            <span className="font-medium flex items-center gap-2">
+                              {preset.originCode && (
+                                <span className="text-xl" title={BREWING_ORIGINS[preset.originCode]}>
+                                  {getCountryFlag(preset.originCode)}
+                                </span>
+                              )}
+                              {preset.name}
+                            </span>
+                            <span className="text-sm font-medium">
                               {preset.colorLovibond}°L | {preset.potentialGu} PPG
                               {preset.originCode && ` | ${preset.originCode}`}
                             </span>
@@ -375,8 +538,8 @@ export default function FermentableSection() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-              <div className="text-sm text-gray-600">
+            <div className="p-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))] flex justify-between items-center">
+              <div className="text-sm">
                 {fermentablePresetsGrouped.reduce(
                   (sum, group) => sum + group.items.length,
                   0

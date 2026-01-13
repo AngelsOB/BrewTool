@@ -15,6 +15,7 @@ import HopSection from './HopSection';
 import YeastSection from './YeastSection';
 import VolumeDisplay from './VolumeDisplay';
 import StyleSelectorModal from './StyleSelectorModal';
+import StyleRangeComparison from './StyleRangeComparison';
 
 export default function BetaBuilderPage() {
   const { id } = useParams<{ id?: string }>();
@@ -53,52 +54,52 @@ export default function BetaBuilderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-[rgb(var(--bg))] p-8 transition-colors duration-200">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 pb-6 mb-6">
+        <div className="bg-white dark:bg-[rgb(var(--card))] border-b border-gray-200 dark:border-[rgb(var(--border))] pb-6 mb-6 rounded-t-lg transition-colors">
           <div className="flex items-center justify-between">
             <div>
               <button
                 onClick={() => navigate('/beta-builder')}
-                className="text-blue-600 hover:text-blue-800 text-sm mb-2 flex items-center gap-1"
+                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm mb-2 flex items-center gap-1"
               >
                 ← Back to Recipes
               </button>
-              <h1 className="text-3xl font-bold text-gray-900">Recipe Builder</h1>
+              <h1 className="text-3xl font-bold dark:text-gray-100">Recipe Builder</h1>
             </div>
           </div>
         </div>
 
         {/* Recipe Name & Metadata */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6 space-y-4">
+        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Recipe Name
             </label>
             <input
               type="text"
               value={currentRecipe.name}
               onChange={(e) => updateRecipe({ name: e.target.value })}
-              className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 BJCP Style
               </label>
               <button
                 onClick={() => setIsStyleModalOpen(true)}
-                className="w-full px-3 py-2 text-left text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-left border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                {currentRecipe.style || <span className="text-gray-400">Select a style...</span>}
+                {currentRecipe.style || <span className="text-gray-500 dark:text-gray-400">Select a style...</span>}
               </button>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 Tags (comma-separated)
               </label>
               <input
@@ -112,13 +113,13 @@ export default function BetaBuilderPage() {
                   updateRecipe({ tags: tags.length > 0 ? tags : [] });
                 }}
                 placeholder="e.g., hoppy, sessionable"
-                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Notes
             </label>
             <textarea
@@ -126,19 +127,19 @@ export default function BetaBuilderPage() {
               onChange={(e) => updateRecipe({ notes: e.target.value || undefined })}
               placeholder="Brew notes, tasting notes, recipe inspiration..."
               rows={3}
-              className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
 
         {/* Equipment Settings */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Equipment & Volumes</h2>
 
           {/* Basic Settings */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 Batch Volume (L)
               </label>
               <input
@@ -147,12 +148,12 @@ export default function BetaBuilderPage() {
                 onChange={(e) =>
                   updateRecipe({ batchVolumeL: parseFloat(e.target.value) || 0 })
                 }
-                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 step="0.1"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 Mash Efficiency (%)
               </label>
               <input
@@ -166,12 +167,12 @@ export default function BetaBuilderPage() {
                     },
                   })
                 }
-                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 step="1"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold mb-2">
                 Boil Time (min)
               </label>
               <input
@@ -185,7 +186,7 @@ export default function BetaBuilderPage() {
                     },
                   })
                 }
-                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 step="1"
               />
             </div>
@@ -193,13 +194,13 @@ export default function BetaBuilderPage() {
 
           {/* Advanced Settings - Collapsible */}
           <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-800 mb-4">
+            <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mb-4">
               Advanced Equipment Settings
             </summary>
 
             <div className="grid grid-cols-3 gap-4 pl-4 border-l-2 border-blue-200">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Boil-Off Rate (L/hr)
                 </label>
                 <input
@@ -213,12 +214,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Mash Thickness (L/kg)
                 </label>
                 <input
@@ -232,12 +233,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Grain Absorption (L/kg)
                 </label>
                 <input
@@ -251,12 +252,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.01"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Mash Tun Deadspace (L)
                 </label>
                 <input
@@ -270,12 +271,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Kettle Loss (L)
                 </label>
                 <input
@@ -289,12 +290,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Hop Absorption (L/kg)
                 </label>
                 <input
@@ -308,12 +309,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Chiller Loss (L)
                 </label>
                 <input
@@ -327,12 +328,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Fermenter Loss (L)
                 </label>
                 <input
@@ -346,12 +347,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-xs font-semibold mb-2">
                   Cooling Shrinkage (%)
                 </label>
                 <input
@@ -365,7 +366,7 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
                   step="0.1"
                 />
               </div>
@@ -377,7 +378,7 @@ export default function BetaBuilderPage() {
         <FermentableSection />
 
         {/* Mash Schedule - Phase 5c addition */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6">
           <MashScheduleSection />
         </div>
 
@@ -391,53 +392,67 @@ export default function BetaBuilderPage() {
         <VolumeDisplay calculations={calculations} />
 
         {/* Calculations Display */}
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg shadow-lg p-6 mb-6 border border-green-200/50 dark:border-green-800/50">
+          <h2 className="text-xl font-bold mb-4">
             Calculated Values
           </h2>
           {calculations ? (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm font-semibold text-gray-700 mb-1">OG</div>
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="bg-[rgb(var(--card))] rounded-lg p-4 shadow">
+                <div className="text-sm font-semibold mb-1">OG</div>
+                <div className="text-2xl font-bold">
                   {calculations.og.toFixed(3)}
                 </div>
               </div>
-              <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm font-semibold text-gray-700 mb-1">FG</div>
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="bg-[rgb(var(--card))] rounded-lg p-4 shadow">
+                <div className="text-sm font-semibold mb-1">FG</div>
+                <div className="text-2xl font-bold">
                   {calculations.fg.toFixed(3)}
                 </div>
               </div>
-              <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm font-semibold text-gray-700 mb-1">ABV</div>
-                <div className="text-2xl font-bold text-green-600">
+              <div className="bg-[rgb(var(--card))] rounded-lg p-4 shadow">
+                <div className="text-sm font-semibold mb-1">ABV</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {calculations.abv.toFixed(1)}%
                 </div>
               </div>
-              <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm font-semibold text-gray-700 mb-1">IBU</div>
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="bg-[rgb(var(--card))] rounded-lg p-4 shadow">
+                <div className="text-sm font-semibold mb-1">IBU</div>
+                <div className="text-2xl font-bold">
                   {calculations.ibu.toFixed(1)}
                 </div>
               </div>
-              <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm font-semibold text-gray-700 mb-1">SRM</div>
-                <div className="text-2xl font-bold text-amber-600">
+              <div className="bg-[rgb(var(--card))] rounded-lg p-4 shadow">
+                <div className="text-sm font-semibold mb-1">SRM</div>
+                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                   {calculations.srm.toFixed(1)}
                 </div>
               </div>
             </div>
           ) : (
-            <p className="text-gray-700">No calculations available</p>
+            <p>No calculations available</p>
           )}
         </div>
 
+        {/* BJCP Style Range Comparison */}
+        {calculations && (
+          <div className="mb-6">
+            <StyleRangeComparison
+              styleCode={currentRecipe.style}
+              abv={calculations.abv}
+              og={calculations.og}
+              fg={calculations.fg}
+              ibu={calculations.ibu}
+              srm={calculations.srm}
+            />
+          </div>
+        )}
+
         {/* Save Button */}
-        <div className="bg-white rounded-lg shadow p-6 flex gap-3">
+        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 flex gap-3">
           <button
             onClick={() => navigate('/beta-builder')}
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-50 transition-colors"
+            className="flex-1 px-6 py-3 border border-[rgb(var(--border))] font-semibold rounded-md hover:bg-[rgb(var(--bg))] transition-colors"
           >
             Cancel
           </button>

@@ -1,0 +1,346 @@
+/**
+ * Fermentable Preset Modal Component
+ *
+ * Modal for selecting fermentable presets with:
+ * - Search functionality
+ * - Advanced filtering by type, color, origin
+ * - Grouped display by category
+ * - Create custom preset option
+ */
+
+import { useState, useMemo } from "react";
+import type { FermentablePreset } from "../../domain/models/Presets";
+import ModalOverlay from "./ModalOverlay";
+import CustomFermentableModal from "./CustomFermentableModal";
+import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
+
+interface FermentablePresetModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (preset: FermentablePreset) => void;
+  presetsGrouped: Array<{ label: string; items: FermentablePreset[] }>;
+  isLoading?: boolean;
+  onSaveCustomPreset: (preset: FermentablePreset) => void;
+}
+
+export default function FermentablePresetModal({
+  isOpen,
+  onClose,
+  onSelect,
+  presetsGrouped,
+  isLoading = false,
+  onSaveCustomPreset,
+}: FermentablePresetModalProps) {
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({
+    origins: [] as string[],
+    types: [] as string[], // 'grain', 'extract', 'sugar', 'adjunct'
+    colors: [] as string[], // 'light', 'amber', 'dark', 'roasted'
+  });
+
+  // Get unique origins for filter
+  const availableOrigins = useMemo(() => {
+    const origins = new Set<string>();
+    presetsGrouped.forEach((group) => {
+      group.items.forEach((item) => {
+        if (item.originCode) origins.add(item.originCode);
+      });
+    });
+    return Array.from(origins).sort();
+  }, [presetsGrouped]);
+
+  // Filter presets by search query and active filters
+  const filteredGrouped = useMemo(() => {
+    return presetsGrouped
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((preset) => {
+          // 1. Search Query
+          const matchesSearch = preset.name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase());
+
+          // 2. Origin Filter (OR logic within origins)
+          const matchesOrigin =
+            activeFilters.origins.length === 0 ||
+            (preset.originCode && activeFilters.origins.includes(preset.originCode));
+
+          // 3. Type Filter
+          let presetType: string = preset.type;
+          if (
+            preset.type === "grain" &&
+            (preset.name.toLowerCase().includes("adjunct") ||
+              preset.name.toLowerCase().includes("flak") ||
+              preset.name.toLowerCase().includes("torrified"))
+          ) {
+            presetType = "adjunct_mashable";
+          }
+
+          const matchesType =
+            activeFilters.types.length === 0 ||
+            activeFilters.types.includes(presetType);
+
+          // 4. Color Filter
+          let colorCategory = "light";
+          if (preset.colorLovibond >= 10 && preset.colorLovibond < 50)
+            colorCategory = "amber";
+          else if (preset.colorLovibond >= 50 && preset.colorLovibond < 200)
+            colorCategory = "dark";
+          else if (preset.colorLovibond >= 200) colorCategory = "roasted";
+
+          const matchesColor =
+            activeFilters.colors.length === 0 ||
+            activeFilters.colors.includes(colorCategory);
+
+          return matchesSearch && matchesOrigin && matchesType && matchesColor;
+        }),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [presetsGrouped, searchQuery, activeFilters]);
+
+  const toggleFilter = (
+    category: keyof typeof activeFilters,
+    value: string
+  ) => {
+    setActiveFilters((prev) => {
+      const current = prev[category];
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+      return { ...prev, [category]: next };
+    });
+  };
+
+  const handleClose = () => {
+    setSearchQuery("");
+    setActiveFilters({ origins: [], types: [], colors: [] });
+    setShowFilters(false);
+    onClose();
+  };
+
+  const handleSelect = (preset: FermentablePreset) => {
+    onSelect(preset);
+    handleClose();
+  };
+
+  return (
+    <>
+      <ModalOverlay isOpen={isOpen} onClose={handleClose} size="3xl">
+        <div className="flex flex-col max-h-[80vh]">
+          {/* Modal Header */}
+          <div className="p-6 border-b border-[rgb(var(--border))]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Select Fermentable</h3>
+              <button
+                onClick={handleClose}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                placeholder="Search fermentables..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                autoFocus
+              />
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-3 py-2 rounded-md border transition-colors ${
+                  showFilters
+                    ? "bg-blue-100 text-blue-600 border-blue-300 dark:bg-blue-900/60 dark:text-blue-200 dark:border-blue-700"
+                    : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                }`}
+                title="Toggle Filters"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="space-y-3 mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                {/* Type Filters */}
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+                    Type:
+                  </span>
+                  {["grain", "extract", "sugar", "adjunct_mashable"].map(
+                    (type) => (
+                      <button
+                        key={type}
+                        onClick={() => toggleFilter("types", type)}
+                        className={`px-3 py-1 rounded-full border transition-colors ${
+                          activeFilters.types.includes(type)
+                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
+                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                        }`}
+                      >
+                        {type === "adjunct_mashable"
+                          ? "Adjunct"
+                          : type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                {/* Color Filters */}
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+                    Color:
+                  </span>
+                  {[
+                    {
+                      id: "light",
+                      label: "Light (<10°L)",
+                      color:
+                        "bg-yellow-50 border-yellow-200 text-yellow-800",
+                    },
+                    {
+                      id: "amber",
+                      label: "Amber (10-50°L)",
+                      color: "bg-orange-50 border-orange-200 text-orange-800",
+                    },
+                    {
+                      id: "dark",
+                      label: "Dark (50-200°L)",
+                      color:
+                        "bg-amber-900/10 border-amber-900/20 text-amber-900 dark:text-amber-100",
+                    },
+                    {
+                      id: "roasted",
+                      label: "Roasted (>200°L)",
+                      color:
+                        "bg-gray-900/10 border-gray-900/20 text-gray-900 dark:bg-gray-100/10 dark:text-gray-100",
+                    },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => toggleFilter("colors", opt.id)}
+                      className={`px-3 py-1 rounded-full border transition-colors ${
+                        activeFilters.colors.includes(opt.id)
+                          ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700 ring-1 ring-blue-500"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Origin Filters */}
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
+                  <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+                    Origin:
+                  </span>
+                  {availableOrigins.map((code) => (
+                    <button
+                      key={code}
+                      onClick={() => toggleFilter("origins", code)}
+                      className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border flex items-center gap-1 ${
+                        activeFilters.origins.includes(code)
+                          ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      }`}
+                    >
+                      <span>{getCountryFlag(code)}</span>
+                      {BREWING_ORIGINS[code] || code}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Modal Body - Scrollable List */}
+          <div className="flex-1 overflow-y-auto pb-4">
+            {isLoading ? (
+              <p className="text-gray-500 dark:text-gray-400 px-6 py-8 text-center">
+                Loading presets...
+              </p>
+            ) : filteredGrouped.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 px-6 py-8 text-center">
+                No fermentables found
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {filteredGrouped.map((group) => (
+                  <div key={group.label}>
+                    <h4 className="text-sm font-semibold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--card))] px-6 py-2 border-b border-[rgb(var(--border))]">
+                      {group.label}
+                    </h4>
+                    <div className="space-y-1 px-6">
+                      {group.items.map((preset) => (
+                        <button
+                          key={preset.name}
+                          onClick={() => handleSelect(preset)}
+                          className="w-full text-left px-4 py-2 rounded hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors flex justify-between items-center"
+                        >
+                          <span className="font-medium flex items-center gap-2">
+                            {preset.originCode && (
+                              <span
+                                className="text-xl"
+                                title={BREWING_ORIGINS[preset.originCode]}
+                              >
+                                {getCountryFlag(preset.originCode)}
+                              </span>
+                            )}
+                            {preset.name}
+                          </span>
+                          <span className="text-sm font-medium">
+                            {preset.colorLovibond}°L | {preset.potentialGu} PPG
+                            {preset.originCode && ` | ${preset.originCode}`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Modal Footer */}
+          <div className="p-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))] flex justify-between items-center">
+            <div className="text-sm">
+              {presetsGrouped.reduce((sum, group) => sum + group.items.length, 0)}{" "}
+              presets available
+            </div>
+            <button
+              onClick={() => setIsCustomModalOpen(true)}
+              className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+            >
+              + Create Custom
+            </button>
+          </div>
+        </div>
+      </ModalOverlay>
+
+      {/* Custom Fermentable Modal */}
+      <CustomFermentableModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        onSave={onSaveCustomPreset}
+      />
+    </>
+  );
+}

@@ -18,6 +18,8 @@ export type Fermentable = {
   ppg: number;
   /** Extract efficiency as percentage (e.g., 80 means 80% efficiency) */
   efficiencyPercent: number;
+  /** Origin country code (e.g., "US", "DE") */
+  originCode?: string;
 };
 
 export type Hop = {
@@ -39,6 +41,18 @@ export type Hop = {
   dryHopStartDay?: number;
   /** Dry hop duration in days */
   dryHopDays?: number;
+  /** Hop flavor profile (optional) */
+  flavor?: {
+    citrus: number;
+    tropicalFruit: number;
+    stoneFruit: number;
+    berry: number;
+    floral: number;
+    grassy: number;
+    herbal: number;
+    spice: number;
+    resinPine: number;
+  };
 };
 
 export type YeastType = "liquid-100" | "liquid-200" | "dry" | "slurry";

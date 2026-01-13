@@ -60,7 +60,7 @@ export default function CustomYeastModal({
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+        className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-semibold mb-4">Create Custom Yeast</h3>
@@ -68,7 +68,7 @@ export default function CustomYeastModal({
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Yeast Name *
             </label>
             <input
@@ -76,14 +76,14 @@ export default function CustomYeastModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Custom House Blend"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               autoFocus
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Category
             </label>
             <input
@@ -91,25 +91,25 @@ export default function CustomYeastModal({
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="e.g., Custom, Homebrew, House Blend"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
             />
           </div>
 
           {/* Attenuation */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Attenuation %
             </label>
             <input
               type="number"
               value={attenuationPercent}
               onChange={(e) => setAttenuationPercent(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
               step="1"
               min="50"
               max="90"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs mt-1">
               Typical range: Low 65-70%, Medium 70-75%, High 75-85%
             </p>
           </div>
@@ -119,7 +119,7 @@ export default function CustomYeastModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] transition-colors"
           >
             Cancel
           </button>

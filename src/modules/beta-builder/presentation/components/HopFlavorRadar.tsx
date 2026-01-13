@@ -251,7 +251,7 @@ export default function HopFlavorRadar({
           {list.map((s, i) => (
             <div
               key={s.name}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/60 px-2 py-1"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-[rgb(var(--card))]/60 px-2 py-1"
             >
               <span
                 className="inline-block h-3 w-3 rounded-sm"

@@ -60,7 +60,7 @@ export default function CustomHopModal({
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+        className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-semibold mb-4">Create Custom Hop</h3>
@@ -68,7 +68,7 @@ export default function CustomHopModal({
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Hop Name *
             </label>
             <input
@@ -76,33 +76,33 @@ export default function CustomHopModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Custom Hop Blend"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               autoFocus
             />
           </div>
 
           {/* Alpha Acid */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Alpha Acid %
             </label>
             <input
               type="number"
               value={alphaAcidPercent}
               onChange={(e) => setAlphaAcidPercent(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
               step="0.1"
               min="0"
               max="25"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs mt-1">
               Typical range: Aroma hops 3-6%, Dual-purpose 6-12%, Bittering 12-18%
             </p>
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
+            <label className="block text-sm font-semibold mb-2">
               Category
             </label>
             <input
@@ -110,12 +110,12 @@ export default function CustomHopModal({
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="e.g., Custom, Bittering, Aroma, Dual-Purpose"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
             />
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-            <p className="text-xs text-gray-700">
+            <p className="text-xs">
               Note: Custom hops won't have flavor profile data. You can still use them for
               calculations and scheduling.
             </p>
@@ -126,7 +126,7 @@ export default function CustomHopModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] transition-colors"
           >
             Cancel
           </button>
