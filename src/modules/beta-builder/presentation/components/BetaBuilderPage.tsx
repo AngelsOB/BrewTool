@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
-import { getBjcpCategories } from '../../../utils/bjcp';
+import { getBjcpCategories } from '../../../../utils/bjcp';
 import FermentableSection from './FermentableSection';
 import MashScheduleSection from './MashScheduleSection';
 import HopSection from './HopSection';
