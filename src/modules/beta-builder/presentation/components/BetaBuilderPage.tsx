@@ -13,7 +13,7 @@ import FermentableSection from './FermentableSection';
 import MashScheduleSection from './MashScheduleSection';
 import HopSection from './HopSection';
 import YeastSection from './YeastSection';
-import VolumeDisplay from './VolumeDisplay';
+import WaterSection from './WaterSection';
 import StyleSelectorModal from './StyleSelectorModal';
 import StyleRangeComparison from './StyleRangeComparison';
 
@@ -402,8 +402,8 @@ export default function BetaBuilderPage() {
         {/* Yeast - Phase 5 addition */}
         <YeastSection />
 
-        {/* Volume Display - Phase 4 addition */}
-        <VolumeDisplay calculations={calculations} />
+        {/* Water - Volumes + Chemistry */}
+        <WaterSection calculations={calculations} recipe={currentRecipe} />
 
         {/* Calculations Display */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg shadow-lg p-6 mb-6 border border-green-200/50 dark:border-green-800/50">

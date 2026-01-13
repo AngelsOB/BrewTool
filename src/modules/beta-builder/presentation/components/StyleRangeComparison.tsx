@@ -162,10 +162,8 @@ export default function StyleRangeComparison({
   }
 
   return (
-    <div className="border border-[rgb(var(--border))] rounded-lg p-4 bg-gradient-to-br from-purple-50/50 to-blue-50/50 dark:from-purple-900/10 dark:to-blue-900/10">
-      <h3 className="text-sm font-semibold mb-3 text-purple-900 dark:text-purple-100 uppercase tracking-wide">
-        BJCP Style Ranges
-      </h3>
+    <div className="bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg shadow p-6">
+      <h2 className="text-xl font-semibold mb-4">BJCP Style Ranges</h2>
       <div className="space-y-1">
         <RangeBar
           label="ABV"
