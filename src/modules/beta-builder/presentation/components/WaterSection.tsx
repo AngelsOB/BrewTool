@@ -331,31 +331,31 @@ export default function WaterSection({ calculations, recipe }: Props) {
                   const finalValue = Math.round(finalProfile[ion]);
                   const targetValue = Math.round(targetProfile[ion]);
 
-                  // Calculate difference from target and create gradient colors
+                  // Calculate difference from target and create gradient backgrounds
                   const diff = finalValue - targetValue;
                   const tolerance = targetValue * 0.2;
 
-                  let colorClass = "text-green-600 dark:text-green-400"; // Good/close enough
+                  let bgClass = "bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100"; // Good/close enough
 
                   if (diff < -tolerance) {
-                    // Too low - progressive red shades
+                    // Too low - progressive red background intensity
                     const percentBelow = Math.abs(diff) / (targetValue || 1);
                     if (percentBelow >= 0.5) {
-                      colorClass = "text-red-900 dark:text-red-300"; // Very low (50%+ below)
+                      bgClass = "bg-red-200 dark:bg-red-900/50 text-red-900 dark:text-red-100"; // Very low
                     } else if (percentBelow >= 0.35) {
-                      colorClass = "text-red-700 dark:text-red-400"; // Quite low (35-50% below)
+                      bgClass = "bg-red-150 dark:bg-red-900/40 text-red-900 dark:text-red-100"; // Quite low
                     } else {
-                      colorClass = "text-red-600 dark:text-red-500"; // Moderately low (20-35% below)
+                      bgClass = "bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100"; // Moderately low
                     }
                   } else if (diff > tolerance) {
-                    // Too high - progressive orange shades
+                    // Too high - progressive orange background intensity
                     const percentAbove = diff / (targetValue || 1);
                     if (percentAbove >= 0.5) {
-                      colorClass = "text-orange-900 dark:text-orange-300"; // Very high (50%+ above)
+                      bgClass = "bg-orange-200 dark:bg-orange-900/50 text-orange-900 dark:text-orange-100"; // Very high
                     } else if (percentAbove >= 0.35) {
-                      colorClass = "text-orange-700 dark:text-orange-400"; // Quite high (35-50% above)
+                      bgClass = "bg-orange-150 dark:bg-orange-900/40 text-orange-900 dark:text-orange-100"; // Quite high
                     } else {
-                      colorClass = "text-orange-600 dark:text-orange-500"; // Moderately high (20-35% above)
+                      bgClass = "bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-100"; // Moderately high
                     }
                   }
 
@@ -368,7 +368,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
                       <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
                         {targetValue}
                       </td>
-                      <td className={`text-right py-2 px-3 font-bold ${colorClass}`}>
+                      <td className={`text-right py-2 px-3 font-bold ${bgClass} rounded`}>
                         {finalValue}
                       </td>
                     </tr>
