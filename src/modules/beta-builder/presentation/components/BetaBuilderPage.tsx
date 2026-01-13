@@ -118,6 +118,20 @@ export default function BetaBuilderPage() {
             </div>
           </div>
 
+          {/* BJCP Style Range Comparison */}
+          {calculations && currentRecipe.style && (
+            <div className="pt-2">
+              <StyleRangeComparison
+                styleCode={currentRecipe.style}
+                abv={calculations.abv}
+                og={calculations.og}
+                fg={calculations.fg}
+                ibu={calculations.ibu}
+                srm={calculations.srm}
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-semibold mb-2">
               Notes
@@ -433,20 +447,6 @@ export default function BetaBuilderPage() {
             <p>No calculations available</p>
           )}
         </div>
-
-        {/* BJCP Style Range Comparison */}
-        {calculations && (
-          <div className="mb-6">
-            <StyleRangeComparison
-              styleCode={currentRecipe.style}
-              abv={calculations.abv}
-              og={calculations.og}
-              fg={calculations.fg}
-              ibu={calculations.ibu}
-              srm={calculations.srm}
-            />
-          </div>
-        )}
 
         {/* Save Button */}
         <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 flex gap-3">

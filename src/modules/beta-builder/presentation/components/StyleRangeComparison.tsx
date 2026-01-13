@@ -29,17 +29,12 @@ export default function StyleRangeComparison({
   ibu,
   srm,
 }: StyleRangeComparisonProps) {
-  const spec = getBjcpStyleSpec(styleCode);
+  // Extract the code from the style string (e.g., "19A. American Amber Ale" -> "19A")
+  const code = styleCode?.split('.')[0]?.trim();
+  const spec = getBjcpStyleSpec(code);
 
   if (!spec) {
-    return (
-      <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 border border-[rgb(var(--border))]">
-        <h2 className="text-xl font-semibold mb-4">BJCP Style Ranges</h2>
-        <p className="text-gray-500 dark:text-gray-400 italic text-sm">
-          Select a beer style to see BJCP range comparison
-        </p>
-      </div>
-    );
+    return null; // Don't show anything if no spec is available
   }
 
   function RangeBar({
@@ -167,8 +162,10 @@ export default function StyleRangeComparison({
   }
 
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 border-t-4 border-purple-500">
-      <h2 className="text-xl font-semibold mb-4">BJCP Style Ranges</h2>
+    <div className="border border-[rgb(var(--border))] rounded-lg p-4 bg-gradient-to-br from-purple-50/50 to-blue-50/50 dark:from-purple-900/10 dark:to-blue-900/10">
+      <h3 className="text-sm font-semibold mb-3 text-purple-900 dark:text-purple-100 uppercase tracking-wide">
+        BJCP Style Ranges
+      </h3>
       <div className="space-y-1">
         <RangeBar
           label="ABV"
