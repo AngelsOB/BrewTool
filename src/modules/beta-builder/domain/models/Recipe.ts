@@ -29,10 +29,16 @@ export type Hop = {
   grams: number;
   /** Hop addition type */
   type: 'boil' | 'whirlpool' | 'dry hop' | 'first wort' | 'mash';
-  /** Time in minutes (for boil/whirlpool) */
+  /** Time in minutes (for boil) */
   timeMinutes?: number;
   /** Temperature in Celsius (for whirlpool) */
   temperatureC?: number;
+  /** Whirlpool/hopstand time in minutes (separate from boil time) */
+  whirlpoolTimeMinutes?: number;
+  /** Dry hop start day (day of fermentation to add, e.g., 0 = pitch day, 7 = 1 week in) */
+  dryHopStartDay?: number;
+  /** Dry hop duration in days */
+  dryHopDays?: number;
 };
 
 export type YeastType = "liquid-100" | "liquid-200" | "dry" | "slurry";

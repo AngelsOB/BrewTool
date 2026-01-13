@@ -66,7 +66,7 @@ export default function VolumeDisplay({ calculations }: Props) {
       </div>
 
       {/* Info note */}
-      <div className="mt-4 text-xs text-gray-600 bg-gray-50 p-3 rounded border border-gray-200">
+      <div className="mt-4 text-xs text-gray-800 bg-gray-50 p-3 rounded border border-gray-200">
         <strong>Note:</strong> These volumes account for grain absorption, boil-off,
         hop absorption, deadspace, and all equipment losses.
       </div>

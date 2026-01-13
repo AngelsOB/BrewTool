@@ -46,14 +46,14 @@ export default function BetaBuilderPage() {
 
         {/* Recipe Name */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-800 mb-2">
             Recipe Name
           </label>
           <input
             type="text"
             value={currentRecipe.name}
             onChange={(e) => updateRecipe({ name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
@@ -64,7 +64,7 @@ export default function BetaBuilderPage() {
           {/* Basic Settings */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Batch Volume (L)
               </label>
               <input
@@ -73,12 +73,12 @@ export default function BetaBuilderPage() {
                 onChange={(e) =>
                   updateRecipe({ batchVolumeL: parseFloat(e.target.value) || 0 })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md"
                 step="0.1"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Mash Efficiency (%)
               </label>
               <input
@@ -92,12 +92,12 @@ export default function BetaBuilderPage() {
                     },
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md"
                 step="1"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Boil Time (min)
               </label>
               <input
@@ -111,7 +111,7 @@ export default function BetaBuilderPage() {
                     },
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md"
                 step="1"
               />
             </div>
@@ -125,7 +125,7 @@ export default function BetaBuilderPage() {
 
             <div className="grid grid-cols-3 gap-4 pl-4 border-l-2 border-blue-200">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Boil-Off Rate (L/hr)
                 </label>
                 <input
@@ -139,12 +139,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Mash Thickness (L/kg)
                 </label>
                 <input
@@ -158,12 +158,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Grain Absorption (L/kg)
                 </label>
                 <input
@@ -177,12 +177,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.01"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Mash Tun Deadspace (L)
                 </label>
                 <input
@@ -196,12 +196,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Kettle Loss (L)
                 </label>
                 <input
@@ -215,12 +215,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Hop Absorption (L/kg)
                 </label>
                 <input
@@ -234,12 +234,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Chiller Loss (L)
                 </label>
                 <input
@@ -253,12 +253,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Fermenter Loss (L)
                 </label>
                 <input
@@ -272,12 +272,12 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Cooling Shrinkage (%)
                 </label>
                 <input
@@ -291,7 +291,7 @@ export default function BetaBuilderPage() {
                       },
                     })
                   }
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                  className="w-full px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded-md"
                   step="0.1"
                 />
               </div>
@@ -313,44 +313,44 @@ export default function BetaBuilderPage() {
 
         {/* Calculations Display */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">
             Calculated Values
           </h2>
           {calculations ? (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm text-gray-600 mb-1">OG</div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">OG</div>
                 <div className="text-2xl font-bold text-gray-900">
                   {calculations.og.toFixed(3)}
                 </div>
               </div>
               <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm text-gray-600 mb-1">FG</div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">FG</div>
                 <div className="text-2xl font-bold text-gray-900">
                   {calculations.fg.toFixed(3)}
                 </div>
               </div>
               <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm text-gray-600 mb-1">ABV</div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">ABV</div>
                 <div className="text-2xl font-bold text-green-600">
                   {calculations.abv.toFixed(1)}%
                 </div>
               </div>
               <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm text-gray-600 mb-1">IBU</div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">IBU</div>
                 <div className="text-2xl font-bold text-gray-900">
                   {calculations.ibu.toFixed(1)}
                 </div>
               </div>
               <div className="bg-white rounded-lg p-4 shadow">
-                <div className="text-sm text-gray-600 mb-1">SRM</div>
+                <div className="text-sm font-semibold text-gray-700 mb-1">SRM</div>
                 <div className="text-2xl font-bold text-amber-600">
                   {calculations.srm.toFixed(1)}
                 </div>
               </div>
             </div>
           ) : (
-            <p className="text-gray-600">No calculations available</p>
+            <p className="text-gray-700">No calculations available</p>
           )}
         </div>
 

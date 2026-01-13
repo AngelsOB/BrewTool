@@ -16,14 +16,16 @@ import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import type { Yeast, YeastType, StarterStep, StarterInfo } from "../../domain/models/Recipe";
 import type { YeastPreset } from "../../domain/models/Presets";
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
+import CustomYeastModal from "./CustomYeastModal";
 
 export default function YeastSection() {
   const { currentRecipe, setYeast, clearYeast } = useRecipeStore();
-  const { yeastPresetsGrouped, loadYeastPresets, isLoading: presetsLoading } =
+  const { yeastPresetsGrouped, loadYeastPresets, saveYeastPreset, isLoading: presetsLoading } =
     usePresetStore();
   const calculations = useRecipeCalculations(currentRecipe);
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isStarterOpen, setIsStarterOpen] = useState(false);
 
@@ -58,13 +60,18 @@ export default function YeastSection() {
     const newYeast: Yeast = {
       id: crypto.randomUUID(),
       name: preset.name,
-      // attenuationPercent in presets is stored as decimal (0.78 for 78%)
-      attenuation: preset.attenuationPercent || 0.75,
+      // attenuationPercent in presets is percentage (75 for 75%), convert to decimal
+      attenuation: (preset.attenuationPercent || 75) / 100,
       laboratory: preset.category,
     };
     setYeast(newYeast);
     setIsPickerOpen(false);
     setSearchQuery("");
+  };
+
+  // Handle saving a custom yeast preset
+  const handleSaveCustomPreset = (preset: YeastPreset) => {
+    saveYeastPreset(preset);
   };
 
   // Handle updating yeast attenuation
@@ -184,7 +191,7 @@ export default function YeastSection() {
 
       {/* Yeast Display */}
       {!currentRecipe?.yeast ? (
-        <p className="text-gray-500 italic">
+        <p className="text-gray-700 italic">
           No yeast selected. Click "Select Yeast" to choose from preset database.
         </p>
       ) : (
@@ -195,7 +202,7 @@ export default function YeastSection() {
               <div className="col-span-6">
                 <span className="font-medium text-lg">{currentRecipe.yeast.name}</span>
                 {currentRecipe.yeast.laboratory && (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm font-medium text-gray-800">
                     {currentRecipe.yeast.laboratory}
                   </div>
                 )}
@@ -203,7 +210,7 @@ export default function YeastSection() {
 
               {/* Attenuation */}
               <div className="col-span-5">
-                <label className="text-xs text-gray-600 block mb-1">
+                <label className="text-xs font-semibold text-gray-700 block mb-1">
                   Attenuation
                 </label>
                 <div className="flex items-center gap-2">
@@ -220,7 +227,7 @@ export default function YeastSection() {
                     min="0"
                     max="100"
                   />
-                  <span className="text-sm text-gray-600">%</span>
+                  <span className="text-sm font-medium text-gray-800">%</span>
                 </div>
               </div>
 
@@ -242,7 +249,7 @@ export default function YeastSection() {
               <div className="flex items-center gap-3">
                 <span className="font-medium text-gray-900">Pitch Rate & Starter</span>
                 {!isStarterOpen && starterSummaryText && (
-                  <span className="text-xs text-gray-500">{starterSummaryText}</span>
+                  <span className="text-xs font-medium text-gray-700">{starterSummaryText}</span>
                 )}
               </div>
               <button
@@ -265,7 +272,7 @@ export default function YeastSection() {
                   {/* Package inputs */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                     <label className="block">
-                      <div className="text-xs text-gray-600 mb-1">Package Type</div>
+                      <div className="text-xs font-semibold text-gray-700 mb-1">Package Type</div>
                       <select
                         className="w-full rounded-md border border-gray-300 px-2 py-2"
                         value={yeastType}
@@ -281,7 +288,7 @@ export default function YeastSection() {
                     {yeastType === "slurry" ? (
                       <>
                         <label className="block">
-                          <div className="text-xs text-gray-600 mb-1">
+                          <div className="text-xs font-semibold text-gray-700 mb-1">
                             Slurry Amount (L)
                           </div>
                           <input
@@ -294,7 +301,7 @@ export default function YeastSection() {
                           />
                         </label>
                         <label className="block">
-                          <div className="text-xs text-gray-600 mb-1">
+                          <div className="text-xs font-semibold text-gray-700 mb-1">
                             Density (B/mL)
                           </div>
                           <input
@@ -311,7 +318,7 @@ export default function YeastSection() {
                       </>
                     ) : yeastType === "dry" ? (
                       <label className="block">
-                        <div className="text-xs text-gray-600 mb-1">Packs</div>
+                        <div className="text-xs font-semibold text-gray-700 mb-1">Packs</div>
                         <input
                           className="w-full rounded-md border border-gray-300 px-3 py-2"
                           type="number"
@@ -324,7 +331,7 @@ export default function YeastSection() {
                     ) : (
                       <>
                         <label className="block">
-                          <div className="text-xs text-gray-600 mb-1">Packs</div>
+                          <div className="text-xs font-semibold text-gray-700 mb-1">Packs</div>
                           <input
                             className="w-full rounded-md border border-gray-300 px-3 py-2"
                             type="number"
@@ -335,7 +342,7 @@ export default function YeastSection() {
                           />
                         </label>
                         <label className="block">
-                          <div className="text-xs text-gray-600 mb-1">Mfg Date</div>
+                          <div className="text-xs font-semibold text-gray-700 mb-1">Mfg Date</div>
                           <input
                             className="w-full rounded-md border border-gray-300 px-3 py-2"
                             type="date"
@@ -388,10 +395,10 @@ export default function YeastSection() {
                           key={s.id}
                           className="grid grid-cols-1 gap-3 items-end sm:grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_auto]"
                         >
-                          <div className="text-xs text-gray-600">Step {i + 1}</div>
+                          <div className="text-xs font-semibold text-gray-700">Step {i + 1}</div>
 
                           <label className="block">
-                            <div className="text-xs text-gray-600 mb-1">Size (L)</div>
+                            <div className="text-xs font-semibold text-gray-700 mb-1">Size (L)</div>
                             <input
                               className="w-full rounded-md border border-gray-300 px-3 py-2"
                               type="number"
@@ -410,7 +417,7 @@ export default function YeastSection() {
                           </label>
 
                           <label className="block">
-                            <div className="text-xs text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-gray-700 mb-1">
                               Gravity (SG)
                             </div>
                             <input
@@ -431,7 +438,7 @@ export default function YeastSection() {
                           </label>
 
                           <label className="block">
-                            <div className="text-xs text-gray-600 mb-1">Model</div>
+                            <div className="text-xs font-semibold text-gray-700 mb-1">Model</div>
                             <select
                               className="w-full rounded-md border border-gray-300 px-2 py-2"
                               value={
@@ -549,8 +556,18 @@ export default function YeastSection() {
 
       {/* Preset Picker Modal */}
       {isPickerOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col">
+        <div
+          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
+          onClick={() => {
+            setIsPickerOpen(false);
+            setSearchQuery("");
+          }}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center mb-4">
@@ -598,7 +615,7 @@ export default function YeastSection() {
                             className="w-full text-left px-4 py-2 rounded hover:bg-amber-50 transition-colors flex justify-between items-center"
                           >
                             <span className="font-medium">{preset.name}</span>
-                            <span className="text-sm text-gray-600">
+                            <span className="text-sm font-medium text-gray-800">
                               {preset.attenuationPercent
                                 ? `${(preset.attenuationPercent * 100).toFixed(0)}% attenuation`
                                 : "Unknown attenuation"}
@@ -613,16 +630,31 @@ export default function YeastSection() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-gray-200 bg-gray-50 text-sm text-gray-600">
-              {yeastPresetsGrouped.reduce(
-                (sum, group) => sum + group.items.length,
-                0
-              )}{" "}
-              yeast strains available
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                {yeastPresetsGrouped.reduce(
+                  (sum, group) => sum + group.items.length,
+                  0
+                )}{" "}
+                yeast strains available
+              </div>
+              <button
+                onClick={() => setIsCustomModalOpen(true)}
+                className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+              >
+                + Create Custom
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Custom Yeast Modal */}
+      <CustomYeastModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        onSave={handleSaveCustomPreset}
+      />
     </div>
   );
 }

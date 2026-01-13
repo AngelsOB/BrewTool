@@ -43,7 +43,7 @@ export default function HopFlavorMini({
     return `${x},${y}`;
   }).join(" ");
 
-  // Choose color based on dominant axis
+  // Choose color based on dominant axis (matches old builder logic)
   function dominantKey(): (typeof HOP_FLAVOR_KEYS)[number] | null {
     let bestKey: (typeof HOP_FLAVOR_KEYS)[number] | null = null;
     let bestVal = -Infinity;

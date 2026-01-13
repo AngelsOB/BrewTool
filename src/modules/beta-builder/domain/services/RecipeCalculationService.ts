@@ -95,7 +95,7 @@ export class RecipeCalculationService {
     const batchVolumeGal = batchVolumeL * 0.264172;
 
     const totalIBU = hops.reduce((sum, hop) => {
-      const ibu = this.calculateHopIBU(hop, og, batchVolumeGal);
+      const ibu = this.calculateSingleHopIBU(hop, og, batchVolumeGal);
       return sum + ibu;
     }, 0);
 
@@ -105,8 +105,8 @@ export class RecipeCalculationService {
   /**
    * Calculate IBU contribution from a single hop addition
    */
-  private calculateHopIBU(hop: Hop, og: number, batchVolumeGal: number): number {
-    const { alphaAcid, grams, type, timeMinutes = 0, temperatureC = 80 } = hop;
+  calculateSingleHopIBU(hop: Hop, og: number, batchVolumeGal: number): number {
+    const { alphaAcid, grams, type, timeMinutes = 0, temperatureC = 80, whirlpoolTimeMinutes } = hop;
 
     // AA utilization based on addition type
     let utilization = 0;
@@ -119,7 +119,9 @@ export class RecipeCalculationService {
         utilization = this.tinsethUtilization(timeMinutes + 20, og); // FWH gets bonus time
         break;
       case 'whirlpool':
-        utilization = this.whirlpoolUtilization(timeMinutes, temperatureC, og);
+        // Use whirlpoolTimeMinutes if available, fallback to timeMinutes for backward compatibility
+        const wpTime = whirlpoolTimeMinutes ?? timeMinutes ?? 15;
+        utilization = this.whirlpoolUtilization(wpTime, temperatureC, og);
         break;
       case 'dry hop':
         utilization = 0.05; // 5% contribution from dry hopping
@@ -129,10 +131,11 @@ export class RecipeCalculationService {
         break;
     }
 
-    // Tinseth formula: IBU = (AAU × U × 75) / Vgal
-    // Where AAU = grams × AA% / 1000
-    const aau = (grams * alphaAcid) / 1000;
-    const ibu = (aau * utilization * 74.89) / batchVolumeGal;
+    // Tinseth formula using imperial units
+    // Convert grams to ounces, then calculate AAU
+    const oz = grams / 28.3495;
+    const aau = oz * alphaAcid;  // Alpha Acid Units
+    const ibu = (aau * utilization * 75) / batchVolumeGal;
 
     return ibu;
   }
