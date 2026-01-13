@@ -331,33 +331,39 @@ export default function WaterSection({ calculations, recipe }: Props) {
                   const finalValue = Math.round(finalProfile[ion]);
                   const targetValue = Math.round(targetProfile[ion]);
 
-                  // Calculate difference from target and create gradient backgrounds
+                  // Calculate difference from target and create opacity-based gradient
                   const diff = finalValue - targetValue;
                   const tolerance = targetValue * 0.2;
 
-                  let bgClass = "bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100"; // Good/close enough
+                  // Calculate how far off we are as a percentage (0 = on target, 1 = very far)
+                  let deviationPercent = 0;
+                  let baseColor = "green"; // Default to green
 
                   if (diff < -tolerance) {
-                    // Too low - progressive red background intensity
-                    const percentBelow = Math.abs(diff) / (targetValue || 1);
-                    if (percentBelow >= 0.5) {
-                      bgClass = "bg-red-200 dark:bg-red-900/50 text-red-900 dark:text-red-100"; // Very low
-                    } else if (percentBelow >= 0.35) {
-                      bgClass = "bg-red-150 dark:bg-red-900/40 text-red-900 dark:text-red-100"; // Quite low
-                    } else {
-                      bgClass = "bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100"; // Moderately low
-                    }
+                    // Too low - red
+                    baseColor = "red";
+                    deviationPercent = Math.min(Math.abs(diff) / (targetValue || 1), 1);
                   } else if (diff > tolerance) {
-                    // Too high - progressive orange background intensity
-                    const percentAbove = diff / (targetValue || 1);
-                    if (percentAbove >= 0.5) {
-                      bgClass = "bg-orange-200 dark:bg-orange-900/50 text-orange-900 dark:text-orange-100"; // Very high
-                    } else if (percentAbove >= 0.35) {
-                      bgClass = "bg-orange-150 dark:bg-orange-900/40 text-orange-900 dark:text-orange-100"; // Quite high
-                    } else {
-                      bgClass = "bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-100"; // Moderately high
-                    }
+                    // Too high - orange
+                    baseColor = "orange";
+                    deviationPercent = Math.min(diff / (targetValue || 1), 1);
+                  } else {
+                    // Within tolerance - green (low opacity)
+                    deviationPercent = 0.2; // Always show a bit of green
                   }
+
+                  // Map deviation to opacity: closer to target = lower opacity (more transparent/greener)
+                  // Further from target = higher opacity (more red/orange)
+                  const opacity = baseColor === "green" ? 0.15 : Math.max(0.15, Math.min(0.6, deviationPercent));
+
+                  const bgStyle = {
+                    backgroundColor:
+                      baseColor === "green"
+                        ? `rgba(34, 197, 94, ${opacity})` // green-500
+                        : baseColor === "red"
+                        ? `rgba(239, 68, 68, ${opacity})` // red-500
+                        : `rgba(249, 115, 22, ${opacity})`, // orange-500
+                  };
 
                   return (
                     <tr key={ion} className="border-b border-[rgb(var(--border))]">
@@ -368,8 +374,13 @@ export default function WaterSection({ calculations, recipe }: Props) {
                       <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
                         {targetValue}
                       </td>
-                      <td className={`text-right py-2 px-3 font-bold ${bgClass} rounded`}>
-                        {finalValue}
+                      <td className="text-right py-2 px-3">
+                        <span
+                          className="inline-block px-2 py-0.5 rounded font-bold"
+                          style={bgStyle}
+                        >
+                          {finalValue}
+                        </span>
                       </td>
                     </tr>
                   );
