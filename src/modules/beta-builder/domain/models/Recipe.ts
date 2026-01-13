@@ -186,6 +186,8 @@ export type Recipe = {
     };
     /** Source profile name for UI (e.g., "RO", "Burton") */
     sourceProfileName?: string;
+    /** Target profile name for reference (e.g., "Burton", "Pilsen") */
+    targetProfileName?: string;
   };
 
   /** Timestamps */

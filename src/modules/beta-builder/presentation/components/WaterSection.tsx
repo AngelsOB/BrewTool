@@ -6,7 +6,7 @@
  * 2. Water chemistry with salt additions
  */
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { RecipeCalculations } from "../../domain/models/Recipe";
 import type { Recipe } from "../../domain/models/Recipe";
 import { waterChemistryService, COMMON_WATER_PROFILES, type WaterProfile, type SaltAdditions } from "../../domain/services/WaterChemistryService";
@@ -29,13 +29,13 @@ const ION_LABELS: Array<keyof WaterProfile> = ["Ca", "Mg", "Na", "Cl", "SO4", "H
 
 export default function WaterSection({ calculations, recipe }: Props) {
   const { updateRecipe } = useRecipeStore();
-  const [showChemistry, setShowChemistry] = useState(false);
 
   // Initialize water chemistry if not present
   const waterChem = recipe.waterChemistry || {
     sourceProfile: COMMON_WATER_PROFILES.RO,
     saltAdditions: {},
     sourceProfileName: "RO",
+    targetProfileName: "Balanced",
   };
 
   // Calculate final water profile
@@ -48,8 +48,6 @@ export default function WaterSection({ calculations, recipe }: Props) {
     );
   }, [waterChem.sourceProfile, waterChem.saltAdditions, calculations?.totalWaterL]);
 
-  const clToSo4Ratio = waterChemistryService.chlorideToSulfateRatio(finalProfile);
-
   const handleSourceProfileChange = (profileName: string) => {
     const profile = COMMON_WATER_PROFILES[profileName];
     if (!profile) return;
@@ -59,6 +57,15 @@ export default function WaterSection({ calculations, recipe }: Props) {
         ...waterChem,
         sourceProfile: profile,
         sourceProfileName: profileName,
+      },
+    });
+  };
+
+  const handleTargetProfileChange = (profileName: string) => {
+    updateRecipe({
+      waterChemistry: {
+        ...waterChem,
+        targetProfileName: profileName,
       },
     });
   };
@@ -79,13 +86,16 @@ export default function WaterSection({ calculations, recipe }: Props) {
     return null;
   }
 
+  // Get target profile for comparison
+  const targetProfile = COMMON_WATER_PROFILES[waterChem.targetProfileName || "Burton"] || COMMON_WATER_PROFILES.RO;
+
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6">
+    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-cyan-500">
       <h2 className="text-xl font-semibold mb-4">Water</h2>
 
       {/* Water Volumes */}
       <div className="mb-6">
-        <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
           Volumes
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -147,28 +157,16 @@ export default function WaterSection({ calculations, recipe }: Props) {
         </div>
       </div>
 
-      {/* Water Chemistry Toggle */}
-      <button
-        onClick={() => setShowChemistry(!showChemistry)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-[rgb(var(--bg))] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg border border-[rgb(var(--border))] transition-colors mb-4"
-      >
-        <span className="text-sm font-semibold">Water Chemistry</span>
-        <svg
-          className={`w-5 h-5 transition-transform ${showChemistry ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+      {/* Water Chemistry */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Water Chemistry
+        </h3>
 
-      {/* Water Chemistry Content */}
-      {showChemistry && (
-        <div className="space-y-4 p-4 bg-[rgb(var(--bg))] rounded-lg border border-[rgb(var(--border))]">
-          {/* Source Water Profile */}
+        {/* Source and Target Profiles */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2">Source Water Profile</label>
+            <label className="block text-sm font-semibold mb-2">Source Water</label>
             <select
               value={waterChem.sourceProfileName || "RO"}
               onChange={(e) => handleSourceProfileChange(e.target.value)}
@@ -182,63 +180,82 @@ export default function WaterSection({ calculations, recipe }: Props) {
             </select>
           </div>
 
-          {/* Salt Additions */}
           <div>
-            <h4 className="text-sm font-semibold mb-2">Salt Additions (grams)</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => (
-                <div key={saltKey}>
-                  <label className="block text-xs mb-1">{SALT_LABELS[saltKey]}</label>
-                  <input
-                    type="number"
-                    value={waterChem.saltAdditions[saltKey] || ""}
-                    onChange={(e) =>
-                      handleSaltChange(saltKey, parseFloat(e.target.value) || 0)
-                    }
-                    placeholder="0"
-                    step="0.1"
-                    min="0"
-                    className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
-                  />
-                </div>
+            <label className="block text-sm font-semibold mb-2">Target Profile</label>
+            <select
+              value={waterChem.targetProfileName || "Burton"}
+              onChange={(e) => handleTargetProfileChange(e.target.value)}
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+            >
+              {Object.keys(COMMON_WATER_PROFILES).map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
               ))}
-            </div>
-          </div>
-
-          {/* Final Water Profile */}
-          <div>
-            <h4 className="text-sm font-semibold mb-2">Final Water Profile (ppm)</h4>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-              {ION_LABELS.map((ion) => (
-                <div
-                  key={ion}
-                  className="bg-white dark:bg-gray-800 rounded p-2 border border-[rgb(var(--border))]"
-                >
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{ion}</div>
-                  <div className="text-lg font-bold">{Math.round(finalProfile[ion])}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Cl:SO4 Ratio */}
-            {clToSo4Ratio !== null && (
-              <div className="mt-3 text-sm">
-                <span className="font-semibold">Cl:SO₄ Ratio: </span>
-                <span className="text-gray-700 dark:text-gray-300">
-                  {clToSo4Ratio.toFixed(2)}:1
-                  <span className="ml-2 text-xs text-gray-500">
-                    {clToSo4Ratio > 2
-                      ? "(Malty/Soft)"
-                      : clToSo4Ratio < 0.5
-                      ? "(Hoppy/Dry)"
-                      : "(Balanced)"}
-                  </span>
-                </span>
-              </div>
-            )}
+            </select>
           </div>
         </div>
-      )}
+
+        {/* Salt Additions */}
+        <div>
+          <h4 className="text-sm font-semibold mb-2">Salt Additions (grams)</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => (
+              <div key={saltKey}>
+                <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+                  {SALT_LABELS[saltKey]}
+                </label>
+                <input
+                  type="number"
+                  value={waterChem.saltAdditions[saltKey] || ""}
+                  onChange={(e) =>
+                    handleSaltChange(saltKey, parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="0"
+                  step="0.1"
+                  min="0"
+                  className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Water Profile Comparison */}
+        <div>
+          <h4 className="text-sm font-semibold mb-2">Water Profile Comparison (ppm)</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[rgb(var(--border))]">
+                  <th className="text-left py-2 px-3 font-semibold">Ion</th>
+                  <th className="text-right py-2 px-3 font-semibold">Source</th>
+                  <th className="text-right py-2 px-3 font-semibold">Target</th>
+                  <th className="text-right py-2 px-3 font-semibold text-green-600 dark:text-green-400">
+                    Final
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {ION_LABELS.map((ion) => (
+                  <tr key={ion} className="border-b border-[rgb(var(--border))]">
+                    <td className="py-2 px-3 font-medium">{ion}</td>
+                    <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
+                      {Math.round(waterChem.sourceProfile[ion])}
+                    </td>
+                    <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
+                      {Math.round(targetProfile[ion])}
+                    </td>
+                    <td className="text-right py-2 px-3 font-bold text-green-600 dark:text-green-400">
+                      {Math.round(finalProfile[ion])}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       {/* Info note */}
       <div className="mt-4 text-xs bg-[rgb(var(--bg))] p-3 rounded border border-[rgb(var(--border))]">
