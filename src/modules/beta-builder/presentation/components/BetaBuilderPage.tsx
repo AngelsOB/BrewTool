@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
 import FermentableSection from './FermentableSection';
+import MashScheduleSection from './MashScheduleSection';
 import HopSection from './HopSection';
 import YeastSection from './YeastSection';
 import VolumeDisplay from './VolumeDisplay';
@@ -301,6 +302,11 @@ export default function BetaBuilderPage() {
 
         {/* Fermentables - Now using dedicated component with preset picker */}
         <FermentableSection />
+
+        {/* Mash Schedule - Phase 5c addition */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <MashScheduleSection />
+        </div>
 
         {/* Hops - Phase 3 addition */}
         <HopSection />

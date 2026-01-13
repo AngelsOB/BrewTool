@@ -7,7 +7,7 @@
  */
 
 import { create } from 'zustand';
-import type { Recipe, RecipeId, Fermentable, Hop, Yeast } from '../../domain/models/Recipe';
+import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep } from '../../domain/models/Recipe';
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 
 type RecipeStore = {
@@ -35,6 +35,12 @@ type RecipeStore = {
   removeHop: (id: string) => void;
   setYeast: (yeast: Yeast) => void;
   clearYeast: () => void;
+
+  // Mash step actions
+  addMashStep: (mashStep: MashStep) => void;
+  updateMashStep: (id: string, updates: Partial<MashStep>) => void;
+  removeMashStep: (id: string) => void;
+  reorderMashSteps: (startIndex: number, endIndex: number) => void;
 };
 
 export const useRecipeStore = create<RecipeStore>((set, get) => ({
@@ -88,6 +94,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       fermentables: [],
       hops: [],
       yeast: null,
+      mashSteps: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -245,6 +252,62 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     const updated = {
       ...current,
       yeast: null,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Add a mash step
+  addMashStep: (mashStep: MashStep) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      mashSteps: [...current.mashSteps, mashStep],
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Update a mash step
+  updateMashStep: (id: string, updates: Partial<MashStep>) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      mashSteps: current.mashSteps.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Remove a mash step
+  removeMashStep: (id: string) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      mashSteps: current.mashSteps.filter((s) => s.id !== id),
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Reorder mash steps (for drag-and-drop)
+  reorderMashSteps: (startIndex: number, endIndex: number) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const steps = [...current.mashSteps];
+    const [removed] = steps.splice(startIndex, 1);
+    steps.splice(endIndex, 0, removed);
+
+    const updated = {
+      ...current,
+      mashSteps: steps,
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: updated });
