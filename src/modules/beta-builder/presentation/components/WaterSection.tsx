@@ -9,8 +9,9 @@
 import { useMemo, useState } from "react";
 import type { RecipeCalculations } from "../../domain/models/Recipe";
 import type { Recipe } from "../../domain/models/Recipe";
-import { waterChemistryService, COMMON_WATER_PROFILES, type WaterProfile, type SaltAdditions } from "../../domain/services/WaterChemistryService";
+import { waterChemistryService, COMMON_WATER_PROFILES, BEER_STYLE_TARGETS, type WaterProfile, type SaltAdditions } from "../../domain/services/WaterChemistryService";
 import { useRecipeStore } from "../stores/recipeStore";
+import TargetStyleModal from "./TargetStyleModal";
 
 type Props = {
   calculations: RecipeCalculations | null;
@@ -38,24 +39,52 @@ const ION_LABELS: Array<keyof WaterProfile> = ["Ca", "Mg", "Na", "Cl", "SO4", "H
 export default function WaterSection({ calculations, recipe }: Props) {
   const { updateRecipe } = useRecipeStore();
   const [isChemistryExpanded, setIsChemistryExpanded] = useState(false);
+  const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
 
   // Initialize water chemistry if not present
   const waterChem = recipe.waterChemistry || {
     sourceProfile: COMMON_WATER_PROFILES.RO,
-    saltAdditions: {},
+    mashSaltAdditions: {},
+    spargeSaltAdditions: {},
     sourceProfileName: "RO",
-    targetProfileName: "Burton",
+    targetStyleName: "Balanced",
   };
 
-  // Calculate final water profile
+  // Calculate final water profile using combined mash and sparge salts
   const finalProfile = useMemo(() => {
     if (!calculations) return waterChem.sourceProfile;
-    return waterChemistryService.calculateFinalProfile(
+    return waterChemistryService.calculateCombinedProfile(
       waterChem.sourceProfile,
-      waterChem.saltAdditions,
-      calculations.totalWaterL
+      waterChem.mashSaltAdditions,
+      waterChem.spargeSaltAdditions,
+      calculations.mashWaterL,
+      calculations.spargeWaterL
     );
-  }, [waterChem.sourceProfile, waterChem.saltAdditions, calculations?.totalWaterL]);
+  }, [
+    waterChem.sourceProfile,
+    waterChem.mashSaltAdditions,
+    waterChem.spargeSaltAdditions,
+    calculations?.mashWaterL,
+    calculations?.spargeWaterL,
+  ]);
+
+  // Calculate total salts (for display)
+  const totalSalts = useMemo(() => {
+    const total: SaltAdditions = {};
+    const mashSalts = waterChem.mashSaltAdditions;
+    const spargeSalts = waterChem.spargeSaltAdditions;
+
+    (Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).forEach((key) => {
+      const mashAmount = mashSalts[key] || 0;
+      const spargeAmount = spargeSalts[key] || 0;
+      const sum = mashAmount + spargeAmount;
+      if (sum > 0) {
+        total[key] = sum;
+      }
+    });
+
+    return total;
+  }, [waterChem.mashSaltAdditions, waterChem.spargeSaltAdditions]);
 
   const handleSourceProfileChange = (profileName: string) => {
     const profile = COMMON_WATER_PROFILES[profileName];
@@ -70,21 +99,33 @@ export default function WaterSection({ calculations, recipe }: Props) {
     });
   };
 
-  const handleTargetProfileChange = (profileName: string) => {
+  const handleTargetStyleChange = (styleName: string) => {
     updateRecipe({
       waterChemistry: {
         ...waterChem,
-        targetProfileName: profileName,
+        targetStyleName: styleName,
       },
     });
   };
 
-  const handleSaltChange = (saltKey: keyof SaltAdditions, value: number) => {
+  const handleMashSaltChange = (saltKey: keyof SaltAdditions, value: number) => {
     updateRecipe({
       waterChemistry: {
         ...waterChem,
-        saltAdditions: {
-          ...waterChem.saltAdditions,
+        mashSaltAdditions: {
+          ...waterChem.mashSaltAdditions,
+          [saltKey]: value || undefined,
+        },
+      },
+    });
+  };
+
+  const handleSpargeSaltChange = (saltKey: keyof SaltAdditions, value: number) => {
+    updateRecipe({
+      waterChemistry: {
+        ...waterChem,
+        spargeSaltAdditions: {
+          ...waterChem.spargeSaltAdditions,
           [saltKey]: value || undefined,
         },
       },
@@ -96,7 +137,8 @@ export default function WaterSection({ calculations, recipe }: Props) {
   }
 
   // Get target profile for comparison
-  const targetProfile = COMMON_WATER_PROFILES[waterChem.targetProfileName || "Burton"] || COMMON_WATER_PROFILES.RO;
+  const targetStyle = BEER_STYLE_TARGETS[waterChem.targetStyleName || "Balanced"];
+  const targetProfile = targetStyle?.profile || BEER_STYLE_TARGETS["Balanced"].profile;
 
   return (
     <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-cyan-500">
@@ -180,12 +222,15 @@ export default function WaterSection({ calculations, recipe }: Props) {
           </button>
         </div>
 
-        {/* Collapsed View - Salt Summary */}
+        {/* Collapsed View - Salt Summary with Mash/Sparge Split */}
         {!isChemistryExpanded && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {(Object.keys(SALT_SHORT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
-              const amount = waterChem.saltAdditions[saltKey];
-              if (!amount || amount === 0) return null;
+              const mashAmount = waterChem.mashSaltAdditions[saltKey] || 0;
+              const spargeAmount = waterChem.spargeSaltAdditions[saltKey] || 0;
+              const totalAmount = mashAmount + spargeAmount;
+
+              if (totalAmount === 0) return null;
 
               return (
                 <div
@@ -196,13 +241,21 @@ export default function WaterSection({ calculations, recipe }: Props) {
                     {SALT_SHORT_LABELS[saltKey]}
                   </div>
                   <div className="text-lg font-bold text-cyan-900 dark:text-cyan-100">
-                    {amount.toFixed(1)}
-                    <span className="text-sm ml-1">g</span>
+                    {totalAmount.toFixed(1)}
+                    <span className="text-sm ml-1">g total</span>
+                  </div>
+                  <div className="text-xs text-cyan-600 dark:text-cyan-400 mt-1 space-y-0.5">
+                    {mashAmount > 0 && (
+                      <div>Mash: {mashAmount.toFixed(1)}g</div>
+                    )}
+                    {spargeAmount > 0 && (
+                      <div>Sparge: {spargeAmount.toFixed(1)}g</div>
+                    )}
                   </div>
                 </div>
               );
             })}
-            {Object.values(waterChem.saltAdditions).every(v => !v || v === 0) && (
+            {Object.values(totalSalts).length === 0 && (
               <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic">
                 No salts added yet
               </div>
@@ -215,61 +268,86 @@ export default function WaterSection({ calculations, recipe }: Props) {
           <>
             {/* Source and Target Profiles */}
             <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold mb-2">Source Water</label>
-            <select
-              value={waterChem.sourceProfileName || "RO"}
-              onChange={(e) => handleSourceProfileChange(e.target.value)}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
-            >
-              {Object.keys(COMMON_WATER_PROFILES).map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">Target Profile</label>
-            <select
-              value={waterChem.targetProfileName || "Burton"}
-              onChange={(e) => handleTargetProfileChange(e.target.value)}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
-            >
-              {Object.keys(COMMON_WATER_PROFILES).map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Salt Additions */}
-        <div>
-          <h4 className="text-sm font-semibold mb-2">Salt Additions (grams)</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => (
-              <div key={saltKey}>
-                <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
-                  {SALT_LABELS[saltKey]}
-                </label>
-                <input
-                  type="number"
-                  value={waterChem.saltAdditions[saltKey] || ""}
-                  onChange={(e) =>
-                    handleSaltChange(saltKey, parseFloat(e.target.value) || 0)
-                  }
-                  placeholder="0"
-                  step="0.1"
-                  min="0"
-                  className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
-                />
+              <div>
+                <label className="block text-sm font-semibold mb-2">Source Water</label>
+                <select
+                  value={waterChem.sourceProfileName || "RO"}
+                  onChange={(e) => handleSourceProfileChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                >
+                  {Object.keys(COMMON_WATER_PROFILES).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ))}
-          </div>
-        </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Target Style</label>
+                <button
+                  onClick={() => setIsTargetModalOpen(true)}
+                  className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-left hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"
+                >
+                  {waterChem.targetStyleName || "Balanced"}
+                </button>
+                {targetStyle && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {targetStyle.clToSo4Ratio}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Mash Salt Additions */}
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Mash Water Salt Additions (grams)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => (
+                  <div key={saltKey}>
+                    <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+                      {SALT_LABELS[saltKey]}
+                    </label>
+                    <input
+                      type="number"
+                      value={waterChem.mashSaltAdditions[saltKey] || ""}
+                      onChange={(e) =>
+                        handleMashSaltChange(saltKey, parseFloat(e.target.value) || 0)
+                      }
+                      placeholder="0"
+                      step="0.1"
+                      min="0"
+                      className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sparge Salt Additions */}
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Sparge Water Salt Additions (grams)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => (
+                  <div key={saltKey}>
+                    <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+                      {SALT_LABELS[saltKey]}
+                    </label>
+                    <input
+                      type="number"
+                      value={waterChem.spargeSaltAdditions[saltKey] || ""}
+                      onChange={(e) =>
+                        handleSpargeSaltChange(saltKey, parseFloat(e.target.value) || 0)
+                      }
+                      placeholder="0"
+                      step="0.1"
+                      min="0"
+                      className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
 
         {/* Water Profile Comparison */}
         <div>
@@ -314,6 +392,14 @@ export default function WaterSection({ calculations, recipe }: Props) {
         <strong>Note:</strong> Water volumes account for grain absorption, boil-off, hop
         absorption, deadspace, and all equipment losses.
       </div>
+
+      {/* Target Style Modal */}
+      <TargetStyleModal
+        isOpen={isTargetModalOpen}
+        onClose={() => setIsTargetModalOpen(false)}
+        onSelect={handleTargetStyleChange}
+        currentStyleName={waterChem.targetStyleName}
+      />
     </div>
   );
 }

@@ -176,18 +176,26 @@ export type Recipe = {
       SO4: number;
       HCO3: number;
     };
-    /** Salt additions in grams (total for all water) */
-    saltAdditions: {
+    /** Salt additions for mash water in grams */
+    mashSaltAdditions: {
       gypsum_g?: number; // CaSO4·2H2O
       cacl2_g?: number; // CaCl2·2H2O
       epsom_g?: number; // MgSO4·7H2O
       nacl_g?: number; // NaCl
       nahco3_g?: number; // NaHCO3 (baking soda)
     };
-    /** Source profile name for UI (e.g., "RO", "Burton") */
+    /** Salt additions for sparge water in grams */
+    spargeSaltAdditions: {
+      gypsum_g?: number; // CaSO4·2H2O
+      cacl2_g?: number; // CaCl2·2H2O
+      epsom_g?: number; // MgSO4·7H2O
+      nacl_g?: number; // NaCl
+      nahco3_g?: number; // NaHCO3 (baking soda)
+    };
+    /** Source profile name for UI (e.g., "RO", "Montreal") */
     sourceProfileName?: string;
-    /** Target profile name for reference (e.g., "Burton", "Pilsen") */
-    targetProfileName?: string;
+    /** Target beer style name for reference (e.g., "NEIPA", "American Pale Ale") */
+    targetStyleName?: string;
   };
 
   /** Timestamps */

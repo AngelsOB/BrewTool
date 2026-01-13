@@ -147,6 +147,80 @@ export class WaterChemistryService {
     const finalProfile = this.addProfiles(sourceProfile, saltDelta);
     return this.clampProfile(finalProfile);
   }
+
+  /**
+   * Calculate the combined final water profile from mash and sparge salts
+   */
+  calculateCombinedProfile(
+    sourceProfile: WaterProfile,
+    mashSalts: SaltAdditions,
+    spargeSalts: SaltAdditions,
+    mashWaterL: number,
+    spargeWaterL: number
+  ): WaterProfile {
+    const totalWaterL = mashWaterL + spargeWaterL;
+    if (totalWaterL <= 0) return sourceProfile;
+
+    // Calculate ion contributions from each water source
+    const mashDelta = this.ionDeltaFromSalts(mashSalts, mashWaterL);
+    const spargeDelta = this.ionDeltaFromSalts(spargeSalts, spargeWaterL);
+
+    // Weight each contribution by volume
+    const mashWeight = mashWaterL / totalWaterL;
+    const spargeWeight = spargeWaterL / totalWaterL;
+
+    const mashWeighted = this.scaleProfile(mashDelta, mashWeight);
+    const spargeWeighted = this.scaleProfile(spargeDelta, spargeWeight);
+
+    // Combine: source + weighted contributions
+    const combined = this.addProfiles(sourceProfile, mashWeighted);
+    const final = this.addProfiles(combined, spargeWeighted);
+
+    return this.clampProfile(final);
+  }
+
+  /**
+   * Calculate total salts needed to hit a target profile
+   * Returns salt additions split between mash and sparge water
+   */
+  calculateSaltsForTarget(
+    sourceProfile: WaterProfile,
+    targetProfile: WaterProfile,
+    mashWaterL: number,
+    spargeWaterL: number
+  ): { mashSalts: SaltAdditions; spargeSalts: SaltAdditions } {
+    // For now, distribute salts proportionally to water volumes
+    // This is a simplified approach - a more sophisticated algorithm would
+    // optimize for specific ions, but that requires solving a system of equations
+    const totalWaterL = mashWaterL + spargeWaterL;
+    if (totalWaterL <= 0) {
+      return { mashSalts: {}, spargeSalts: {} };
+    }
+
+    const mashRatio = mashWaterL / totalWaterL;
+    const spargeRatio = spargeWaterL / totalWaterL;
+
+    // Calculate deltas needed
+    const caDelta = Math.max(0, targetProfile.Ca - sourceProfile.Ca);
+    const clDelta = Math.max(0, targetProfile.Cl - sourceProfile.Cl);
+    const so4Delta = Math.max(0, targetProfile.SO4 - sourceProfile.SO4);
+
+    // Use gypsum for sulfate and calcium chloride for chloride
+    // This is a simplified approach that covers the most common adjustments
+    const gypsumTotal = so4Delta > 0 ? (so4Delta * totalWaterL) / ION_PPM_PER_G_PER_L.gypsum.SO4 : 0;
+    const cacl2Total = clDelta > 0 ? (clDelta * totalWaterL) / ION_PPM_PER_G_PER_L.cacl2.Cl : 0;
+
+    return {
+      mashSalts: {
+        gypsum_g: gypsumTotal > 0 ? gypsumTotal * mashRatio : undefined,
+        cacl2_g: cacl2Total > 0 ? cacl2Total * mashRatio : undefined,
+      },
+      spargeSalts: {
+        gypsum_g: gypsumTotal > 0 ? gypsumTotal * spargeRatio : undefined,
+        cacl2_g: cacl2Total > 0 ? cacl2Total * spargeRatio : undefined,
+      },
+    };
+  }
 }
 
 // Export a singleton instance
@@ -161,4 +235,84 @@ export const COMMON_WATER_PROFILES: Record<string, WaterProfile> = {
   Dublin: { Ca: 120, Mg: 4, Na: 12, Cl: 19, SO4: 53, HCO3: 319 },
   Vienna: { Ca: 163, Mg: 12, Na: 10, Cl: 40, SO4: 125, HCO3: 258 },
   Montreal: { Ca: 31, Mg: 8, Na: 15, Cl: 26, SO4: 22, HCO3: 0 },
+};
+
+// Beer style-based target water profiles
+export type BeerStyleTarget = {
+  profile: WaterProfile;
+  description: string;
+  clToSo4Ratio: string; // e.g., "2.7:1 (Malty)"
+};
+
+export const BEER_STYLE_TARGETS: Record<string, BeerStyleTarget> = {
+  "NEIPA / Hazy IPA": {
+    profile: { Ca: 100, Mg: 20, Na: 20, Cl: 200, SO4: 75, HCO3: 49 },
+    description: "High chloride for juicy, soft mouthfeel. Moderate sulfate for hop balance.",
+    clToSo4Ratio: "2.7:1 (Malty)",
+  },
+  "American IPA": {
+    profile: { Ca: 100, Mg: 15, Na: 20, Cl: 75, SO4: 200, HCO3: 49 },
+    description: "High sulfate for crisp, dry hop character. Moderate chloride for balance.",
+    clToSo4Ratio: "0.4:1 (Hoppy)",
+  },
+  "American Pale Ale": {
+    profile: { Ca: 75, Mg: 15, Na: 20, Cl: 50, SO4: 150, HCO3: 49 },
+    description: "High sulfate for hop accentuation. Lower chloride for clean finish.",
+    clToSo4Ratio: "0.3:1 (Very Hoppy)",
+  },
+  "West Coast IPA": {
+    profile: { Ca: 100, Mg: 15, Na: 20, Cl: 50, SO4: 250, HCO3: 49 },
+    description: "Very high sulfate for aggressive hop bitterness. Low chloride for dry finish.",
+    clToSo4Ratio: "0.2:1 (Very Hoppy)",
+  },
+  "English IPA": {
+    profile: { Ca: 100, Mg: 15, Na: 20, Cl: 100, SO4: 150, HCO3: 100 },
+    description: "Balanced chloride and sulfate. Higher bicarbonate for malt backbone.",
+    clToSo4Ratio: "0.7:1 (Balanced)",
+  },
+  "Pilsner": {
+    profile: { Ca: 50, Mg: 5, Na: 5, Cl: 50, SO4: 75, HCO3: 25 },
+    description: "Soft water with low minerals. Delicate balance for crisp lager character.",
+    clToSo4Ratio: "0.7:1 (Balanced)",
+  },
+  "German Pilsner": {
+    profile: { Ca: 50, Mg: 5, Na: 5, Cl: 50, SO4: 100, HCO3: 25 },
+    description: "Soft with slightly elevated sulfate for hop spiciness.",
+    clToSo4Ratio: "0.5:1 (Hoppy)",
+  },
+  "Munich Helles": {
+    profile: { Ca: 75, Mg: 15, Na: 10, Cl: 75, SO4: 50, HCO3: 100 },
+    description: "Higher chloride for malt-forward profile. Moderate bicarbonate.",
+    clToSo4Ratio: "1.5:1 (Malty)",
+  },
+  "Stout / Porter": {
+    profile: { Ca: 100, Mg: 20, Na: 20, Cl: 100, SO4: 100, HCO3: 150 },
+    description: "Balanced chloride and sulfate. Higher bicarbonate for dark malt buffering.",
+    clToSo4Ratio: "1:1 (Balanced)",
+  },
+  "Irish Stout": {
+    profile: { Ca: 120, Mg: 4, Na: 12, Cl: 19, SO4: 53, HCO3: 319 },
+    description: "Dublin water profile. Very high bicarbonate for roast character.",
+    clToSo4Ratio: "0.4:1 (Balanced)",
+  },
+  "Belgian Ale": {
+    profile: { Ca: 75, Mg: 15, Na: 20, Cl: 100, SO4: 75, HCO3: 120 },
+    description: "Higher chloride for malt complexity. Moderate bicarbonate.",
+    clToSo4Ratio: "1.3:1 (Malty)",
+  },
+  "Blonde / Cream Ale": {
+    profile: { Ca: 50, Mg: 10, Na: 15, Cl: 50, SO4: 75, HCO3: 49 },
+    description: "Clean, soft profile. Slightly elevated sulfate for crispness.",
+    clToSo4Ratio: "0.7:1 (Balanced)",
+  },
+  "Brown Ale": {
+    profile: { Ca: 100, Mg: 20, Na: 20, Cl: 125, SO4: 75, HCO3: 100 },
+    description: "Higher chloride for malt sweetness. Moderate bicarbonate.",
+    clToSo4Ratio: "1.7:1 (Malty)",
+  },
+  "Balanced": {
+    profile: { Ca: 75, Mg: 15, Na: 20, Cl: 75, SO4: 75, HCO3: 49 },
+    description: "Equal chloride and sulfate for neutral balance.",
+    clToSo4Ratio: "1:1 (Balanced)",
+  },
 };
