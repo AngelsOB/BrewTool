@@ -6,7 +6,7 @@
  * 2. Water chemistry with salt additions
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { RecipeCalculations } from "../../domain/models/Recipe";
 import type { Recipe } from "../../domain/models/Recipe";
 import { waterChemistryService, COMMON_WATER_PROFILES, type WaterProfile, type SaltAdditions } from "../../domain/services/WaterChemistryService";
@@ -25,17 +25,26 @@ const SALT_LABELS: Record<keyof SaltAdditions, string> = {
   nahco3_g: "Baking Soda (NaHCO₃)",
 };
 
+const SALT_SHORT_LABELS: Record<keyof SaltAdditions, string> = {
+  gypsum_g: "Gypsum",
+  cacl2_g: "CaCl₂",
+  epsom_g: "Epsom",
+  nacl_g: "NaCl",
+  nahco3_g: "Baking Soda",
+};
+
 const ION_LABELS: Array<keyof WaterProfile> = ["Ca", "Mg", "Na", "Cl", "SO4", "HCO3"];
 
 export default function WaterSection({ calculations, recipe }: Props) {
   const { updateRecipe } = useRecipeStore();
+  const [isChemistryExpanded, setIsChemistryExpanded] = useState(false);
 
   // Initialize water chemistry if not present
   const waterChem = recipe.waterChemistry || {
     sourceProfile: COMMON_WATER_PROFILES.RO,
     saltAdditions: {},
     sourceProfileName: "RO",
-    targetProfileName: "Balanced",
+    targetProfileName: "Burton",
   };
 
   // Calculate final water profile
@@ -159,12 +168,53 @@ export default function WaterSection({ calculations, recipe }: Props) {
 
       {/* Water Chemistry */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Water Chemistry
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Water Chemistry
+          </h3>
+          <button
+            onClick={() => setIsChemistryExpanded(!isChemistryExpanded)}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            {isChemistryExpanded ? "Hide Details" : "Show Details"}
+          </button>
+        </div>
 
-        {/* Source and Target Profiles */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Collapsed View - Salt Summary */}
+        {!isChemistryExpanded && (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {(Object.keys(SALT_SHORT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
+              const amount = waterChem.saltAdditions[saltKey];
+              if (!amount || amount === 0) return null;
+
+              return (
+                <div
+                  key={saltKey}
+                  className="bg-cyan-50 dark:bg-cyan-900/30 rounded-lg p-3 border border-cyan-200 dark:border-cyan-800"
+                >
+                  <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-1 font-medium">
+                    {SALT_SHORT_LABELS[saltKey]}
+                  </div>
+                  <div className="text-lg font-bold text-cyan-900 dark:text-cyan-100">
+                    {amount.toFixed(1)}
+                    <span className="text-sm ml-1">g</span>
+                  </div>
+                </div>
+              );
+            })}
+            {Object.values(waterChem.saltAdditions).every(v => !v || v === 0) && (
+              <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic">
+                No salts added yet
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Expanded View - Full Controls */}
+        {isChemistryExpanded && (
+          <>
+            {/* Source and Target Profiles */}
+            <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold mb-2">Source Water</label>
             <select
@@ -255,6 +305,8 @@ export default function WaterSection({ calculations, recipe }: Props) {
             </table>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* Info note */}
