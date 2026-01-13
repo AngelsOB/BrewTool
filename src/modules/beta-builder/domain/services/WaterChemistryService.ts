@@ -149,34 +149,54 @@ export class WaterChemistryService {
   }
 
   /**
-   * Calculate the combined final water profile from mash and sparge salts
+   * Automatically split total salt additions between mash and sparge water proportionally
+   * @param totalSalts Total salt additions in grams
+   * @param mashWaterL Mash water volume in liters
+   * @param spargeWaterL Sparge water volume in liters
+   * @returns Object with mashSalts and spargeSalts
    */
-  calculateCombinedProfile(
+  splitSaltsProportionally(
+    totalSalts: SaltAdditions,
+    mashWaterL: number,
+    spargeWaterL: number
+  ): { mashSalts: SaltAdditions; spargeSalts: SaltAdditions } {
+    const totalWaterL = mashWaterL + spargeWaterL;
+    if (totalWaterL <= 0) {
+      return { mashSalts: {}, spargeSalts: {} };
+    }
+
+    const mashRatio = mashWaterL / totalWaterL;
+    const spargeRatio = spargeWaterL / totalWaterL;
+
+    const mashSalts: SaltAdditions = {};
+    const spargeSalts: SaltAdditions = {};
+
+    // Split each salt proportionally
+    (Object.keys(totalSalts) as Array<keyof SaltAdditions>).forEach((key) => {
+      const total = totalSalts[key];
+      if (total && total > 0) {
+        mashSalts[key] = total * mashRatio;
+        spargeSalts[key] = total * spargeRatio;
+      }
+    });
+
+    return { mashSalts, spargeSalts };
+  }
+
+  /**
+   * Calculate the combined final water profile from total salts (auto-split)
+   */
+  calculateFinalProfileFromTotalSalts(
     sourceProfile: WaterProfile,
-    mashSalts: SaltAdditions,
-    spargeSalts: SaltAdditions,
+    totalSalts: SaltAdditions,
     mashWaterL: number,
     spargeWaterL: number
   ): WaterProfile {
     const totalWaterL = mashWaterL + spargeWaterL;
     if (totalWaterL <= 0) return sourceProfile;
 
-    // Calculate ion contributions from each water source
-    const mashDelta = this.ionDeltaFromSalts(mashSalts, mashWaterL);
-    const spargeDelta = this.ionDeltaFromSalts(spargeSalts, spargeWaterL);
-
-    // Weight each contribution by volume
-    const mashWeight = mashWaterL / totalWaterL;
-    const spargeWeight = spargeWaterL / totalWaterL;
-
-    const mashWeighted = this.scaleProfile(mashDelta, mashWeight);
-    const spargeWeighted = this.scaleProfile(spargeDelta, spargeWeight);
-
-    // Combine: source + weighted contributions
-    const combined = this.addProfiles(sourceProfile, mashWeighted);
-    const final = this.addProfiles(combined, spargeWeighted);
-
-    return this.clampProfile(final);
+    // Calculate final profile using total salts and total water
+    return this.calculateFinalProfile(sourceProfile, totalSalts, totalWaterL);
   }
 
   /**

@@ -176,16 +176,8 @@ export type Recipe = {
       SO4: number;
       HCO3: number;
     };
-    /** Salt additions for mash water in grams */
-    mashSaltAdditions: {
-      gypsum_g?: number; // CaSO4·2H2O
-      cacl2_g?: number; // CaCl2·2H2O
-      epsom_g?: number; // MgSO4·7H2O
-      nacl_g?: number; // NaCl
-      nahco3_g?: number; // NaHCO3 (baking soda)
-    };
-    /** Salt additions for sparge water in grams */
-    spargeSaltAdditions: {
+    /** Total salt additions in grams (will be auto-split between mash and sparge) */
+    saltAdditions: {
       gypsum_g?: number; // CaSO4·2H2O
       cacl2_g?: number; // CaCl2·2H2O
       epsom_g?: number; // MgSO4·7H2O

@@ -44,47 +44,36 @@ export default function WaterSection({ calculations, recipe }: Props) {
   // Initialize water chemistry if not present
   const waterChem = recipe.waterChemistry || {
     sourceProfile: COMMON_WATER_PROFILES.RO,
-    mashSaltAdditions: {},
-    spargeSaltAdditions: {},
+    saltAdditions: {},
     sourceProfileName: "RO",
     targetStyleName: "Balanced",
   };
 
-  // Calculate final water profile using combined mash and sparge salts
+  // Calculate final water profile from total salts
   const finalProfile = useMemo(() => {
     if (!calculations) return waterChem.sourceProfile;
-    return waterChemistryService.calculateCombinedProfile(
+    return waterChemistryService.calculateFinalProfileFromTotalSalts(
       waterChem.sourceProfile,
-      waterChem.mashSaltAdditions,
-      waterChem.spargeSaltAdditions,
+      waterChem.saltAdditions,
       calculations.mashWaterL,
       calculations.spargeWaterL
     );
   }, [
     waterChem.sourceProfile,
-    waterChem.mashSaltAdditions,
-    waterChem.spargeSaltAdditions,
+    waterChem.saltAdditions,
     calculations?.mashWaterL,
     calculations?.spargeWaterL,
   ]);
 
-  // Calculate total salts (for display)
-  const totalSalts = useMemo(() => {
-    const total: SaltAdditions = {};
-    const mashSalts = waterChem.mashSaltAdditions;
-    const spargeSalts = waterChem.spargeSaltAdditions;
-
-    (Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).forEach((key) => {
-      const mashAmount = mashSalts[key] || 0;
-      const spargeAmount = spargeSalts[key] || 0;
-      const sum = mashAmount + spargeAmount;
-      if (sum > 0) {
-        total[key] = sum;
-      }
-    });
-
-    return total;
-  }, [waterChem.mashSaltAdditions, waterChem.spargeSaltAdditions]);
+  // Calculate mash and sparge split for display
+  const { mashSalts, spargeSalts } = useMemo(() => {
+    if (!calculations) return { mashSalts: {}, spargeSalts: {} };
+    return waterChemistryService.splitSaltsProportionally(
+      waterChem.saltAdditions,
+      calculations.mashWaterL,
+      calculations.spargeWaterL
+    );
+  }, [waterChem.saltAdditions, calculations?.mashWaterL, calculations?.spargeWaterL]);
 
   const handleSourceProfileChange = (profileName: string) => {
     const profile = COMMON_WATER_PROFILES[profileName];
@@ -108,24 +97,12 @@ export default function WaterSection({ calculations, recipe }: Props) {
     });
   };
 
-  const handleMashSaltChange = (saltKey: keyof SaltAdditions, value: number) => {
+  const handleSaltChange = (saltKey: keyof SaltAdditions, value: number) => {
     updateRecipe({
       waterChemistry: {
         ...waterChem,
-        mashSaltAdditions: {
-          ...waterChem.mashSaltAdditions,
-          [saltKey]: value || undefined,
-        },
-      },
-    });
-  };
-
-  const handleSpargeSaltChange = (saltKey: keyof SaltAdditions, value: number) => {
-    updateRecipe({
-      waterChemistry: {
-        ...waterChem,
-        spargeSaltAdditions: {
-          ...waterChem.spargeSaltAdditions,
+        saltAdditions: {
+          ...waterChem.saltAdditions,
           [saltKey]: value || undefined,
         },
       },
@@ -222,13 +199,13 @@ export default function WaterSection({ calculations, recipe }: Props) {
           </button>
         </div>
 
-        {/* Collapsed View - Salt Summary with Mash/Sparge Split */}
+        {/* Collapsed View - Salt Summary with Auto-Calculated Mash/Sparge Split */}
         {!isChemistryExpanded && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {(Object.keys(SALT_SHORT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
-              const mashAmount = waterChem.mashSaltAdditions[saltKey] || 0;
-              const spargeAmount = waterChem.spargeSaltAdditions[saltKey] || 0;
-              const totalAmount = mashAmount + spargeAmount;
+              const totalAmount = waterChem.saltAdditions[saltKey] || 0;
+              const mashAmount = mashSalts[saltKey] || 0;
+              const spargeAmount = spargeSalts[saltKey] || 0;
 
               if (totalAmount === 0) return null;
 
@@ -245,17 +222,13 @@ export default function WaterSection({ calculations, recipe }: Props) {
                     <span className="text-sm ml-1">g total</span>
                   </div>
                   <div className="text-xs text-cyan-600 dark:text-cyan-400 mt-1 space-y-0.5">
-                    {mashAmount > 0 && (
-                      <div>Mash: {mashAmount.toFixed(1)}g</div>
-                    )}
-                    {spargeAmount > 0 && (
-                      <div>Sparge: {spargeAmount.toFixed(1)}g</div>
-                    )}
+                    <div>Mash: {mashAmount.toFixed(1)}g</div>
+                    <div>Sparge: {spargeAmount.toFixed(1)}g</div>
                   </div>
                 </div>
               );
             })}
-            {Object.values(totalSalts).length === 0 && (
+            {Object.values(waterChem.saltAdditions).every(v => !v || v === 0) && (
               <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic">
                 No salts added yet
               </div>
@@ -299,53 +272,42 @@ export default function WaterSection({ calculations, recipe }: Props) {
               </div>
             </div>
 
-            {/* Mash Salt Additions */}
+            {/* Salt Additions */}
             <div>
-              <h4 className="text-sm font-semibold mb-2">Mash Water Salt Additions (grams)</h4>
+              <h4 className="text-sm font-semibold mb-2">Salt Additions (grams total)</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Enter total amounts - they'll be automatically split between mash and sparge water
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => (
-                  <div key={saltKey}>
-                    <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
-                      {SALT_LABELS[saltKey]}
-                    </label>
-                    <input
-                      type="number"
-                      value={waterChem.mashSaltAdditions[saltKey] || ""}
-                      onChange={(e) =>
-                        handleMashSaltChange(saltKey, parseFloat(e.target.value) || 0)
-                      }
-                      placeholder="0"
-                      step="0.1"
-                      min="0"
-                      className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+                {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
+                  const totalAmount = waterChem.saltAdditions[saltKey] || 0;
+                  const mashAmount = mashSalts[saltKey] || 0;
+                  const spargeAmount = spargeSalts[saltKey] || 0;
 
-            {/* Sparge Salt Additions */}
-            <div>
-              <h4 className="text-sm font-semibold mb-2">Sparge Water Salt Additions (grams)</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => (
-                  <div key={saltKey}>
-                    <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
-                      {SALT_LABELS[saltKey]}
-                    </label>
-                    <input
-                      type="number"
-                      value={waterChem.spargeSaltAdditions[saltKey] || ""}
-                      onChange={(e) =>
-                        handleSpargeSaltChange(saltKey, parseFloat(e.target.value) || 0)
-                      }
-                      placeholder="0"
-                      step="0.1"
-                      min="0"
-                      className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
-                    />
-                  </div>
-                ))}
+                  return (
+                    <div key={saltKey}>
+                      <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+                        {SALT_LABELS[saltKey]}
+                      </label>
+                      <input
+                        type="number"
+                        value={totalAmount || ""}
+                        onChange={(e) =>
+                          handleSaltChange(saltKey, parseFloat(e.target.value) || 0)
+                        }
+                        placeholder="0"
+                        step="0.1"
+                        min="0"
+                        className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                      />
+                      {totalAmount > 0 && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Mash: {mashAmount.toFixed(1)}g / Sparge: {spargeAmount.toFixed(1)}g
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
