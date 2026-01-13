@@ -331,16 +331,32 @@ export default function WaterSection({ calculations, recipe }: Props) {
                   const finalValue = Math.round(finalProfile[ion]);
                   const targetValue = Math.round(targetProfile[ion]);
 
-                  // Calculate difference percentage from target
-                  // Allow ±20% tolerance for "good" (green)
+                  // Calculate difference from target and create gradient colors
                   const diff = finalValue - targetValue;
                   const tolerance = targetValue * 0.2;
 
                   let colorClass = "text-green-600 dark:text-green-400"; // Good/close enough
+
                   if (diff < -tolerance) {
-                    colorClass = "text-red-600 dark:text-red-400"; // Too low
+                    // Too low - progressive red shades
+                    const percentBelow = Math.abs(diff) / (targetValue || 1);
+                    if (percentBelow >= 0.5) {
+                      colorClass = "text-red-900 dark:text-red-300"; // Very low (50%+ below)
+                    } else if (percentBelow >= 0.35) {
+                      colorClass = "text-red-700 dark:text-red-400"; // Quite low (35-50% below)
+                    } else {
+                      colorClass = "text-red-600 dark:text-red-500"; // Moderately low (20-35% below)
+                    }
                   } else if (diff > tolerance) {
-                    colorClass = "text-blue-600 dark:text-blue-400"; // Too high
+                    // Too high - progressive orange shades
+                    const percentAbove = diff / (targetValue || 1);
+                    if (percentAbove >= 0.5) {
+                      colorClass = "text-orange-900 dark:text-orange-300"; // Very high (50%+ above)
+                    } else if (percentAbove >= 0.35) {
+                      colorClass = "text-orange-700 dark:text-orange-400"; // Quite high (35-50% above)
+                    } else {
+                      colorClass = "text-orange-600 dark:text-orange-500"; // Moderately high (20-35% above)
+                    }
                   }
 
                   return (
