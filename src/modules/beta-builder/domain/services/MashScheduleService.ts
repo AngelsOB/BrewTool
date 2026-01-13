@@ -250,14 +250,7 @@ export class MashScheduleService {
       errors.push('Duration must be greater than 0 minutes');
     }
 
-    if (step.type === 'infusion') {
-      if (!step.infusionVolumeLiters || step.infusionVolumeLiters <= 0) {
-        errors.push('Infusion volume is required and must be greater than 0');
-      }
-      if (!step.infusionTempC || step.infusionTempC <= 0) {
-        errors.push('Infusion temperature is required and must be greater than 0');
-      }
-    }
+    // Note: infusion volume and temp are optional - they'll be auto-calculated if not provided
 
     if (step.type === 'decoction') {
       if (!step.decoctionVolumeLiters || step.decoctionVolumeLiters <= 0) {

@@ -5,16 +5,16 @@
  * It uses the store (like @ObservedObject) and hooks (for calculations).
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
-import { getBjcpCategories } from '../../../../utils/bjcp';
 import FermentableSection from './FermentableSection';
 import MashScheduleSection from './MashScheduleSection';
 import HopSection from './HopSection';
 import YeastSection from './YeastSection';
 import VolumeDisplay from './VolumeDisplay';
+import StyleSelectorModal from './StyleSelectorModal';
 
 export default function BetaBuilderPage() {
   const { id } = useParams<{ id?: string }>();
@@ -28,6 +28,7 @@ export default function BetaBuilderPage() {
   } = useRecipeStore();
 
   const calculations = useRecipeCalculations(currentRecipe);
+  const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
 
   // Load recipe based on URL param or create new
   useEffect(() => {
@@ -88,22 +89,12 @@ export default function BetaBuilderPage() {
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 BJCP Style
               </label>
-              <select
-                value={currentRecipe.style || ''}
-                onChange={(e) => updateRecipe({ style: e.target.value || undefined })}
-                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              <button
+                onClick={() => setIsStyleModalOpen(true)}
+                className="w-full px-3 py-2 text-left text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">None</option>
-                {getBjcpCategories().map((cat) => (
-                  <optgroup key={cat.code} label={`${cat.code}. ${cat.name}`}>
-                    {cat.styles.map((s) => (
-                      <option key={s.code} value={`${s.code}. ${s.name}`}>
-                        {s.code}. {s.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+                {currentRecipe.style || <span className="text-gray-400">Select a style...</span>}
+              </button>
             </div>
 
             <div>
@@ -458,6 +449,14 @@ export default function BetaBuilderPage() {
           </button>
         </div>
       </div>
+
+      {/* Style Selector Modal */}
+      <StyleSelectorModal
+        isOpen={isStyleModalOpen}
+        onClose={() => setIsStyleModalOpen(false)}
+        onSelect={(style) => updateRecipe({ style: style || undefined })}
+        currentStyle={currentRecipe.style}
+      />
     </div>
   );
 }

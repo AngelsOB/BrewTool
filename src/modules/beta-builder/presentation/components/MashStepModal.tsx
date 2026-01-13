@@ -181,10 +181,15 @@ export default function MashStepModal({
               onChange={(e) => setStepType(e.target.value as MashStepType)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
             >
-              <option value="infusion">Infusion (add hot water)</option>
-              <option value="temperature">Temperature (rest at temp)</option>
-              <option value="decoction">Decoction (boil portion)</option>
+              <option value="infusion">Infusion - Add hot water (changes volume)</option>
+              <option value="temperature">Temperature - Rest at temp (no water added)</option>
+              <option value="decoction">Decoction - Boil portion of mash</option>
             </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {stepType === "infusion" && "Adds hot water to raise mash temperature. Water volume auto-calculated based on your grain bill."}
+              {stepType === "temperature" && "Rests at target temperature using direct heat or insulation. No water added."}
+              {stepType === "decoction" && "Remove portion of mash, boil it, return to raise temperature."}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -224,19 +229,19 @@ export default function MashStepModal({
           {stepType === "infusion" && (
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-2">
-                Infusion Volume (Liters)
+                Infusion Volume (Liters) - Optional
               </label>
               <input
                 type="number"
                 value={infusionVolume ?? ""}
                 onChange={(e) => setInfusionVolume(e.target.value ? parseFloat(e.target.value) : null)}
-                placeholder={`Default: ${defaultInfusionVolume.toFixed(1)} L`}
+                placeholder={`Auto: ${defaultInfusionVolume.toFixed(1)} L (based on mash thickness)`}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                 step="0.1"
                 min="0"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Leave empty to auto-calculate based on grain weight and mash thickness
+                💡 Leave empty for auto-calculation. Only override if you're doing a specific step mash regimen.
               </p>
             </div>
           )}
