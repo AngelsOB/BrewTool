@@ -321,26 +321,43 @@ export default function WaterSection({ calculations, recipe }: Props) {
                   <th className="text-left py-2 px-3 font-semibold">Ion</th>
                   <th className="text-right py-2 px-3 font-semibold">Source</th>
                   <th className="text-right py-2 px-3 font-semibold">Target</th>
-                  <th className="text-right py-2 px-3 font-semibold text-green-600 dark:text-green-400">
+                  <th className="text-right py-2 px-3 font-semibold">
                     Final
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {ION_LABELS.map((ion) => (
-                  <tr key={ion} className="border-b border-[rgb(var(--border))]">
-                    <td className="py-2 px-3 font-medium">{ion}</td>
-                    <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
-                      {Math.round(waterChem.sourceProfile[ion])}
-                    </td>
-                    <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
-                      {Math.round(targetProfile[ion])}
-                    </td>
-                    <td className="text-right py-2 px-3 font-bold text-green-600 dark:text-green-400">
-                      {Math.round(finalProfile[ion])}
-                    </td>
-                  </tr>
-                ))}
+                {ION_LABELS.map((ion) => {
+                  const finalValue = Math.round(finalProfile[ion]);
+                  const targetValue = Math.round(targetProfile[ion]);
+
+                  // Calculate difference percentage from target
+                  // Allow ±20% tolerance for "good" (green)
+                  const diff = finalValue - targetValue;
+                  const tolerance = targetValue * 0.2;
+
+                  let colorClass = "text-green-600 dark:text-green-400"; // Good/close enough
+                  if (diff < -tolerance) {
+                    colorClass = "text-red-600 dark:text-red-400"; // Too low
+                  } else if (diff > tolerance) {
+                    colorClass = "text-blue-600 dark:text-blue-400"; // Too high
+                  }
+
+                  return (
+                    <tr key={ion} className="border-b border-[rgb(var(--border))]">
+                      <td className="py-2 px-3 font-medium">{ion}</td>
+                      <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
+                        {Math.round(waterChem.sourceProfile[ion])}
+                      </td>
+                      <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
+                        {targetValue}
+                      </td>
+                      <td className={`text-right py-2 px-3 font-bold ${colorClass}`}>
+                        {finalValue}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
