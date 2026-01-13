@@ -21,6 +21,7 @@ type RecipeStore = {
   loadRecipes: () => void;
   loadRecipe: (id: RecipeId) => void;
   createNewRecipe: () => void;
+  duplicateRecipe: (id: RecipeId) => void;
   updateRecipe: (updates: Partial<Recipe>) => void;
   saveCurrentRecipe: () => void;
   deleteRecipe: (id: RecipeId) => void;
@@ -77,6 +78,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     const newRecipe: Recipe = {
       id: crypto.randomUUID(),
       name: 'New Recipe',
+      style: undefined,
+      notes: undefined,
+      tags: [],
       batchVolumeL: 20,
       equipment: {
         boilTimeMin: 60,
@@ -99,6 +103,36 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: newRecipe });
+  },
+
+  // Duplicate an existing recipe
+  duplicateRecipe: (id: RecipeId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const original = recipeRepository.loadById(id);
+      if (!original) {
+        set({ error: 'Recipe not found', isLoading: false });
+        return;
+      }
+
+      // Create a copy with new ID and updated timestamps
+      const duplicate: Recipe = {
+        ...original,
+        id: crypto.randomUUID(),
+        name: `${original.name} (Copy)`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Save the duplicate
+      recipeRepository.save(duplicate);
+
+      // Load all recipes to update the list
+      const recipes = recipeRepository.loadAll();
+      set({ recipes, currentRecipe: duplicate, isLoading: false });
+    } catch (error) {
+      set({ error: 'Failed to duplicate recipe', isLoading: false });
+    }
   },
 
   // Update current recipe (doesn't save to storage yet)

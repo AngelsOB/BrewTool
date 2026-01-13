@@ -109,6 +109,11 @@ export type Recipe = {
   id: RecipeId;
   name: string;
 
+  /** Recipe metadata */
+  style?: string; // BJCP style name (e.g., "American IPA")
+  notes?: string; // Brew notes, tasting notes, etc.
+  tags?: string[]; // User-defined tags (e.g., ["hoppy", "sessionable", "summer"])
+
   /** Target batch volume in liters (into fermenter) */
   batchVolumeL: number;
 

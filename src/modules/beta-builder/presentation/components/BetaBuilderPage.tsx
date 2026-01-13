@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
 import FermentableSection from './FermentableSection';
@@ -15,21 +16,28 @@ import YeastSection from './YeastSection';
 import VolumeDisplay from './VolumeDisplay';
 
 export default function BetaBuilderPage() {
+  const { id } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const {
     currentRecipe,
     createNewRecipe,
+    loadRecipe,
     updateRecipe,
     saveCurrentRecipe,
   } = useRecipeStore();
 
   const calculations = useRecipeCalculations(currentRecipe);
 
-  // Create a new recipe on mount if none exists
+  // Load recipe based on URL param or create new
   useEffect(() => {
-    if (!currentRecipe) {
+    if (id) {
+      // Editing existing recipe
+      loadRecipe(id);
+    } else {
+      // Creating new recipe
       createNewRecipe();
     }
-  }, [currentRecipe, createNewRecipe]);
+  }, [id, loadRecipe, createNewRecipe]);
 
   // Removed hard-coded fermentable handler - now using FermentableSection with presets
 
@@ -37,25 +45,89 @@ export default function BetaBuilderPage() {
     return <div className="p-8">Loading...</div>;
   }
 
+  const handleSave = () => {
+    saveCurrentRecipe();
+    navigate('/beta-builder');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 pb-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Recipe Builder</h1>
+          <div className="flex items-center justify-between">
+            <div>
+              <button
+                onClick={() => navigate('/beta-builder')}
+                className="text-blue-600 hover:text-blue-800 text-sm mb-2 flex items-center gap-1"
+              >
+                ← Back to Recipes
+              </button>
+              <h1 className="text-3xl font-bold text-gray-900">Recipe Builder</h1>
+            </div>
+          </div>
         </div>
 
-        {/* Recipe Name */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Recipe Name
-          </label>
-          <input
-            type="text"
-            value={currentRecipe.name}
-            onChange={(e) => updateRecipe({ name: e.target.value })}
-            className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+        {/* Recipe Name & Metadata */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6 space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              Recipe Name
+            </label>
+            <input
+              type="text"
+              value={currentRecipe.name}
+              onChange={(e) => updateRecipe({ name: e.target.value })}
+              className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                Style
+              </label>
+              <input
+                type="text"
+                value={currentRecipe.style || ''}
+                onChange={(e) => updateRecipe({ style: e.target.value || undefined })}
+                placeholder="e.g., American IPA"
+                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                Tags (comma-separated)
+              </label>
+              <input
+                type="text"
+                value={currentRecipe.tags?.join(', ') || ''}
+                onChange={(e) => {
+                  const tags = e.target.value
+                    .split(',')
+                    .map(t => t.trim())
+                    .filter(t => t.length > 0);
+                  updateRecipe({ tags: tags.length > 0 ? tags : [] });
+                }}
+                placeholder="e.g., hoppy, sessionable"
+                className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              Notes
+            </label>
+            <textarea
+              value={currentRecipe.notes || ''}
+              onChange={(e) => updateRecipe({ notes: e.target.value || undefined })}
+              placeholder="Brew notes, tasting notes, recipe inspiration..."
+              rows={3}
+              className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </div>
 
         {/* Equipment Settings */}
@@ -361,12 +433,18 @@ export default function BetaBuilderPage() {
         </div>
 
         {/* Save Button */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-6 flex gap-3">
           <button
-            onClick={saveCurrentRecipe}
-            className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors"
+            onClick={() => navigate('/beta-builder')}
+            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-50 transition-colors"
           >
-            Save Recipe
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors"
+          >
+            Save & Close
           </button>
         </div>
       </div>

@@ -32,13 +32,38 @@ const router = createBrowserRouter(
         },
         {
           path: "beta-builder",
-          lazy: async () => ({
-            Component: (
-              await import(
-                "./modules/beta-builder/presentation/components/BetaBuilderPage.tsx"
-              )
-            ).default,
-          }),
+          children: [
+            {
+              index: true,
+              lazy: async () => ({
+                Component: (
+                  await import(
+                    "./modules/beta-builder/presentation/components/RecipeListPage.tsx"
+                  )
+                ).default,
+              }),
+            },
+            {
+              path: "new",
+              lazy: async () => ({
+                Component: (
+                  await import(
+                    "./modules/beta-builder/presentation/components/BetaBuilderPage.tsx"
+                  )
+                ).default,
+              }),
+            },
+            {
+              path: ":id",
+              lazy: async () => ({
+                Component: (
+                  await import(
+                    "./modules/beta-builder/presentation/components/BetaBuilderPage.tsx"
+                  )
+                ).default,
+              }),
+            },
+          ],
         },
         {
           path: "brew/:id",
