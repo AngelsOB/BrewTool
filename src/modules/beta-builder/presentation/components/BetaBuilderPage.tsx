@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
+import { getBjcpCategories } from '../../../utils/bjcp';
 import FermentableSection from './FermentableSection';
 import MashScheduleSection from './MashScheduleSection';
 import HopSection from './HopSection';
@@ -85,15 +86,24 @@ export default function BetaBuilderPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-2">
-                Style
+                BJCP Style
               </label>
-              <input
-                type="text"
+              <select
                 value={currentRecipe.style || ''}
                 onChange={(e) => updateRecipe({ style: e.target.value || undefined })}
-                placeholder="e.g., American IPA"
                 className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              >
+                <option value="">None</option>
+                {getBjcpCategories().map((cat) => (
+                  <optgroup key={cat.code} label={`${cat.code}. ${cat.name}`}>
+                    {cat.styles.map((s) => (
+                      <option key={s.code} value={`${s.code}. ${s.name}`}>
+                        {s.code}. {s.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </div>
 
             <div>
