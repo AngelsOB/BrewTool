@@ -30,6 +30,19 @@ import type {
   EquipmentProfile,
 } from "../types/recipe";
 
+// Fallback for crypto.randomUUID in non-HTTPS contexts
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback UUID v4 generator
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 function defaultEquipmentFromUI(params: {
   mashThicknessLPerKg: number;
   grainAbsorptionLPerKg: number;
@@ -568,7 +581,7 @@ export default function RecipeBuilder() {
   const [efficiencyPct, setEfficiencyPct] = useState(72); // brewhouse efficiency percentage
   const [grains, setGrains] = useState<GrainItem[]>([
     {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name: "Pale Malt",
       weightKg: 4,
       colorLovibond: 2,
@@ -578,7 +591,7 @@ export default function RecipeBuilder() {
   ]);
   const [hops, setHops] = useState<HopItem[]>([
     {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name: "",
       grams: 0,
       alphaAcidPercent: 0,
@@ -600,7 +613,7 @@ export default function RecipeBuilder() {
     FermentationStep[]
   >([
     {
-      id: crypto.randomUUID(),
+      id: generateId(),
       stage: "primary",
       tempC: 20,
       days: 10,
@@ -726,7 +739,7 @@ export default function RecipeBuilder() {
     }[]
   >([
     {
-      id: crypto.randomUUID(),
+      id: generateId(),
       type: "infusion",
       tempC: 66,
       timeMin: 60,
@@ -931,7 +944,7 @@ export default function RecipeBuilder() {
     setEfficiencyPct(72);
     setGrains([
       {
-        id: crypto.randomUUID(),
+        id: generateId(),
         name: "Pale Malt",
         weightKg: 4,
         colorLovibond: 2,
@@ -941,7 +954,7 @@ export default function RecipeBuilder() {
     ]);
     setHops([
       {
-        id: crypto.randomUUID(),
+        id: generateId(),
         name: "",
         grams: 0,
         alphaAcidPercent: 0,
@@ -953,7 +966,7 @@ export default function RecipeBuilder() {
     setOtherIngredients([]);
     setFermentationSteps([
       {
-        id: crypto.randomUUID(),
+        id: generateId(),
         stage: "primary",
         tempC: 20,
         days: 10,
@@ -971,7 +984,7 @@ export default function RecipeBuilder() {
     setBrewMethod("three-vessel");
     setMashSteps([
       {
-        id: crypto.randomUUID(),
+        id: generateId(),
         type: "infusion",
         tempC: 66,
         timeMin: 60,
@@ -1162,7 +1175,7 @@ export default function RecipeBuilder() {
           ? steps
           : [
               {
-                id: crypto.randomUUID(),
+                id: generateId(),
                 type: "infusion",
                 tempC: 66,
                 timeMin: 60,
@@ -1189,7 +1202,7 @@ export default function RecipeBuilder() {
       setFermentationSteps(
         ferm.length
           ? ferm
-          : [{ id: crypto.randomUUID(), stage: "primary", tempC: 20, days: 10 }]
+          : [{ id: generateId(), stage: "primary", tempC: 20, days: 10 }]
       );
 
       // Water from equipment snapshot (guarded)
@@ -1238,11 +1251,11 @@ export default function RecipeBuilder() {
         (rr.others ?? []).map((x) => ({ ...x })) as OtherIngredient[]
       );
       const steps: MashStep[] = (rr.mash?.steps ?? [
-        { id: crypto.randomUUID(), type: "infusion", tempC: 66, timeMin: 60 },
+        { id: generateId(), type: "infusion", tempC: 66, timeMin: 60 },
       ]) as MashStep[];
       setMashSteps(steps);
       const ferm: FermentationStep[] = (rr.fermentation?.steps ?? [
-        { id: crypto.randomUUID(), stage: "primary", tempC: 20, days: 10 },
+        { id: generateId(), stage: "primary", tempC: 20, days: 10 },
       ]) as FermentationStep[];
       setFermentationSteps(ferm);
       setMashThicknessLPerKg(rr.water?.mashThicknessLPerKg ?? 3);
@@ -1879,7 +1892,7 @@ export default function RecipeBuilder() {
                   setShowSaveMenu((v) => !v);
                 } else {
                   // Save brand new
-                  const id = crypto.randomUUID();
+                  const id = generateId();
                   const recipe: Recipe = buildRecipe({
                     id,
                     name: getUniqueRecipeName(name),
@@ -2010,7 +2023,7 @@ export default function RecipeBuilder() {
                 <button
                   className="block w-full text-left px-3 py-2 hover:bg-white/10"
                   onClick={() => {
-                    const id = crypto.randomUUID();
+                    const id = generateId();
                     const recipe: Recipe = buildRecipe({
                       id,
                       name: getUniqueRecipeName(name),
@@ -2148,7 +2161,7 @@ export default function RecipeBuilder() {
               className={`btn-neon ${!name ? "opacity-50" : ""}`}
               onClick={() => {
                 // Always save latest state, create ID if needed, then navigate
-                const id = currentRecipeId ?? crypto.randomUUID();
+                const id = currentRecipeId ?? generateId();
                 const existing = currentRecipeId
                   ? recipes.find((x) => x.id === currentRecipeId)
                   : undefined;
@@ -2390,7 +2403,7 @@ export default function RecipeBuilder() {
           setGrains((gs) => [
             ...gs,
             {
-              id: crypto.randomUUID(),
+              id: generateId(),
               name: "",
               weightKg: 0,
               colorLovibond: 2,
@@ -2415,7 +2428,7 @@ export default function RecipeBuilder() {
           setMashSteps((xs) => [
             ...xs,
             {
-              id: crypto.randomUUID(),
+              id: generateId(),
               type: "infusion",
               tempC: 66,
               timeMin: 15,
@@ -2438,7 +2451,7 @@ export default function RecipeBuilder() {
           setHops((hs) => [
             ...hs,
             {
-              id: crypto.randomUUID(),
+              id: generateId(),
               name: "",
               grams: 0,
               alphaAcidPercent: 0,
@@ -2471,7 +2484,7 @@ export default function RecipeBuilder() {
           setOtherIngredients((xs) => [
             ...xs,
             {
-              id: crypto.randomUUID(),
+              id: generateId(),
               name: "",
               category: "other",
               amount: 0,
