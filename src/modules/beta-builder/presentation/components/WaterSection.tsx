@@ -12,6 +12,7 @@ import type { Recipe } from "../../domain/models/Recipe";
 import { waterChemistryService, COMMON_WATER_PROFILES, BEER_STYLE_TARGETS, type WaterProfile, type SaltAdditions } from "../../domain/services/WaterChemistryService";
 import { useRecipeStore } from "../stores/recipeStore";
 import TargetStyleModal from "./TargetStyleModal";
+import SourceWaterModal from "./SourceWaterModal";
 
 type Props = {
   calculations: RecipeCalculations | null;
@@ -40,6 +41,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
   const { updateRecipe } = useRecipeStore();
   const [isChemistryExpanded, setIsChemistryExpanded] = useState(false);
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
+  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
 
   // Initialize water chemistry if not present
   const waterChem = recipe.waterChemistry || {
@@ -75,10 +77,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
     );
   }, [waterChem.saltAdditions, calculations?.mashWaterL, calculations?.spargeWaterL]);
 
-  const handleSourceProfileChange = (profileName: string) => {
-    const profile = COMMON_WATER_PROFILES[profileName];
-    if (!profile) return;
-
+  const handleSourceProfileChange = (profile: WaterProfile, profileName: string) => {
     updateRecipe({
       waterChemistry: {
         ...waterChem,
@@ -187,13 +186,30 @@ export default function WaterSection({ calculations, recipe }: Props) {
 
       {/* Water Chemistry */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Water Chemistry
           </h3>
+
+          {/* Final Water Metrics - Inline */}
+          <div className="flex items-center gap-3 flex-1 justify-center">
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              Final:
+            </span>
+            {ION_LABELS.map((ion) => {
+              const finalValue = Math.round(finalProfile[ion]);
+              return (
+                <div key={ion} className="text-xs">
+                  <span className="font-semibold text-gray-600 dark:text-gray-400">{ion}:</span>
+                  <span className="ml-1 font-bold text-gray-900 dark:text-gray-100">{finalValue}</span>
+                </div>
+              );
+            })}
+          </div>
+
           <button
             onClick={() => setIsChemistryExpanded(!isChemistryExpanded)}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
           >
             {isChemistryExpanded ? "Hide Details" : "Show Details"}
           </button>
@@ -201,38 +217,45 @@ export default function WaterSection({ calculations, recipe }: Props) {
 
         {/* Collapsed View - Salt Summary with Auto-Calculated Mash/Sparge Split */}
         {!isChemistryExpanded && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {(Object.keys(SALT_SHORT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
-              const totalAmount = waterChem.saltAdditions[saltKey] || 0;
-              const mashAmount = mashSalts[saltKey] || 0;
-              const spargeAmount = spargeSalts[saltKey] || 0;
-
-              if (totalAmount === 0) return null;
-
-              return (
-                <div
-                  key={saltKey}
-                  className="bg-cyan-50 dark:bg-cyan-900/30 rounded-lg p-3 border border-cyan-200 dark:border-cyan-800"
-                >
-                  <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-1 font-medium">
-                    {SALT_SHORT_LABELS[saltKey]}
-                  </div>
-                  <div className="text-lg font-bold text-cyan-900 dark:text-cyan-100">
-                    {totalAmount.toFixed(1)}
-                    <span className="text-sm ml-1">g total</span>
-                  </div>
-                  <div className="text-xs text-cyan-600 dark:text-cyan-400 mt-1 space-y-0.5">
-                    <div>Mash: {mashAmount.toFixed(1)}g</div>
-                    <div>Sparge: {spargeAmount.toFixed(1)}g</div>
-                  </div>
-                </div>
-              );
-            })}
-            {Object.values(waterChem.saltAdditions).every(v => !v || v === 0) && (
-              <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic">
-                No salts added yet
+          <div>
+            {Object.values(waterChem.saltAdditions).some(v => v && v > 0) && (
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                Added to {waterChem.sourceProfileName || "Custom"}:
               </div>
             )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {(Object.keys(SALT_SHORT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
+                const totalAmount = waterChem.saltAdditions[saltKey] || 0;
+                const mashAmount = mashSalts[saltKey] || 0;
+                const spargeAmount = spargeSalts[saltKey] || 0;
+
+                if (totalAmount === 0) return null;
+
+                return (
+                  <div
+                    key={saltKey}
+                    className="bg-cyan-50 dark:bg-cyan-900/30 rounded-lg p-3 border border-cyan-200 dark:border-cyan-800"
+                  >
+                    <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-1 font-medium">
+                      {SALT_SHORT_LABELS[saltKey]}
+                    </div>
+                    <div className="text-lg font-bold text-cyan-900 dark:text-cyan-100">
+                      {totalAmount.toFixed(1)}
+                      <span className="text-sm ml-1">g total</span>
+                    </div>
+                    <div className="text-xs text-cyan-600 dark:text-cyan-400 mt-1 space-y-0.5">
+                      <div>Mash: {mashAmount.toFixed(1)}g</div>
+                      <div>Sparge: {spargeAmount.toFixed(1)}g</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {Object.values(waterChem.saltAdditions).every(v => !v || v === 0) && (
+                <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic">
+                  No salts added yet
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -243,17 +266,12 @@ export default function WaterSection({ calculations, recipe }: Props) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">Source Water</label>
-                <select
-                  value={waterChem.sourceProfileName || "RO"}
-                  onChange={(e) => handleSourceProfileChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                <button
+                  onClick={() => setIsSourceModalOpen(true)}
+                  className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-left hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"
                 >
-                  {Object.keys(COMMON_WATER_PROFILES).map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                  {waterChem.sourceProfileName || "Custom"}
+                </button>
               </div>
 
               <div>
@@ -348,13 +366,19 @@ export default function WaterSection({ calculations, recipe }: Props) {
                     baseColor = "orange";
                     deviationPercent = Math.min(diff / (targetValue || 1), 1);
                   } else {
-                    // Within tolerance - green (low opacity)
-                    deviationPercent = 0.2; // Always show a bit of green
+                    // Within tolerance - calculate proximity to exact target
+                    // Closer to exact = higher deviationPercent for darker green
+                    const absoluteDiff = Math.abs(diff);
+                    const percentOfTolerance = absoluteDiff / tolerance; // 0 = exact, 1 = at edge
+                    deviationPercent = 1 - percentOfTolerance; // Invert: 1 = exact, 0 = at edge
                   }
 
-                  // Map deviation to opacity: closer to target = lower opacity (more transparent/greener)
-                  // Further from target = higher opacity (more red/orange)
-                  const opacity = baseColor === "green" ? 0.15 : Math.max(0.15, Math.min(0.6, deviationPercent));
+                  // Map deviation to opacity
+                  // For green: exact target (1.0) = 0.6 opacity, edge (0.0) = 0.15 opacity
+                  // For red/orange: further from target = higher opacity
+                  const opacity = baseColor === "green"
+                    ? 0.15 + (deviationPercent * 0.45) // Scales from 0.15 to 0.6
+                    : Math.max(0.15, Math.min(0.6, deviationPercent));
 
                   const bgStyle = {
                     backgroundColor:
@@ -398,6 +422,15 @@ export default function WaterSection({ calculations, recipe }: Props) {
         <strong>Note:</strong> Water volumes account for grain absorption, boil-off, hop
         absorption, deadspace, and all equipment losses.
       </div>
+
+      {/* Source Water Modal */}
+      <SourceWaterModal
+        isOpen={isSourceModalOpen}
+        onClose={() => setIsSourceModalOpen(false)}
+        onSelect={handleSourceProfileChange}
+        currentProfile={waterChem.sourceProfile}
+        currentProfileName={waterChem.sourceProfileName}
+      />
 
       {/* Target Style Modal */}
       <TargetStyleModal

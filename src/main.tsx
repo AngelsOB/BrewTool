@@ -44,7 +44,37 @@ const router = createBrowserRouter(
               }),
             },
             {
+              path: "recipes",
+              lazy: async () => ({
+                Component: (
+                  await import(
+                    "./modules/beta-builder/presentation/components/RecipeListPage.tsx"
+                  )
+                ).default,
+              }),
+            },
+            {
               path: "new",
+              lazy: async () => ({
+                Component: (
+                  await import(
+                    "./modules/beta-builder/presentation/components/BetaBuilderPage.tsx"
+                  )
+                ).default,
+              }),
+            },
+            {
+              path: "sessions/:sessionId",
+              lazy: async () => ({
+                Component: (
+                  await import(
+                    "./modules/beta-builder/presentation/components/BrewSessionPage.tsx"
+                  )
+                ).default,
+              }),
+            },
+            {
+              path: ":id/versions/:versionNumber",
               lazy: async () => ({
                 Component: (
                   await import(

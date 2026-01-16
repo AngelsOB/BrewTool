@@ -7,8 +7,10 @@
  */
 
 import { create } from 'zustand';
-import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep } from '../../domain/models/Recipe';
+import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, FermentationStep, RecipeVersion } from '../../domain/models/Recipe';
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
+import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
+import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';
 
 type RecipeStore = {
   // State (like @Published properties)
@@ -26,6 +28,7 @@ type RecipeStore = {
   saveCurrentRecipe: () => void;
   deleteRecipe: (id: RecipeId) => void;
   setCurrentRecipe: (recipe: Recipe | null) => void;
+  importFromBeerXml: (xml: string) => Recipe | null;
 
   // Ingredient actions
   addFermentable: (fermentable: Fermentable) => void;
@@ -42,6 +45,12 @@ type RecipeStore = {
   updateMashStep: (id: string, updates: Partial<MashStep>) => void;
   removeMashStep: (id: string) => void;
   reorderMashSteps: (startIndex: number, endIndex: number) => void;
+
+  // Version control actions
+  createNewVersion: (recipeId: RecipeId, changeNotes?: string) => void;
+  createVariation: (recipeId: RecipeId, newName: string) => void;
+  loadVersionHistory: (recipeId: RecipeId) => RecipeVersion[];
+  restoreVersion: (recipeId: RecipeId, versionNumber: number) => void;
 };
 
 export const useRecipeStore = create<RecipeStore>((set, get) => ({
@@ -81,6 +90,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       style: undefined,
       notes: undefined,
       tags: [],
+      currentVersion: 1,
       batchVolumeL: 20,
       equipment: {
         boilTimeMin: 60,
@@ -99,6 +109,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       hops: [],
       yeast: null,
       mashSteps: [],
+      fermentationSteps: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -120,6 +131,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         ...original,
         id: crypto.randomUUID(),
         name: `${original.name} (Copy)`,
+        currentVersion: 1,
+        parentRecipeId: undefined,
+        parentVersionNumber: undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -183,6 +197,24 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   // Set current recipe directly
   setCurrentRecipe: (recipe: Recipe | null) => {
     set({ currentRecipe: recipe });
+  },
+
+  // Import BeerXML and persist
+  importFromBeerXml: (xml: string) => {
+    try {
+      const recipe = beerXmlImportService.parse(xml);
+      if (!recipe) {
+        set({ error: 'Failed to import BeerXML' });
+        return null;
+      }
+      recipeRepository.save(recipe);
+      const recipes = recipeRepository.loadAll();
+      set({ recipes, error: null });
+      return recipe;
+    } catch (error) {
+      set({ error: 'Failed to import BeerXML' });
+      return null;
+    }
   },
 
   // Add a fermentable
@@ -345,5 +377,130 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: updated });
+  },
+
+  // Create a new version of a recipe (saves current state as snapshot)
+  createNewVersion: (recipeId: RecipeId, changeNotes?: string) => {
+    try {
+      const recipe = recipeRepository.loadById(recipeId);
+      if (!recipe) {
+        set({ error: 'Recipe not found' });
+        return;
+      }
+
+      // Save current state as a version snapshot
+      const versionSnapshot: RecipeVersion = {
+        id: crypto.randomUUID(),
+        recipeId: recipe.id,
+        versionNumber: recipe.currentVersion,
+        createdAt: new Date().toISOString(),
+        changeNotes,
+        recipeSnapshot: { ...recipe },
+      };
+
+      recipeVersionRepository.save(versionSnapshot);
+
+      // Increment version number on the main recipe
+      const updatedRecipe: Recipe = {
+        ...recipe,
+        currentVersion: recipe.currentVersion + 1,
+        updatedAt: new Date().toISOString(),
+      };
+
+      recipeRepository.save(updatedRecipe);
+
+      // Reload recipes
+      get().loadRecipes();
+      set({ error: null });
+    } catch (error) {
+      set({ error: 'Failed to create new version' });
+    }
+  },
+
+  // Create a variation (fork) of a recipe
+  createVariation: (recipeId: RecipeId, newName: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const original = recipeRepository.loadById(recipeId);
+      if (!original) {
+        set({ error: 'Recipe not found', isLoading: false });
+        return;
+      }
+
+      // Create a variation with new ID and parent reference
+      const variation: Recipe = {
+        ...original,
+        id: crypto.randomUUID(),
+        name: newName,
+        currentVersion: 1,
+        parentRecipeId: original.id,
+        parentVersionNumber: original.currentVersion,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Save the variation
+      recipeRepository.save(variation);
+
+      // Load all recipes to update the list
+      const recipes = recipeRepository.loadAll();
+      set({ recipes, currentRecipe: variation, isLoading: false });
+    } catch (error) {
+      set({ error: 'Failed to create variation', isLoading: false });
+    }
+  },
+
+  // Load version history for a recipe
+  loadVersionHistory: (recipeId: RecipeId): RecipeVersion[] => {
+    try {
+      return recipeVersionRepository.loadByRecipeId(recipeId);
+    } catch (error) {
+      set({ error: 'Failed to load version history' });
+      return [];
+    }
+  },
+
+  // Restore a previous version (creates new version from old snapshot)
+  restoreVersion: (recipeId: RecipeId, versionNumber: number) => {
+    try {
+      const currentRecipe = recipeRepository.loadById(recipeId);
+      if (!currentRecipe) {
+        set({ error: 'Recipe not found' });
+        return;
+      }
+
+      const version = recipeVersionRepository.loadByRecipeIdAndVersion(recipeId, versionNumber);
+      if (!version) {
+        set({ error: 'Version not found' });
+        return;
+      }
+
+      // First, save current state as a version before restoring
+      const currentSnapshot: RecipeVersion = {
+        id: crypto.randomUUID(),
+        recipeId: currentRecipe.id,
+        versionNumber: currentRecipe.currentVersion,
+        createdAt: new Date().toISOString(),
+        changeNotes: `Auto-save before restoring v${versionNumber}`,
+        recipeSnapshot: { ...currentRecipe },
+      };
+      recipeVersionRepository.save(currentSnapshot);
+
+      // Restore the old version's data but keep the recipe ID and increment version
+      const restoredRecipe: Recipe = {
+        ...version.recipeSnapshot,
+        id: currentRecipe.id, // Keep the same ID
+        currentVersion: currentRecipe.currentVersion + 1,
+        updatedAt: new Date().toISOString(),
+      };
+
+      recipeRepository.save(restoredRecipe);
+
+      // Reload recipes and set as current
+      const recipes = recipeRepository.loadAll();
+      set({ recipes, currentRecipe: restoredRecipe, error: null });
+    } catch (error) {
+      set({ error: 'Failed to restore version' });
+    }
   },
 }));

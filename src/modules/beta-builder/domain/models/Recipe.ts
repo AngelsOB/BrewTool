@@ -119,6 +119,28 @@ export type MashStep = {
   decoctionVolumeLiters?: number;
 };
 
+/**
+ * Fermentation step types
+ */
+export type FermentationStepType = 'primary' | 'secondary' | 'conditioning' | 'cold-crash' | 'diacetyl-rest';
+
+/**
+ * A single step in the fermentation schedule
+ */
+export type FermentationStep = {
+  id: string;
+  /** Step name (e.g., "Primary Fermentation", "Dry Hop", "Cold Crash") */
+  name: string;
+  /** Step type */
+  type: FermentationStepType;
+  /** Duration in days */
+  durationDays: number;
+  /** Temperature in Celsius */
+  temperatureC: number;
+  /** Optional notes for this step */
+  notes?: string;
+};
+
 export type Recipe = {
   id: RecipeId;
   name: string;
@@ -128,8 +150,16 @@ export type Recipe = {
   notes?: string; // Brew notes, tasting notes, etc.
   tags?: string[]; // User-defined tags (e.g., ["hoppy", "sessionable", "summer"])
 
+  /** Version control */
+  currentVersion: number; // Current version number (starts at 1)
+  parentRecipeId?: string; // If this is a variation, the ID of the parent recipe
+  parentVersionNumber?: number; // If this is a variation, which version was forked
+
   /** Target batch volume in liters (into fermenter) */
   batchVolumeL: number;
+
+  /** Equipment profile name (references saved equipment profile) */
+  equipmentProfileName?: string;
 
   /** Equipment settings */
   equipment: {
@@ -190,6 +220,9 @@ export type Recipe = {
     targetStyleName?: string;
   };
 
+  /** Fermentation schedule - list of fermentation steps */
+  fermentationSteps: FermentationStep[];
+
   /** Timestamps */
   createdAt: string;
   updatedAt: string;
@@ -218,4 +251,22 @@ export type RecipeCalculations = {
   spargeWaterL: number;
   /** Total water needed in liters */
   totalWaterL: number;
+};
+
+/**
+ * Recipe version snapshot
+ * Stores a complete snapshot of a recipe at a specific version number
+ */
+export type RecipeVersion = {
+  id: string;
+  /** ID of the recipe this version belongs to */
+  recipeId: string;
+  /** Version number (e.g., 1, 2, 3) */
+  versionNumber: number;
+  /** When this version was created */
+  createdAt: string;
+  /** Optional notes about changes in this version */
+  changeNotes?: string;
+  /** Full snapshot of the recipe at this version */
+  recipeSnapshot: Recipe;
 };

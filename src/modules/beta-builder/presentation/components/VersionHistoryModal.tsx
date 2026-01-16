@@ -1,0 +1,305 @@
+/**
+ * Version History Modal
+ *
+ * Displays the version history tree for a recipe
+ * Shows all versions with timestamps, change notes, and restore capability
+ */
+
+import type React from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { Recipe, RecipeVersion } from '../../domain/models/Recipe';
+import type { BrewSession } from '../../domain/models/BrewSession';
+import { useRecipeStore } from '../stores/recipeStore';
+import { recipeRepository } from '../../domain/repositories/RecipeRepository';
+import { brewSessionRepository } from '../../domain/repositories/BrewSessionRepository';
+
+interface VersionHistoryModalProps {
+  recipe: Recipe;
+  onClose: () => void;
+}
+
+interface TreeNode {
+  version: RecipeVersion | 'current';
+  children: TreeNode[];
+  variations: Recipe[];
+}
+
+export default function VersionHistoryModal({ recipe, onClose }: VersionHistoryModalProps) {
+  const navigate = useNavigate();
+  const { loadVersionHistory } = useRecipeStore();
+  const [versions, setVersions] = useState<RecipeVersion[]>([]);
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
+  const [sessions, setSessions] = useState<BrewSession[]>([]);
+
+  useEffect(() => {
+    const history = loadVersionHistory(recipe.id);
+    setVersions(history);
+
+    // Load all recipes to find variations
+    const all = recipeRepository.loadAll();
+    setAllRecipes(all);
+    // Load sessions for this recipe
+    const recipeSessions = brewSessionRepository.loadByRecipeId(recipe.id);
+    setSessions(recipeSessions);
+  }, [recipe.id, loadVersionHistory]);
+
+  // Build tree structure
+  const buildTree = (): TreeNode => {
+    const sortedVersions = [...versions].sort((a, b) => a.versionNumber - b.versionNumber);
+
+    // Find variations that branched from this recipe
+    const variations = allRecipes.filter(r => r.parentRecipeId === recipe.id);
+
+    // Group variations by the version they forked from
+    const variationsByVersion = new Map<number, Recipe[]>();
+    for (const variation of variations) {
+      if (variation.parentVersionNumber) {
+        const existing = variationsByVersion.get(variation.parentVersionNumber) || [];
+        existing.push(variation);
+        variationsByVersion.set(variation.parentVersionNumber, existing);
+      }
+    }
+
+    const root: TreeNode = {
+      version: 'current',
+      children: [],
+      variations: variationsByVersion.get(recipe.currentVersion) || []
+    };
+
+    // Build linear chain of versions
+    let currentNode = root;
+    for (let i = sortedVersions.length - 1; i >= 0; i--) {
+      const version = sortedVersions[i];
+      const node: TreeNode = {
+        version,
+        children: [],
+        variations: variationsByVersion.get(version.versionNumber) || []
+      };
+      currentNode.children.push(node);
+      currentNode = node;
+    }
+
+    return root;
+  };
+
+  const tree = buildTree();
+
+  const renderTreeNode = (node: TreeNode, depth = 0, isLast = true): JSX.Element => {
+    const isCurrent = node.version === 'current';
+    const version = isCurrent ? null : node.version;
+
+    return (
+      <div key={isCurrent ? 'current' : version?.id}>
+        {/* Main version node */}
+        <div className="flex items-start gap-3">
+          {/* Vertical line connector */}
+          {depth > 0 && (
+            <div className="flex flex-col items-center">
+              <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
+            </div>
+          )}
+
+          {/* Version card */}
+          <div className="flex-1">
+            {isCurrent ? (
+              <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-500 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <div>
+                      <div className="font-semibold text-green-700 dark:text-green-400">
+                        Version {recipe.currentVersion} (Current)
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Last updated: {new Date(recipe.updatedAt).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="mb-4 p-4 border border-[rgb(var(--border))] rounded-lg hover:shadow-md hover:border-blue-500 transition-all bg-[rgb(var(--card))] cursor-pointer"
+                onClick={() => {
+                  navigate(`/beta-builder/${recipe.id}/versions/${version!.versionNumber}`);
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-blue-700 dark:text-blue-400">
+                        Version {version!.versionNumber}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(version!.createdAt).toLocaleString()}
+                      </div>
+                      {version!.changeNotes && (
+                        <div className="text-sm mt-1 text-gray-700 dark:text-gray-300">
+                          {version!.changeNotes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Click to view →
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Brew sessions tied to this version */}
+            {(() => {
+              const versionNumber = isCurrent ? recipe.currentVersion : version!.versionNumber;
+              const versionSessions = sessions.filter(
+                (session) => session.recipeVersionNumber === versionNumber
+              );
+              if (versionSessions.length === 0) {
+                return null;
+              }
+
+              return (
+                <div className="ml-8 mb-4">
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                    Brew Sessions ({versionSessions.length})
+                  </div>
+                  <div className="space-y-2">
+                    {versionSessions.map((session) => (
+                      <div
+                        key={session.id}
+                        onClick={() => navigate(`/beta-builder/sessions/${session.id}`)}
+                        className="p-3 border border-amber-300 dark:border-amber-700 rounded-lg bg-amber-50 dark:bg-amber-900/20 cursor-pointer hover:shadow-sm transition-shadow"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium">
+                              {new Date(session.brewDate).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            OG {session.actuals.originalGravity?.toFixed(3) ?? '—'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Show variations that branched from this version */}
+            {node.variations.length > 0 && (
+              <div className="ml-8 mb-4">
+                {node.variations.map((variation, idx) => (
+                  <div key={variation.id} className="relative mb-3">
+                    {/* Branch connector */}
+                    <div className="absolute -left-8 top-1/2 w-8 h-px bg-purple-300 dark:bg-purple-600" />
+                    <div className="absolute -left-8 top-1/2 w-2 h-2 rounded-full bg-purple-500 -translate-y-1/2" />
+
+                    <div className="p-3 border-2 border-purple-300 dark:border-purple-700 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                      <div className="flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4 text-purple-600 dark:text-purple-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <div>
+                          <div className="font-semibold text-purple-700 dark:text-purple-400">
+                            {variation.name}
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            Variation (v{variation.currentVersion}) • Created {new Date(variation.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Render children (previous versions) */}
+        {node.children.map((child, idx) => (
+          <div key={child.version === 'current' ? 'current' : child.version.id} className="ml-6">
+            {renderTreeNode(child, depth + 1, idx === node.children.length - 1)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-xl font-semibold">Version History: {recipe.name}</h3>
+            {recipe.parentRecipeId && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Variation of: {allRecipes.find(r => r.id === recipe.parentRecipeId)?.name || 'Unknown'}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Version Tree */}
+        {versions.length === 0 && tree.variations.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>No version history yet.</p>
+            <p className="text-sm mt-2">
+              Versions will appear here when you create new versions of this recipe.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {renderTreeNode(tree)}
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -11,6 +11,7 @@
 
 import { getBjcpStyleSpec } from "../../../../utils/bjcpSpecs";
 import type { BjcpStyleSpec } from "../../../../utils/bjcpSpecs";
+import { srmToRgb } from "../../utils/srmColorUtils";
 
 interface StyleRangeComparisonProps {
   styleCode?: string;
@@ -43,12 +44,14 @@ export default function StyleRangeComparison({
     value,
     format = (n: number) => n.toString(),
     maxFallback,
+    isSrm = false,
   }: {
     label: string;
     range?: [number, number];
     value: number;
     format?: (n: number) => string;
     maxFallback?: number;
+    isSrm?: boolean;
   }) {
     const min = range?.[0] ?? 0;
     const max = range?.[1] ?? maxFallback ?? Math.max(min + 1, value * 1.5);
@@ -75,7 +78,7 @@ export default function StyleRangeComparison({
         </div>
         <div className="relative h-8 rounded bg-gray-200 dark:bg-gray-800 overflow-hidden border border-[rgb(var(--border))]">
           {/* Out of range - below min */}
-          {range && minPct > 0 && (
+          {range && minPct > 0 && !isSrm && (
             <div
               className="absolute inset-y-0 left-0 bg-red-100 dark:bg-red-900/30"
               style={{ width: `${minPct}%` }}
@@ -84,17 +87,41 @@ export default function StyleRangeComparison({
 
           {/* Valid range */}
           {range && (
-            <div
-              className="absolute inset-y-0 bg-green-100 dark:bg-green-900/30 border-x border-green-400 dark:border-green-600"
-              style={{
-                left: `${minPct}%`,
-                width: `${Math.max(0, maxPct - minPct)}%`,
-              }}
-            />
+            isSrm ? (
+              // SRM color gradient with faded edges
+              <>
+                {/* Full gradient spanning the entire bar */}
+                <div
+                  className="absolute inset-y-0 left-0 right-0"
+                  style={{
+                    background: `linear-gradient(to right, ${srmToRgb(domMin)}, ${srmToRgb((domMin + domMax) / 2)}, ${srmToRgb(domMax)})`,
+                    opacity: 0.3,
+                  }}
+                />
+                {/* Valid range - full opacity */}
+                <div
+                  className="absolute inset-y-0 border-x border-gray-400 dark:border-gray-600"
+                  style={{
+                    left: `${minPct}%`,
+                    width: `${Math.max(0, maxPct - minPct)}%`,
+                    background: `linear-gradient(to right, ${srmToRgb(min)}, ${srmToRgb((min + max) / 2)}, ${srmToRgb(max)})`,
+                  }}
+                />
+              </>
+            ) : (
+              // Normal green range
+              <div
+                className="absolute inset-y-0 bg-green-100 dark:bg-green-900/30 border-x border-green-400 dark:border-green-600"
+                style={{
+                  left: `${minPct}%`,
+                  width: `${Math.max(0, maxPct - minPct)}%`,
+                }}
+              />
+            )
           )}
 
           {/* Out of range - above max */}
-          {range && maxPct < 100 && (
+          {range && maxPct < 100 && !isSrm && (
             <div
               className="absolute inset-y-0 right-0 bg-red-100 dark:bg-red-900/30"
               style={{ width: `${Math.max(0, 100 - maxPct)}%` }}
@@ -184,15 +211,6 @@ export default function StyleRangeComparison({
           format={(n) => n.toFixed(3)}
         />
         <RangeBar
-          label="SRM"
-          range={
-            spec.srm ??
-            (spec.ebc ? [spec.ebc[0] / 1.97, spec.ebc[1] / 1.97] : undefined)
-          }
-          value={srm}
-          format={(n) => n.toFixed(1)}
-        />
-        <RangeBar
           label="IBU"
           range={spec.ibu}
           value={ibu}
@@ -205,6 +223,16 @@ export default function StyleRangeComparison({
           value={buGu}
           format={(n) => n.toFixed(2)}
           maxFallback={1.2}
+        />
+        <RangeBar
+          label="SRM"
+          range={
+            spec.srm ??
+            (spec.ebc ? [spec.ebc[0] / 1.97, spec.ebc[1] / 1.97] : undefined)
+          }
+          value={srm}
+          format={(n) => n.toFixed(1)}
+          isSrm={true}
         />
       </div>
     </div>

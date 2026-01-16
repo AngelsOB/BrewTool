@@ -5,7 +5,7 @@
  * It uses the store (like @ObservedObject) and hooks (for calculations).
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
@@ -14,25 +14,47 @@ import MashScheduleSection from './MashScheduleSection';
 import HopSection from './HopSection';
 import YeastSection from './YeastSection';
 import WaterSection from './WaterSection';
+import FermentationSection from './FermentationSection';
+import { EquipmentSection } from './EquipmentSection';
 import StyleSelectorModal from './StyleSelectorModal';
 import StyleRangeComparison from './StyleRangeComparison';
+import { srmToRgb } from '../../utils/srmColorUtils';
+import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 
 export default function BetaBuilderPage() {
-  const { id } = useParams<{ id?: string }>();
+  const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
   const navigate = useNavigate();
   const {
     currentRecipe,
     createNewRecipe,
     loadRecipe,
+    setCurrentRecipe,
     updateRecipe,
     saveCurrentRecipe,
   } = useRecipeStore();
 
   const calculations = useRecipeCalculations(currentRecipe);
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
+  const [showStickyTop, setShowStickyTop] = useState(false);
+  const [showStickyBottom, setShowStickyBottom] = useState(false);
+  const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
+  const isReadOnly = Boolean(versionNumber);
 
   // Load recipe based on URL param or create new
   useEffect(() => {
+    if (id && versionNumber) {
+      const version = recipeVersionRepository.loadByRecipeIdAndVersion(
+        id,
+        Number(versionNumber)
+      );
+      if (version) {
+        setCurrentRecipe({ ...version.recipeSnapshot, id });
+      } else {
+        setCurrentRecipe(null);
+      }
+      return;
+    }
+
     if (id) {
       // Editing existing recipe
       loadRecipe(id);
@@ -40,12 +62,68 @@ export default function BetaBuilderPage() {
       // Creating new recipe
       createNewRecipe();
     }
-  }, [id, loadRecipe, createNewRecipe]);
+  }, [id, versionNumber, loadRecipe, createNewRecipe, setCurrentRecipe]);
+
+  // Sticky header scroll detection
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const calculatedValuesEl = calculatedValuesRef.current;
+
+      if (calculatedValuesEl) {
+        const rect = calculatedValuesEl.getBoundingClientRect();
+        const isPastCalculatedValues = rect.bottom < 0;
+
+        if (isPastCalculatedValues) {
+          const scrollDiff = currentScrollY - lastScrollY;
+
+          if (scrollDiff > 0) {
+            // Scrolling down - show top header
+            setShowStickyTop(true);
+            setShowStickyBottom(false);
+          } else if (scrollDiff < 0) {
+            // Scrolling up - show bottom header
+            setShowStickyTop(false);
+            setShowStickyBottom(true);
+          }
+        } else {
+          // Not past calculated values - hide both
+          setShowStickyTop(false);
+          setShowStickyBottom(false);
+        }
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   // Removed hard-coded fermentable handler - now using FermentableSection with presets
 
   if (!currentRecipe) {
-    return <div className="p-8">Loading...</div>;
+    return (
+      <div className="p-8">
+        {isReadOnly ? (
+          <div className="text-center">
+            <p className="mb-4">Version not found.</p>
+            <button
+              onClick={() => navigate('/beta-builder')}
+              className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+            >
+              Back to Recipes
+            </button>
+          </div>
+        ) : (
+          <p>Loading...</p>
+        )}
+      </div>
+    );
   }
 
   const handleSave = () => {
@@ -55,6 +133,148 @@ export default function BetaBuilderPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[rgb(var(--bg))] p-8 transition-colors duration-200">
+      {/* Sticky Calculated Values Header - Top */}
+      {calculations && (
+        <div
+          className={`fixed top-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-lg z-40 transition-all duration-300 ease-in-out ${
+            showStickyTop
+              ? 'translate-y-0 opacity-100'
+              : '-translate-y-full opacity-0'
+          }`}
+        >
+          <div className="max-w-4xl mx-auto px-8 py-2">
+            <div className="grid grid-cols-5 gap-2">
+              {/* ABV */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Alcohol
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.abv.toFixed(1)}%
+                </div>
+              </div>
+
+              {/* OG */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Original Gravity
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.og.toFixed(3)}
+                </div>
+              </div>
+
+              {/* FG */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Final Gravity
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.fg.toFixed(3)}
+                </div>
+              </div>
+
+              {/* IBU */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Bitterness (IBU)
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.ibu.toFixed(0)}
+                </div>
+              </div>
+
+              {/* SRM with Color */}
+              <div className="text-center flex items-center justify-center gap-1">
+                <div
+                  className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 shadow-sm"
+                  style={{ backgroundColor: srmToRgb(calculations.srm) }}
+                />
+                <div>
+                  <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                    Color (SRM)
+                  </div>
+                  <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    {calculations.srm.toFixed(1)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Calculated Values Header - Bottom */}
+      {calculations && (
+        <div
+          className={`fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 shadow-lg z-40 transition-all duration-300 ease-in-out ${
+            showStickyBottom
+              ? 'translate-y-0 opacity-100'
+              : 'translate-y-full opacity-0'
+          }`}
+        >
+          <div className="max-w-4xl mx-auto px-8 py-2">
+            <div className="grid grid-cols-5 gap-2">
+              {/* ABV */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Alcohol
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.abv.toFixed(1)}%
+                </div>
+              </div>
+
+              {/* OG */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Original Gravity
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.og.toFixed(3)}
+                </div>
+              </div>
+
+              {/* FG */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Final Gravity
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.fg.toFixed(3)}
+                </div>
+              </div>
+
+              {/* IBU */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Bitterness (IBU)
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.ibu.toFixed(0)}
+                </div>
+              </div>
+
+              {/* SRM with Color */}
+              <div className="text-center flex items-center justify-center gap-1">
+                <div
+                  className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 shadow-sm"
+                  style={{ backgroundColor: srmToRgb(calculations.srm) }}
+                />
+                <div>
+                  <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                    Color (SRM)
+                  </div>
+                  <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    {calculations.srm.toFixed(1)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white dark:bg-[rgb(var(--card))] border-b border-gray-200 dark:border-[rgb(var(--border))] pb-6 mb-6 rounded-t-lg transition-colors">
@@ -66,11 +286,22 @@ export default function BetaBuilderPage() {
               >
                 ← Back to Recipes
               </button>
-              <h1 className="text-3xl font-bold dark:text-gray-100">Recipe Builder</h1>
+              <h1 className="text-3xl font-bold dark:text-gray-100">
+                {isReadOnly ? `Version ${versionNumber} (Read-only)` : 'Recipe Builder'}
+              </h1>
             </div>
+            {isReadOnly && id && (
+              <button
+                onClick={() => navigate(`/beta-builder/${id}`)}
+                className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+              >
+                Open Current Recipe
+              </button>
+            )}
           </div>
         </div>
 
+        <div className={isReadOnly ? 'pointer-events-none opacity-90' : ''}>
         {/* Recipe Name & Metadata */}
         <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 space-y-4">
           <div>
@@ -118,6 +349,66 @@ export default function BetaBuilderPage() {
             </div>
           </div>
 
+          {/* Calculated Values */}
+          {calculations && (
+            <div ref={calculatedValuesRef} className="grid grid-cols-5 gap-3">
+              {/* ABV */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center shadow-sm">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Alcohol
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.abv.toFixed(1)}%
+                </div>
+              </div>
+
+              {/* OG */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center shadow-sm">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Original Gravity
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.og.toFixed(3)}
+                </div>
+              </div>
+
+              {/* FG */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center shadow-sm">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Final Gravity
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.fg.toFixed(3)}
+                </div>
+              </div>
+
+              {/* IBU */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center shadow-sm">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Bitterness (IBU)
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.ibu.toFixed(0)}
+                </div>
+              </div>
+
+              {/* SRM with Color Background */}
+              <div
+                className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center shadow-sm relative overflow-hidden"
+                style={{
+                  backgroundColor: srmToRgb(calculations.srm)
+                }}
+              >
+                <div className="text-xs font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mb-2">
+                  Color (SRM)
+                </div>
+                <div className="text-2xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  {calculations.srm.toFixed(1)}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* BJCP Style Range Comparison */}
           {calculations && currentRecipe.style && (
             <div className="pt-2">
@@ -146,247 +437,8 @@ export default function BetaBuilderPage() {
           </div>
         </div>
 
-        {/* Equipment Settings */}
-        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Equipment & Volumes</h2>
-
-          {/* Basic Settings */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Batch Volume (L)
-              </label>
-              <input
-                type="number"
-                value={currentRecipe.batchVolumeL}
-                onChange={(e) =>
-                  updateRecipe({ batchVolumeL: parseFloat(e.target.value) || 0 })
-                }
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                step="0.1"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Mash Efficiency (%)
-              </label>
-              <input
-                type="number"
-                value={currentRecipe.equipment.mashEfficiencyPercent}
-                onChange={(e) =>
-                  updateRecipe({
-                    equipment: {
-                      ...currentRecipe.equipment,
-                      mashEfficiencyPercent: parseFloat(e.target.value) || 0,
-                    },
-                  })
-                }
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                step="1"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Boil Time (min)
-              </label>
-              <input
-                type="number"
-                value={currentRecipe.equipment.boilTimeMin}
-                onChange={(e) =>
-                  updateRecipe({
-                    equipment: {
-                      ...currentRecipe.equipment,
-                      boilTimeMin: parseFloat(e.target.value) || 0,
-                    },
-                  })
-                }
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                step="1"
-              />
-            </div>
-          </div>
-
-          {/* Advanced Settings - Collapsible */}
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mb-4">
-              Advanced Equipment Settings
-            </summary>
-
-            <div className="grid grid-cols-3 gap-4 pl-4 border-l-2 border-blue-200">
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Boil-Off Rate (L/hr)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.boilOffRateLPerHour}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        boilOffRateLPerHour: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Mash Thickness (L/kg)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.mashThicknessLPerKg}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        mashThicknessLPerKg: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Grain Absorption (L/kg)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.grainAbsorptionLPerKg}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        grainAbsorptionLPerKg: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.01"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Mash Tun Deadspace (L)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.mashTunDeadspaceLiters}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        mashTunDeadspaceLiters: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Kettle Loss (L)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.kettleLossLiters}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        kettleLossLiters: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Hop Absorption (L/kg)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.hopsAbsorptionLPerKg}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        hopsAbsorptionLPerKg: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Chiller Loss (L)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.chillerLossLiters}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        chillerLossLiters: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Fermenter Loss (L)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.fermenterLossLiters}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        fermenterLossLiters: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-2">
-                  Cooling Shrinkage (%)
-                </label>
-                <input
-                  type="number"
-                  value={currentRecipe.equipment.coolingShrinkagePercent}
-                  onChange={(e) =>
-                    updateRecipe({
-                      equipment: {
-                        ...currentRecipe.equipment,
-                        coolingShrinkagePercent: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded-md"
-                  step="0.1"
-                />
-              </div>
-            </div>
-          </details>
-        </div>
+        {/* Equipment Profile */}
+        <EquipmentSection />
 
         {/* Fermentables - Now using dedicated component with preset picker */}
         <FermentableSection />
@@ -404,6 +456,9 @@ export default function BetaBuilderPage() {
 
         {/* Water - Volumes + Chemistry */}
         <WaterSection calculations={calculations} recipe={currentRecipe} />
+
+        {/* Fermentation - Phase 5 addition */}
+        <FermentationSection />
 
         {/* Calculations Display */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg shadow-lg p-6 mb-6 border border-green-200/50 dark:border-green-800/50">
@@ -449,6 +504,7 @@ export default function BetaBuilderPage() {
         </div>
 
         {/* Save Button */}
+          {!isReadOnly && (
         <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 flex gap-3">
           <button
             onClick={() => navigate('/beta-builder')}
@@ -462,6 +518,8 @@ export default function BetaBuilderPage() {
           >
             Save & Close
           </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -472,6 +530,7 @@ export default function BetaBuilderPage() {
         onSelect={(style) => updateRecipe({ style: style || undefined })}
         currentStyle={currentRecipe.style}
       />
+
     </div>
   );
 }

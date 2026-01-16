@@ -9,7 +9,7 @@
 import type { Recipe, RecipeId } from '../models/Recipe';
 
 export class RecipeRepository {
-  private readonly STORAGE_KEY = 'beta-recipes-v1';
+  private readonly STORAGE_KEY = 'beer-recipes-v1';
 
   /**
    * Load all recipes from storage
@@ -20,7 +20,24 @@ export class RecipeRepository {
       if (!json) return [];
 
       const recipes = JSON.parse(json) as Recipe[];
-      return recipes;
+
+      // Migrate old recipes to include currentVersion field
+      const migratedRecipes = recipes.map(recipe => {
+        if (recipe.currentVersion === undefined) {
+          return {
+            ...recipe,
+            currentVersion: 1,
+          };
+        }
+        return recipe;
+      });
+
+      // Save migrated recipes if any migration occurred
+      if (migratedRecipes.some((r, i) => r.currentVersion !== recipes[i].currentVersion)) {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(migratedRecipes));
+      }
+
+      return migratedRecipes;
     } catch (error) {
       console.error('Failed to load recipes:', error);
       return [];
