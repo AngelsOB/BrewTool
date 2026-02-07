@@ -7,7 +7,7 @@
  */
 
 import { create } from 'zustand';
-import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, FermentationStep, RecipeVersion, OtherIngredient } from '../../domain/models/Recipe';
+import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion, OtherIngredient } from '../../domain/models/Recipe';
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';

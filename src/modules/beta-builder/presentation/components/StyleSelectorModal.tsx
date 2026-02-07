@@ -48,7 +48,7 @@ export default function StyleSelectorModal({
       .filter((cat) => cat.styles.length > 0);
   }, [searchQuery, categories]);
 
-  const handleSelect = (style: BjcpStyle, categoryName: string) => {
+  const handleSelect = (style: BjcpStyle, _categoryName: string) => {
     onSelect(`${style.code}. ${style.name}`);
     onClose();
     setSearchQuery("");

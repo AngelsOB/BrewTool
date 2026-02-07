@@ -5,7 +5,6 @@
  * Shows all versions with timestamps, change notes, and restore capability
  */
 
-import type React from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Recipe, RecipeVersion } from '../../domain/models/Recipe';
@@ -85,9 +84,9 @@ export default function VersionHistoryModal({ recipe, onClose }: VersionHistoryM
 
   const tree = buildTree();
 
-  const renderTreeNode = (node: TreeNode, depth = 0, isLast = true): JSX.Element => {
+  const renderTreeNode = (node: TreeNode, depth = 0) => {
     const isCurrent = node.version === 'current';
-    const version = isCurrent ? null : node.version;
+    const version = node.version === 'current' ? null : node.version;
 
     return (
       <div key={isCurrent ? 'current' : version?.id}>
@@ -194,7 +193,7 @@ export default function VersionHistoryModal({ recipe, onClose }: VersionHistoryM
             {/* Show variations that branched from this version */}
             {node.variations.length > 0 && (
               <div className="ml-8 mb-4">
-                {node.variations.map((variation, idx) => (
+                {node.variations.map((variation) => (
                   <div key={variation.id} className="relative mb-3">
                     {/* Branch connector */}
                     <div className="absolute -left-8 top-1/2 w-8 h-px bg-purple-300 dark:bg-purple-600" />
@@ -234,9 +233,9 @@ export default function VersionHistoryModal({ recipe, onClose }: VersionHistoryM
         </div>
 
         {/* Render children (previous versions) */}
-        {node.children.map((child, idx) => (
-          <div key={child.version === 'current' ? 'current' : child.version.id} className="ml-6">
-            {renderTreeNode(child, depth + 1, idx === node.children.length - 1)}
+        {node.children.map((child) => (
+          <div key={child.version === 'current' ? 'current' : (child.version as RecipeVersion).id} className="ml-6">
+            {renderTreeNode(child, depth + 1)}
           </div>
         ))}
       </div>

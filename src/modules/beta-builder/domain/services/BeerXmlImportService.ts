@@ -225,6 +225,7 @@ class BeerXmlImportService {
       style: styleName,
       notes: text(recipeEl, 'NOTES'),
       tags: [],
+      currentVersion: 1,
       batchVolumeL,
       equipment: {
         boilTimeMin,
