@@ -1,5 +1,5 @@
 
-import type { Recipe, Fermentable, Hop, MashStep, FermentationStep, Yeast } from '../models/Recipe';
+import type { Recipe, Fermentable, Hop, MashStep, FermentationStep, Yeast, OtherIngredient, OtherIngredientCategory } from '../models/Recipe';
 import { HOP_PRESETS } from '../../../../utils/presets';
 
 
@@ -115,19 +115,21 @@ class BeerXmlImportService {
     }
 
     // Yeast
-    let yeast: Yeast | null = null;
+    const yeasts: Yeast[] = [];
     const yeastsParent = recipeEl.getElementsByTagName('YEASTS')?.[0];
-    const yeastEl = yeastsParent?.getElementsByTagName('YEAST')?.[0];
-    if (yeastEl) {
-      const attenuationPct = toNumber(text(yeastEl, 'ATTENUATION'));
-      const attDecimal =
-        attenuationPct != null ? (attenuationPct > 1 ? attenuationPct / 100 : attenuationPct) : undefined;
-      yeast = {
-        id: crypto.randomUUID(),
-        name: text(yeastEl, 'NAME') || 'Yeast',
-        attenuation: attDecimal ?? 0.75,
-        laboratory: text(yeastEl, 'LABORATORY'),
-      };
+    if (yeastsParent) {
+      const yeastEls = Array.from(yeastsParent.getElementsByTagName('YEAST'));
+      yeastEls.forEach((yeastEl) => {
+        const attenuationPct = toNumber(text(yeastEl, 'ATTENUATION'));
+        const attDecimal =
+          attenuationPct != null ? (attenuationPct > 1 ? attenuationPct / 100 : attenuationPct) : undefined;
+        yeasts.push({
+          id: crypto.randomUUID(),
+          name: text(yeastEl, 'NAME') || 'Yeast',
+          attenuation: attDecimal ?? 0.75,
+          laboratory: text(yeastEl, 'LABORATORY'),
+        });
+      });
     }
 
     // Mash steps
@@ -256,7 +258,7 @@ class BeerXmlImportService {
       },
       fermentables,
       hops,
-      yeast,
+      yeasts,
       otherIngredients,
       mashSteps,
       waterChemistry: undefined,

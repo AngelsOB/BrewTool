@@ -272,39 +272,39 @@ export default function BrewSessionPage() {
             <IngredientCard tone="yeast" className="md:col-span-2">
               <div className="space-y-3">
                 <SubSectionHeader title="Yeast" />
-                {sessionRecipe.yeast ? (
+                {sessionRecipe.yeasts?.[0] ? (
                   <div className="space-y-2 rounded-md bg-[rgb(var(--bg))] p-3">
-                    <div className="text-sm font-medium">{sessionRecipe.yeast.name}</div>
+                    <div className="text-sm font-medium">{sessionRecipe.yeasts?.[0].name}</div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-gray-500">Type</span>
                         <span className="font-medium capitalize">
-                          {sessionRecipe.yeast.starter?.yeastType
-                            ? sessionRecipe.yeast.starter.yeastType.replace('-', ' ')
+                          {sessionRecipe.yeasts?.[0].starter?.yeastType
+                            ? sessionRecipe.yeasts?.[0].starter.yeastType.replace('-', ' ')
                             : '—'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-500">Packs</span>
                         <ReadOnlyNumber
-                          value={sessionRecipe.yeast.starter?.packs}
+                          value={sessionRecipe.yeasts?.[0].starter?.packs}
                           format={(value) => value.toFixed(0)}
                         />
                       </div>
                     </div>
-                    {sessionRecipe.yeast.starter?.steps?.length ? (
+                    {sessionRecipe.yeasts?.[0].starter?.steps?.length ? (
                       <div className="grid grid-cols-2 gap-3 text-sm">
-                        {sessionRecipe.yeast.starter.mfgDate && (
+                        {sessionRecipe.yeasts?.[0].starter.mfgDate && (
                           <div className="flex items-center justify-between col-span-2">
                             <span className="text-gray-500">Mfg</span>
-                            <span className="font-medium">{sessionRecipe.yeast.starter.mfgDate}</span>
+                            <span className="font-medium">{sessionRecipe.yeasts?.[0].starter.mfgDate}</span>
                           </div>
                         )}
-                        {sessionRecipe.yeast.starter.slurryLiters !== undefined && (
+                        {sessionRecipe.yeasts?.[0].starter.slurryLiters !== undefined && (
                           <div className="flex items-center justify-between col-span-2">
                             <span className="text-gray-500">Slurry</span>
                             <span className="font-medium">
-                              {sessionRecipe.yeast.starter.slurryLiters.toFixed(1)} L
+                              {sessionRecipe.yeasts?.[0].starter.slurryLiters.toFixed(1)} L
                             </span>
                           </div>
                         )}
@@ -434,17 +434,17 @@ export default function BrewSessionPage() {
 
         <SectionCard title="Instructions" description="Brew day steps in order." tone="emerald">
           <div className="space-y-4">
-            {sessionRecipe.yeast?.starter?.steps?.length ? (
+            {sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? (
               <InstructionStep number={1} title="Starter (if using)">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
                     <span className="text-gray-500">Packs</span>
                     <ReadOnlyNumber
-                      value={sessionRecipe.yeast.starter.packs}
+                      value={sessionRecipe.yeasts?.[0].starter.packs}
                       format={(value) => value.toFixed(0)}
                     />
                   </div>
-                  {sessionRecipe.yeast.starter.steps.map((step) => (
+                  {sessionRecipe.yeasts?.[0].starter.steps.map((step) => (
                     <div key={step.id} className="rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
                       <div className="flex flex-wrap gap-2">
                         <InfoPill text={`${step.liters.toFixed(1)} L`} />
@@ -456,7 +456,7 @@ export default function BrewSessionPage() {
               </InstructionStep>
             ) : null}
 
-            <InstructionStep number={sessionRecipe.yeast?.starter?.steps?.length ? 2 : 1} title="Warm strike + sparge water">
+            <InstructionStep number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 2 : 1} title="Warm strike + sparge water">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div className="rounded-md bg-[rgb(var(--bg))] p-2">
                   <div className="text-xs text-gray-500 uppercase">Strike</div>
@@ -476,7 +476,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 3 : 2}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 3 : 2}
               title="Add water salts (strike + sparge)"
             >
               {sessionRecipe.waterChemistry ? (
@@ -503,7 +503,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 4 : 3}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 4 : 3}
               title="Mash in"
             >
               {sessionRecipe.fermentables.length === 0 ? (
@@ -524,7 +524,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 5 : 4}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 5 : 4}
               title="Mash steps"
             >
               {sessionRecipe.mashSteps.length === 0 ? (
@@ -545,7 +545,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 6 : 5}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 6 : 5}
               title="Pull grains and sparge"
             >
               <div className="flex flex-wrap gap-2 text-sm">
@@ -555,7 +555,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 7 : 6}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 7 : 6}
               title="Boil + hop additions"
             >
               {sessionRecipe.hops.length === 0 ? (
@@ -579,7 +579,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 8 : 7}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 8 : 7}
               title="Cool and pitch yeast"
             >
               <div className="flex flex-wrap gap-2 text-sm">
@@ -592,7 +592,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 9 : 8}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 9 : 8}
               title="Fermentation steps"
             >
               {sessionRecipe.fermentationSteps.filter((step) => step.type !== 'conditioning' && step.type !== 'cold-crash')
@@ -616,7 +616,7 @@ export default function BrewSessionPage() {
             </InstructionStep>
 
             <InstructionStep
-              number={sessionRecipe.yeast?.starter?.steps?.length ? 10 : 9}
+              number={sessionRecipe.yeasts?.[0]?.starter?.steps?.length ? 10 : 9}
               title="Conditioning steps"
             >
               {sessionRecipe.fermentationSteps.filter((step) => step.type === 'conditioning' || step.type === 'cold-crash')

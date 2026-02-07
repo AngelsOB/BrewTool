@@ -162,7 +162,7 @@ export default function FermentableSection() {
         targetABV,
         currentRecipe.batchVolumeL,
         currentRecipe.equipment.mashEfficiencyPercent || 75,
-        currentRecipe.yeast?.attenuation || 0.75
+        currentRecipe.yeasts?.[0]?.attenuation || 0.75
       );
 
       // Update weights if they changed

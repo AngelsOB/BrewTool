@@ -51,7 +51,25 @@ const getFavicon = (lab: string | undefined) => {
 };
 
 export default function YeastSection() {
-  const { currentRecipe, setYeast, clearYeast } = useRecipeStore();
+  const { currentRecipe, addYeast, updateYeast, removeYeast } = useRecipeStore();
+
+  // Get the first yeast (for backward compatibility with single-yeast UI)
+  const currentYeast = currentRecipe?.yeasts?.[0] ?? null;
+
+  // Adapter functions for single-yeast operations
+  const setYeast = (yeast: Yeast) => {
+    if (currentYeast) {
+      // Replace existing yeast by removing old and adding new
+      removeYeast(currentYeast.id);
+    }
+    addYeast(yeast);
+  };
+
+  const clearYeast = () => {
+    if (currentYeast) {
+      removeYeast(currentYeast.id);
+    }
+  };
   const { yeastPresetsGrouped, loadYeastPresets, saveYeastPreset, isLoading: presetsLoading } =
     usePresetStore();
   const calculations = useRecipeCalculations(currentRecipe);
@@ -81,8 +99,8 @@ export default function YeastSection() {
 
   // Hydrate starter state from yeast
   useEffect(() => {
-    if (currentRecipe?.yeast?.starter) {
-      const s = currentRecipe.yeast.starter;
+    if (currentYeast?.starter) {
+      const s = currentYeast.starter;
       setYeastType(s.yeastType);
       setPacks(s.packs);
       setMfgDate(s.mfgDate || "");
@@ -90,7 +108,7 @@ export default function YeastSection() {
       setSlurryBillionPerMl(s.slurryBillionPerMl || 1);
       setSteps(s.steps);
     }
-  }, [currentRecipe?.yeast]);
+  }, [currentYeast]);
 
   // Handle selecting a yeast from preset
   const handleSelectFromPreset = (preset: YeastPreset) => {
@@ -113,16 +131,13 @@ export default function YeastSection() {
 
   // Handle updating yeast attenuation
   const handleUpdateAttenuation = (attenuation: number) => {
-    if (!currentRecipe?.yeast) return;
-    setYeast({
-      ...currentRecipe.yeast,
-      attenuation,
-    });
+    if (!currentYeast) return;
+    updateYeast(currentYeast.id, { attenuation });
   };
 
   // Update starter info in yeast
   const updateStarterInfo = () => {
-    if (!currentRecipe?.yeast) return;
+    if (!currentYeast) return;
     const starterInfo: StarterInfo = {
       yeastType,
       packs,
@@ -131,15 +146,12 @@ export default function YeastSection() {
       slurryBillionPerMl,
       steps,
     };
-    setYeast({
-      ...currentRecipe.yeast,
-      starter: starterInfo,
-    });
+    updateYeast(currentYeast.id, { starter: starterInfo });
   };
 
   // Update starter whenever inputs change
   useEffect(() => {
-    if (currentRecipe?.yeast && isStarterOpen) {
+    if (currentYeast && isStarterOpen) {
       updateStarterInfo();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -251,7 +263,7 @@ export default function YeastSection() {
     <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-amber-500">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Yeast</h2>
-        {!currentRecipe?.yeast ? (
+        {!currentYeast ? (
           <button
             onClick={() => setIsPickerOpen(true)}
             className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
@@ -269,7 +281,7 @@ export default function YeastSection() {
       </div>
 
       {/* Yeast Display */}
-      {!currentRecipe?.yeast ? (
+      {!currentYeast ? (
         <p className="text-gray-500 dark:text-gray-400 italic">
           No yeast selected. Click "Select Yeast" to choose from preset database.
         </p>
@@ -280,23 +292,23 @@ export default function YeastSection() {
               {/* Name and Laboratory */}
               <div className="col-span-6 flex items-start gap-4">
                 <div className="mt-1">
-                  {getFavicon(currentRecipe.yeast.laboratory) ? (
+                  {getFavicon(currentYeast.laboratory) ? (
                     <img
-                      src={getFavicon(currentRecipe.yeast.laboratory)!}
-                      alt={currentRecipe.yeast.laboratory}
+                      src={getFavicon(currentYeast.laboratory)!}
+                      alt={currentYeast.laboratory}
                       className="w-8 h-8 rounded-md object-contain"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-md border border-[rgb(var(--border))] bg-gray-50 flex items-center justify-center text-gray-400 text-xs font-bold uppercase">
-                      {(currentRecipe.yeast.laboratory?.charAt(0) || "Y")}
+                      {(currentYeast.laboratory?.charAt(0) || "Y")}
                     </div>
                   )}
                 </div>
                 <div>
-                  <span className="font-medium text-lg block">{currentRecipe.yeast.name}</span>
-                  {currentRecipe.yeast.laboratory && (
+                  <span className="font-medium text-lg block">{currentYeast.name}</span>
+                  {currentYeast.laboratory && (
                     <div className="text-sm font-medium text-gray-500">
-                      {currentRecipe.yeast.laboratory}
+                      {currentYeast.laboratory}
                     </div>
                   )}
                 </div>
@@ -310,7 +322,7 @@ export default function YeastSection() {
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
-                    value={(currentRecipe.yeast.attenuation * 100).toFixed(0)}
+                    value={(currentYeast.attenuation * 100).toFixed(0)}
                     onChange={(e) =>
                       handleUpdateAttenuation(
                         (parseFloat(e.target.value) || 0) / 100

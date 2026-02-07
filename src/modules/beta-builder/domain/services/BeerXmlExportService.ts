@@ -98,8 +98,7 @@ class BeerXmlExportService {
 
     // Yeast
     lines.push('      <YEASTS>');
-    if (recipe.yeast) {
-      const y = recipe.yeast;
+    for (const y of (recipe.yeasts ?? [])) {
       lines.push('        <YEAST>');
       lines.push(`          <NAME>${escapeXml(y.name)}</NAME>`);
       lines.push(`          <VERSION>1</VERSION>`);

@@ -354,6 +354,12 @@ function RecipeCard({
     downloadTextFile(`${sanitizeFileName(recipe.name)}.md`, md);
   };
 
+  const handleCopyMarkdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const md = generateRecipeMarkdown(recipe, calculations);
+    navigator.clipboard.writeText(md);
+  };
+
   const handleExportJson = (e: React.MouseEvent) => {
     e.stopPropagation();
     const json = JSON.stringify(recipe, null, 2);
@@ -481,6 +487,15 @@ function RecipeCard({
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 Export Markdown
+              </button>
+              <button
+                onClick={(e) => {
+                  handleCopyMarkdown(e);
+                  setIsVersionMenuOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Copy Markdown
               </button>
               <button
                 onClick={(e) => {
