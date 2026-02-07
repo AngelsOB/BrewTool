@@ -10,7 +10,6 @@
  */
 
 import { getBjcpStyleSpec } from "../../../../utils/bjcpSpecs";
-import type { BjcpStyleSpec } from "../../../../utils/bjcpSpecs";
 import { srmToRgb } from "../../utils/srmColorUtils";
 
 interface StyleRangeComparisonProps {

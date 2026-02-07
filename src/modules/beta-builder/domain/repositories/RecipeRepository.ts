@@ -21,19 +21,20 @@ export class RecipeRepository {
 
       const recipes = JSON.parse(json) as Recipe[];
 
-      // Migrate old recipes to include currentVersion field
+      // Migrate old recipes to include currentVersion and otherIngredients fields
       const migratedRecipes = recipes.map(recipe => {
-        if (recipe.currentVersion === undefined) {
-          return {
-            ...recipe,
-            currentVersion: 1,
-          };
+        let migrated = recipe;
+        if (migrated.currentVersion === undefined) {
+          migrated = { ...migrated, currentVersion: 1 };
         }
-        return recipe;
+        if (!migrated.otherIngredients) {
+          migrated = { ...migrated, otherIngredients: [] };
+        }
+        return migrated;
       });
 
       // Save migrated recipes if any migration occurred
-      if (migratedRecipes.some((r, i) => r.currentVersion !== recipes[i].currentVersion)) {
+      if (migratedRecipes.some((r, i) => r !== recipes[i])) {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(migratedRecipes));
       }
 

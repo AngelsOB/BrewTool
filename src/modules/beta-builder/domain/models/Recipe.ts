@@ -141,6 +141,37 @@ export type FermentationStep = {
   notes?: string;
 };
 
+/**
+ * Category for other/miscellaneous ingredients
+ */
+export type OtherIngredientCategory =
+  | 'water-agent'
+  | 'fining'
+  | 'spice'
+  | 'flavor'
+  | 'herb'
+  | 'other';
+
+/**
+ * A miscellaneous ingredient (water agents, finings, spices, etc.)
+ * Excludes water salts (those are in waterChemistry.saltAdditions)
+ */
+export type OtherIngredient = {
+  id: string;
+  /** Ingredient name (e.g., "Whirlfloc", "Lactic acid") */
+  name: string;
+  /** Ingredient category */
+  category: OtherIngredientCategory;
+  /** Amount (numeric value, interpreted with unit) */
+  amount: number;
+  /** Unit of measurement (g, kg, tsp, tbsp, oz, lb, ml, l, drops, capsule, tablet, packet) */
+  unit: string;
+  /** When in the process to add this ingredient */
+  timing: 'mash' | 'boil' | 'whirlpool' | 'secondary' | 'kegging' | 'bottling';
+  /** Optional free-form notes */
+  notes?: string;
+};
+
 export type Recipe = {
   id: RecipeId;
   name: string;
@@ -191,6 +222,7 @@ export type Recipe = {
   fermentables: Fermentable[];
   hops: Hop[];
   yeast: Yeast | null;
+  otherIngredients: OtherIngredient[];
 
   /** Mash schedule (optional - for all-grain recipes) */
   mashSteps: MashStep[];
