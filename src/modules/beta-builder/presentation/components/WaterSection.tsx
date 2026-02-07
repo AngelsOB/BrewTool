@@ -210,6 +210,28 @@ export default function WaterSection({ calculations, recipe }: Props) {
     setCustomCategory("other");
   };
 
+  const handleAddPhAdjustment = (name: string, amount: number, unit: string) => {
+    // Check if this ingredient already exists in otherIngredients (match by name, case-insensitive)
+    const existing = otherIngredients.find(
+      (ing) => ing.name.toLowerCase() === name.toLowerCase() && ing.timing === "mash"
+    );
+
+    if (existing) {
+      // Update the existing ingredient's amount
+      updateOtherIngredient(existing.id, { amount });
+    } else {
+      // Add as a new water-agent ingredient
+      addOtherIngredient({
+        id: crypto.randomUUID(),
+        name,
+        category: "water-agent",
+        amount,
+        unit,
+        timing: "mash",
+      });
+    }
+  };
+
   if (!calculations) {
     return null;
   }
@@ -327,16 +349,22 @@ export default function WaterSection({ calculations, recipe }: Props) {
                   </div>
                 </div>
                 {adj && adj.lacticAcid88Ml > 0 && (
-                  <div className="text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 rounded-md text-right">
-                    <div className="font-semibold">Add ~{adj.lacticAcid88Ml} mL lactic acid (88%)</div>
+                  <button
+                    onClick={() => handleAddPhAdjustment("Lactic acid (88%)", adj.lacticAcid88Ml, "ml")}
+                    className="text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 rounded-md text-right hover:bg-amber-200 dark:hover:bg-amber-800/60 transition-colors cursor-pointer border border-amber-300 dark:border-amber-700"
+                  >
+                    <div className="font-semibold">+ Add ~{adj.lacticAcid88Ml} mL lactic acid (88%)</div>
                     <div className="text-amber-600 dark:text-amber-400">to reach pH {adj.targetPh.toFixed(1)}</div>
-                  </div>
+                  </button>
                 )}
                 {adj && adj.bakingSodaG > 0 && (
-                  <div className="text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 rounded-md text-right">
-                    <div className="font-semibold">Add ~{adj.bakingSodaG} g baking soda</div>
+                  <button
+                    onClick={() => handleAddPhAdjustment("Baking soda", adj.bakingSodaG, "g")}
+                    className="text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 rounded-md text-right hover:bg-amber-200 dark:hover:bg-amber-800/60 transition-colors cursor-pointer border border-amber-300 dark:border-amber-700"
+                  >
+                    <div className="font-semibold">+ Add ~{adj.bakingSodaG} g baking soda</div>
                     <div className="text-amber-600 dark:text-amber-400">to reach pH {adj.targetPh.toFixed(1)}</div>
-                  </div>
+                  </button>
                 )}
               </div>
             </div>
