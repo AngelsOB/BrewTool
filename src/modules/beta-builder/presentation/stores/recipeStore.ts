@@ -7,7 +7,7 @@
  */
 
 import { create } from 'zustand';
-import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, FermentationStep, RecipeVersion } from '../../domain/models/Recipe';
+import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, FermentationStep, RecipeVersion, OtherIngredient } from '../../domain/models/Recipe';
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';
@@ -39,6 +39,11 @@ type RecipeStore = {
   removeHop: (id: string) => void;
   setYeast: (yeast: Yeast) => void;
   clearYeast: () => void;
+
+  // Other ingredient actions
+  addOtherIngredient: (ingredient: OtherIngredient) => void;
+  updateOtherIngredient: (id: string, updates: Partial<OtherIngredient>) => void;
+  removeOtherIngredient: (id: string) => void;
 
   // Mash step actions
   addMashStep: (mashStep: MashStep) => void;
@@ -108,6 +113,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       fermentables: [],
       hops: [],
       yeast: null,
+      otherIngredients: [],
       mashSteps: [],
       fermentationSteps: [],
       createdAt: new Date().toISOString(),
@@ -318,6 +324,47 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     const updated = {
       ...current,
       yeast: null,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Add an other ingredient
+  addOtherIngredient: (ingredient: OtherIngredient) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      otherIngredients: [...(current.otherIngredients || []), ingredient],
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Update an other ingredient
+  updateOtherIngredient: (id: string, updates: Partial<OtherIngredient>) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      otherIngredients: (current.otherIngredients || []).map((i) =>
+        i.id === id ? { ...i, ...updates } : i
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Remove an other ingredient
+  removeOtherIngredient: (id: string) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      otherIngredients: (current.otherIngredients || []).filter((i) => i.id !== id),
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: updated });
