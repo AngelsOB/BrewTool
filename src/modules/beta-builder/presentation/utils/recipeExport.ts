@@ -178,6 +178,21 @@ export const generateRecipeMarkdown = (
   }
   lines.push("");
 
+  // Other Ingredients
+  lines.push("### Other Ingredients");
+  if (!recipe.otherIngredients || recipe.otherIngredients.length === 0) {
+    lines.push("- None");
+  } else {
+    recipe.otherIngredients.forEach((i) => {
+      lines.push(
+        `- ${i.name} — ${formatNumber(i.amount, 1)} ${i.unit} @ ${i.timing}${
+          i.notes ? ` (${i.notes})` : ""
+        }`
+      );
+    });
+  }
+  lines.push("");
+
   // Mash
   lines.push("## Mash Schedule");
   if (recipe.mashSteps.length === 0) {

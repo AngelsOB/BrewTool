@@ -1,4 +1,4 @@
-import type { Recipe, Fermentable, Hop, MashStep, FermentationStep, Yeast } from '../models/Recipe';
+import type { Recipe, Fermentable, Hop, MashStep, FermentationStep, Yeast, OtherIngredient, OtherIngredientCategory } from '../models/Recipe';
 
 const text = (parent: Element | null, tag: string): string | undefined => {
   const el = parent?.getElementsByTagName(tag)?.[0];
@@ -185,6 +185,40 @@ class BeerXmlImportService {
       });
     }
 
+    // Misc items (other ingredients)
+    const otherIngredients: OtherIngredient[] = [];
+    const miscParent = recipeEl.getElementsByTagName('MISCS')?.[0];
+    if (miscParent) {
+      const miscEls = Array.from(miscParent.getElementsByTagName('MISC'));
+      miscEls.forEach((m) => {
+        const amountKg = toNumber(text(m, 'AMOUNT')) ?? 0;
+        const useStr = (text(m, 'USE') || 'boil').toLowerCase();
+        const typeStr = (text(m, 'TYPE') || 'other').toLowerCase();
+
+        let timing: OtherIngredient['timing'] = 'boil';
+        if (useStr.includes('mash')) timing = 'mash';
+        else if (useStr.includes('primary') || useStr.includes('secondary')) timing = 'secondary';
+        else if (useStr.includes('bottling')) timing = 'bottling';
+
+        let category: OtherIngredientCategory = 'other';
+        if (typeStr.includes('water')) category = 'water-agent';
+        else if (typeStr.includes('fining')) category = 'fining';
+        else if (typeStr.includes('spice')) category = 'spice';
+        else if (typeStr.includes('flavor')) category = 'flavor';
+        else if (typeStr.includes('herb')) category = 'herb';
+
+        otherIngredients.push({
+          id: crypto.randomUUID(),
+          name: text(m, 'NAME') || 'Misc',
+          category,
+          amount: amountKg * 1000, // BeerXML stores in kg, convert to g
+          unit: 'g',
+          timing,
+          notes: text(m, 'NOTES'),
+        });
+      });
+    }
+
     const recipe: Recipe = {
       id: crypto.randomUUID(),
       name,
@@ -208,6 +242,7 @@ class BeerXmlImportService {
       fermentables,
       hops,
       yeast,
+      otherIngredients,
       mashSteps,
       waterChemistry: undefined,
       fermentationSteps,
