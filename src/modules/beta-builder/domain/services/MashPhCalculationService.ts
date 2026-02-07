@@ -9,7 +9,7 @@
  * References: Bru'n Water, Brewfather, Kai Troester's pH research
  */
 
-import type { Recipe, Fermentable } from '../models/Recipe';
+import type { Recipe, Fermentable, OtherIngredient } from '../models/Recipe';
 import type { WaterProfile, SaltAdditions } from './WaterChemistryService';
 import { waterChemistryService } from './WaterChemistryService';
 
@@ -236,6 +236,74 @@ const LACTIC_88_DENSITY_G_PER_ML = 1.209;
  * base additions we go through the RA path for consistency.
  */
 
+/* ------------------------------------------------------------------ */
+/*  Acid / base extraction from Other Ingredients                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Convert an OtherIngredient amount to mL based on its unit.
+ * Supports ml, l, tsp (~5 mL), tbsp (~15 mL), drops (~0.05 mL).
+ */
+function toMl(amount: number, unit: string): number {
+  switch (unit.toLowerCase()) {
+    case 'ml': return amount;
+    case 'l':  return amount * 1000;
+    case 'tsp': return amount * 4.93;
+    case 'tbsp': return amount * 14.79;
+    case 'drops': return amount * 0.05;
+    default: return 0; // g, tablet, etc. — not a volume unit for liquids
+  }
+}
+
+/**
+ * Convert an OtherIngredient amount to grams based on its unit.
+ * Supports g, kg, oz, lb, tsp (~5 g approx), tbsp (~15 g approx).
+ */
+function toGrams(amount: number, unit: string): number {
+  switch (unit.toLowerCase()) {
+    case 'g': return amount;
+    case 'kg': return amount * 1000;
+    case 'oz': return amount * 28.3495;
+    case 'lb': return amount * 453.592;
+    case 'tsp': return amount * 4.6; // baking soda density ~0.92 g/mL × 5 mL
+    case 'tbsp': return amount * 13.8;
+    default: return 0;
+  }
+}
+
+/**
+ * Extract effective lactic acid (mL of 88%) and baking soda (g) from
+ * the recipe's otherIngredients, considering only mash-timed additions.
+ *
+ * Recognizes common names for lactic acid and baking soda.
+ * Phosphoric acid / other acids are not yet modeled.
+ */
+function extractAcidBaseFromIngredients(
+  ingredients: OtherIngredient[]
+): { lacticAcid88Ml: number; bakingSodaG: number } {
+  let lacticMl = 0;
+  let sodaG = 0;
+
+  for (const ing of ingredients) {
+    // Only count mash additions for pH impact
+    if (ing.timing !== 'mash') continue;
+
+    const n = ing.name.toLowerCase();
+
+    if (n.includes('lactic acid') || n.includes('lactic')) {
+      lacticMl += toMl(ing.amount, ing.unit);
+    } else if (
+      n.includes('baking soda') ||
+      n.includes('sodium bicarbonate') ||
+      n.includes('nahco3')
+    ) {
+      sodaG += toGrams(ing.amount, ing.unit);
+    }
+  }
+
+  return { lacticAcid88Ml: lacticMl, bakingSodaG: sodaG };
+}
+
 /**
  * Mash pH adjustment recommendation.
  * Only one of lacticAcid88Ml / bakingSodaG will be > 0.
@@ -261,33 +329,62 @@ export class MashPhCalculationService {
     const grainPh = this.calculateGrainOnlyPh(recipe.fermentables);
     if (grainPh == null) return null;
 
-    // If no water chemistry, return grain-only pH (DI water assumption)
-    if (!recipe.waterChemistry) return grainPh;
-
-    const { sourceProfile, saltAdditions } = recipe.waterChemistry;
-
-    // Calculate the mash water profile (source + mash-portion salt additions)
-    const mashProfile = this.getMashWaterProfile(
-      sourceProfile,
-      saltAdditions,
-      mashWaterL,
-      recipe,
-    );
-
-    // Calculate RA from the mash water
-    const ra = calculateResidualAlkalinity(mashProfile);
-
-    // Mash thickness factor
     const totalGrainKg = recipe.fermentables.reduce(
       (sum, f) => sum + f.weightKg,
       0,
     );
-    const thickness = totalGrainKg > 0 ? mashWaterL / totalGrainKg : STANDARD_THICKNESS_L_PER_KG;
-    const thicknessFactor = thickness / STANDARD_THICKNESS_L_PER_KG;
 
-    // Apply RA adjustment
-    const phShift = ra * RA_PH_COEFFICIENT * thicknessFactor;
-    return grainPh + phShift;
+    let ph = grainPh;
+
+    // Apply RA adjustment from water chemistry
+    if (recipe.waterChemistry) {
+      const { sourceProfile, saltAdditions } = recipe.waterChemistry;
+
+      // Calculate the mash water profile (source + mash-portion salt additions)
+      const mashProfile = this.getMashWaterProfile(
+        sourceProfile,
+        saltAdditions,
+        mashWaterL,
+        recipe,
+      );
+
+      // Calculate RA from the mash water
+      const ra = calculateResidualAlkalinity(mashProfile);
+
+      // Mash thickness factor
+      const thickness = totalGrainKg > 0 ? mashWaterL / totalGrainKg : STANDARD_THICKNESS_L_PER_KG;
+      const thicknessFactor = thickness / STANDARD_THICKNESS_L_PER_KG;
+
+      // Apply RA adjustment
+      ph += ra * RA_PH_COEFFICIENT * thicknessFactor;
+    }
+
+    // Apply acid/base additions from Other Ingredients (mash-timed only)
+    if (recipe.otherIngredients && recipe.otherIngredients.length > 0 && totalGrainKg > 0) {
+      const { lacticAcid88Ml, bakingSodaG } = extractAcidBaseFromIngredients(recipe.otherIngredients);
+
+      if (lacticAcid88Ml > 0) {
+        // Reverse Kolbach: how much pH does this much lactic acid lower?
+        // lacticGrams = lacticMl * density
+        const lacticGrams = lacticAcid88Ml * LACTIC_88_DENSITY_G_PER_ML;
+        // reductionUnits = lacticGrams / (factor * totalGrainKg)
+        const reductionUnits = lacticGrams / (LACTIC_88_G_PER_KG_PER_01_PH * totalGrainKg);
+        ph -= reductionUnits * 0.1;
+      }
+
+      if (bakingSodaG > 0 && mashWaterL > 0) {
+        // Baking soda raises pH via RA framework
+        const thickness = mashWaterL / totalGrainKg;
+        const thicknessFactor = thickness / STANDARD_THICKNESS_L_PER_KG;
+        const hco3PpmPerGPerL = 726.3;
+        const alkalinityFactor = 50 / 61.016;
+        const raPerGPerL = hco3PpmPerGPerL * alkalinityFactor;
+        const gramsPerL = bakingSodaG / mashWaterL;
+        ph += gramsPerL * raPerGPerL * RA_PH_COEFFICIENT * thicknessFactor;
+      }
+    }
+
+    return ph;
   }
 
   /**
