@@ -20,6 +20,7 @@ import StyleSelectorModal from './StyleSelectorModal';
 import StyleRangeComparison from './StyleRangeComparison';
 import { srmToRgb } from '../../utils/srmColorUtils';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
+import BrewDayChecklistSection from './BrewDayChecklistSection';
 
 export default function BetaBuilderPage() {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
@@ -143,7 +144,7 @@ export default function BetaBuilderPage() {
           }`}
         >
           <div className="max-w-4xl mx-auto px-8 py-2">
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-7 gap-2">
               {/* ABV */}
               <div className="text-center">
                 <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
@@ -197,6 +198,26 @@ export default function BetaBuilderPage() {
                   <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     {calculations.srm.toFixed(1)}
                   </div>
+                </div>
+              </div>
+
+              {/* Calories */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Calories
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.calories}
+                </div>
+              </div>
+
+              {/* Carbs */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Carbs
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.carbsG.toFixed(1)}g
                 </div>
               </div>
             </div>
@@ -214,7 +235,7 @@ export default function BetaBuilderPage() {
           }`}
         >
           <div className="max-w-4xl mx-auto px-8 py-2">
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-7 gap-2">
               {/* ABV */}
               <div className="text-center">
                 <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
@@ -268,6 +289,26 @@ export default function BetaBuilderPage() {
                   <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     {calculations.srm.toFixed(1)}
                   </div>
+                </div>
+              </div>
+
+              {/* Calories */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Calories
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.calories}
+                </div>
+              </div>
+
+              {/* Carbs */}
+              <div className="text-center">
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                  Carbs
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.carbsG.toFixed(1)}g
                 </div>
               </div>
             </div>
@@ -406,6 +447,28 @@ export default function BetaBuilderPage() {
                   {calculations.srm.toFixed(1)}
                 </div>
               </div>
+
+              {/* Calories */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center shadow-sm">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Calories
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.calories}
+                </div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500">per 12 oz</div>
+              </div>
+
+              {/* Carbs */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center shadow-sm">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Carbs
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {calculations.carbsG.toFixed(1)}g
+                </div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500">per 12 oz</div>
+              </div>
             </div>
           )}
 
@@ -460,6 +523,9 @@ export default function BetaBuilderPage() {
         {/* Fermentation - Phase 5 addition */}
         <FermentationSection />
 
+        {/* Brew Day Checklist */}
+        <BrewDayChecklistSection />
+
         {/* Calculations Display */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg shadow-lg p-6 mb-6 border border-green-200/50 dark:border-green-800/50">
           <h2 className="text-xl font-bold mb-4">
@@ -496,6 +562,20 @@ export default function BetaBuilderPage() {
                 <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                   {calculations.srm.toFixed(1)}
                 </div>
+              </div>
+              <div className="bg-[rgb(var(--card))] rounded-lg p-4 shadow">
+                <div className="text-sm font-semibold mb-1">Calories</div>
+                <div className="text-2xl font-bold">
+                  {calculations.calories}
+                </div>
+                <div className="text-xs text-gray-400">per 12 oz</div>
+              </div>
+              <div className="bg-[rgb(var(--card))] rounded-lg p-4 shadow">
+                <div className="text-sm font-semibold mb-1">Carbs</div>
+                <div className="text-2xl font-bold">
+                  {calculations.carbsG.toFixed(1)}g
+                </div>
+                <div className="text-xs text-gray-400">per 12 oz</div>
               </div>
             </div>
           ) : (

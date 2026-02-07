@@ -451,6 +451,7 @@ export default function HopSection() {
                             : null;
                         })
                         .filter((s): s is { name: string; flavor: HopFlavorProfile } => s !== null)
+                        .filter((s, i, arr) => arr.findIndex((x) => x.name === s.name) === i)
                 }
                 maxValue={5}
                 size={280}

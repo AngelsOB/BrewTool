@@ -46,8 +46,9 @@ type RecipeStore = {
   addHop: (hop: Hop) => void;
   updateHop: (id: string, updates: Partial<Hop>) => void;
   removeHop: (id: string) => void;
-  setYeast: (yeast: Yeast) => void;
-  clearYeast: () => void;
+  addYeast: (yeast: Yeast) => void;
+  updateYeast: (id: string, updates: Partial<Yeast>) => void;
+  removeYeast: (id: string) => void;
 
   // Other ingredient actions
   addOtherIngredient: (ingredient: OtherIngredient) => void;
@@ -121,7 +122,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       },
       fermentables: [],
       hops: [],
-      yeast: null,
+      yeasts: [],
       otherIngredients: [],
       mashSteps: [],
       fermentationSteps: [],
@@ -349,27 +350,42 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     set({ currentRecipe: updated });
   },
 
-  // Set yeast
-  setYeast: (yeast: Yeast) => {
+  // Add yeast
+  addYeast: (yeast: Yeast) => {
     const current = get().currentRecipe;
     if (!current) return;
 
     const updated = {
       ...current,
-      yeast,
+      yeasts: [...current.yeasts, yeast],
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: updated });
   },
 
-  // Clear yeast
-  clearYeast: () => {
+  // Update yeast
+  updateYeast: (id: string, updates: Partial<Yeast>) => {
     const current = get().currentRecipe;
     if (!current) return;
 
     const updated = {
       ...current,
-      yeast: null,
+      yeasts: current.yeasts.map((y) =>
+        y.id === id ? { ...y, ...updates } : y
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Remove yeast
+  removeYeast: (id: string) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      yeasts: current.yeasts.filter((y) => y.id !== id),
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: updated });

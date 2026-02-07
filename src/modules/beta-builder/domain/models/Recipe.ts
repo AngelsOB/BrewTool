@@ -172,6 +172,36 @@ export type OtherIngredient = {
   notes?: string;
 };
 
+/**
+ * Brew day checkpoint stages — defines when a checklist item appears in the markdown
+ */
+export type BrewDayStage =
+  | 'water-prep'       // Before mashing (strike water heating)
+  | 'mash'             // During mash
+  | 'pre-boil'         // After mash, before boil
+  | 'boil'             // During the boil
+  | 'post-boil'        // Immediately after boil / whirlpool
+  | 'pitch'            // Yeast pitching
+  | 'fermentation'     // During fermentation
+  | 'dry-hop'          // Dry hop timing
+  | 'cold-crash'       // Cold crash start
+  | 'packaging';       // Packaging / carbonation
+
+/**
+ * A single brew day checklist item — can be a static default or user-customised
+ */
+export type BrewDayChecklistItem = {
+  id: string;
+  /** Short label shown as the checkbox line */
+  label: string;
+  /** When in the brew day this checkpoint appears */
+  stage: BrewDayStage;
+  /** Optional longer description / instructions */
+  details?: string;
+  /** Whether this item is enabled (user can toggle off defaults they don't need) */
+  enabled: boolean;
+};
+
 export type Recipe = {
   id: RecipeId;
   name: string;
@@ -221,7 +251,7 @@ export type Recipe = {
   /** Ingredients */
   fermentables: Fermentable[];
   hops: Hop[];
-  yeast: Yeast | null;
+  yeasts: Yeast[];
   otherIngredients: OtherIngredient[];
 
   /** Mash schedule (optional - for all-grain recipes) */
@@ -255,6 +285,9 @@ export type Recipe = {
   /** Fermentation schedule - list of fermentation steps */
   fermentationSteps: FermentationStep[];
 
+  /** Brew day checklist — per-recipe overrides (optional, defaults generated at export time) */
+  brewDayChecklist?: BrewDayChecklistItem[];
+
   /** Timestamps */
   createdAt: string;
   updatedAt: string;
@@ -275,6 +308,10 @@ export type RecipeCalculations = {
   ibu: number;
   /** Standard Reference Method color */
   srm: number;
+  /** Estimated calories per 355 ml (12 oz) serving */
+  calories: number;
+  /** Estimated carbohydrates (g) per 355 ml (12 oz) serving */
+  carbsG: number;
   /** Pre-boil volume in liters */
   preBoilVolumeL: number;
   /** Mash water volume in liters */
@@ -283,6 +320,14 @@ export type RecipeCalculations = {
   spargeWaterL: number;
   /** Total water needed in liters */
   totalWaterL: number;
+  /** Estimated mash pH (null if cannot be calculated, e.g., extract-only) */
+  estimatedMashPh: number | null;
+  /** Recommended acid/base adjustment to reach target pH (null if none needed or pH unavailable) */
+  mashPhAdjustment: {
+    targetPh: number;
+    lacticAcid88Ml: number;
+    bakingSodaG: number;
+  } | null;
 };
 
 /**
