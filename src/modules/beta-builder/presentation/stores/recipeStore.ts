@@ -11,6 +11,14 @@ import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';
+import { HOP_PRESETS } from '../../../../utils/presets';
+
+/** Case-insensitive map from hop name → flavor profile */
+const hopFlavorLookup = new Map(
+  HOP_PRESETS
+    .filter((p) => p.flavor)
+    .map((p) => [p.name.toLowerCase(), p.flavor!])
+);
 
 type RecipeStore = {
   // State (like @Published properties)
@@ -233,8 +241,17 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         return null;
       }
       const now = new Date().toISOString();
+      // Enrich hops missing flavor profiles from presets
+      const hops = Array.isArray(parsed.hops)
+        ? parsed.hops.map((h: Record<string, unknown>) => {
+            if (h.flavor) return h;
+            const flavor = hopFlavorLookup.get((h.name as string || '').toLowerCase());
+            return flavor ? { ...h, flavor } : h;
+          })
+        : parsed.hops;
       const recipe: Recipe = {
         ...parsed,
+        hops,
         id: crypto.randomUUID(),
         currentVersion: 1,
         parentRecipeId: undefined,
