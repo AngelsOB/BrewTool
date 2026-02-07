@@ -17,6 +17,7 @@ import { useBrewSessionStore } from "../stores/brewSessionStore";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import {
   downloadTextFile,
+  generateBeerXml,
   generateRecipeMarkdown,
   sanitizeFileName,
 } from "../utils/recipeExport";
@@ -332,6 +333,16 @@ function RecipeCard({
     );
   };
 
+  const handleExportBeerXml = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const xml = generateBeerXml(recipe);
+    downloadTextFile(
+      `${sanitizeFileName(recipe.name)}.xml`,
+      xml,
+      "text/xml"
+    );
+  };
+
   const handleNewVersion = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowNewVersionDialog(true);
@@ -448,6 +459,15 @@ function RecipeCard({
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 Export JSON
+              </button>
+              <button
+                onClick={(e) => {
+                  handleExportBeerXml(e);
+                  setIsVersionMenuOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Export BeerXML
               </button>
               <div className="my-1 border-t border-[rgb(var(--border))]" />
               <button

@@ -1,5 +1,6 @@
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 import { recipeCalculationService } from "../../domain/services/RecipeCalculationService";
+import { beerXmlExportService } from "../../domain/services/BeerXmlExportService";
 
 const litersToGallons = (l: number | undefined): number | undefined =>
   l == null ? undefined : l * 0.2641720524;
@@ -39,6 +40,9 @@ export const downloadTextFile = (
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
+export const generateBeerXml = (recipe: Recipe): string =>
+  beerXmlExportService.generate(recipe);
 
 export const generateRecipeMarkdown = (
   recipe: Recipe,
