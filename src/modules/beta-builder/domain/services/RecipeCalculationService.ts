@@ -6,7 +6,7 @@
  * NO React dependencies, NO hooks, NO localStorage - pure logic only.
  */
 
-import type { Recipe, RecipeCalculations, Fermentable, Hop } from '../models/Recipe';
+import type { Recipe, RecipeCalculations, Hop } from '../models/Recipe';
 import { volumeCalculationService } from './VolumeCalculationService';
 
 export class RecipeCalculationService {

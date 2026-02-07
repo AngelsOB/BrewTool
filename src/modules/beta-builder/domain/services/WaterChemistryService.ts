@@ -221,7 +221,6 @@ export class WaterChemistryService {
     const spargeRatio = spargeWaterL / totalWaterL;
 
     // Calculate deltas needed
-    const caDelta = Math.max(0, targetProfile.Ca - sourceProfile.Ca);
     const clDelta = Math.max(0, targetProfile.Cl - sourceProfile.Cl);
     const so4Delta = Math.max(0, targetProfile.SO4 - sourceProfile.SO4);
 
