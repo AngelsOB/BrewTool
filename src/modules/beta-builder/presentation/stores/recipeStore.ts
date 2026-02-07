@@ -29,6 +29,7 @@ type RecipeStore = {
   deleteRecipe: (id: RecipeId) => void;
   setCurrentRecipe: (recipe: Recipe | null) => void;
   importFromBeerXml: (xml: string) => Recipe | null;
+  importFromJson: (json: string) => Recipe | null;
 
   // Ingredient actions
   addFermentable: (fermentable: Fermentable) => void;
@@ -213,6 +214,34 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       return recipe;
     } catch (error) {
       set({ error: 'Failed to import BeerXML' });
+      return null;
+    }
+  },
+
+  // Import JSON and persist
+  importFromJson: (json: string) => {
+    try {
+      const parsed = JSON.parse(json);
+      if (!parsed || typeof parsed !== 'object' || !parsed.name) {
+        set({ error: 'Invalid recipe JSON' });
+        return null;
+      }
+      const now = new Date().toISOString();
+      const recipe: Recipe = {
+        ...parsed,
+        id: crypto.randomUUID(),
+        currentVersion: 1,
+        parentRecipeId: undefined,
+        parentVersionNumber: undefined,
+        createdAt: now,
+        updatedAt: now,
+      };
+      recipeRepository.save(recipe);
+      const recipes = recipeRepository.loadAll();
+      set({ recipes, error: null });
+      return recipe;
+    } catch (error) {
+      set({ error: 'Failed to import JSON' });
       return null;
     }
   },

@@ -45,8 +45,10 @@ export default function RecipeListPage() {
     setCurrentRecipe,
     isLoading,
     importFromBeerXml,
+    importFromJson,
   } = useRecipeStore();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const jsonFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
@@ -219,6 +221,35 @@ export default function RecipeListPage() {
                 className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] whitespace-nowrap"
               >
                 Import BeerXML
+              </button>
+              <input
+                ref={jsonFileInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const text =
+                      typeof reader.result === "string" ? reader.result : "";
+                    const imported = importFromJson(text);
+                    if (imported) {
+                      loadRecipes();
+                    } else {
+                      alert("Failed to import JSON");
+                    }
+                  };
+                  reader.readAsText(file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                onClick={() => jsonFileInputRef.current?.click()}
+                className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] whitespace-nowrap"
+              >
+                Import JSON
               </button>
             </div>
           </div>
