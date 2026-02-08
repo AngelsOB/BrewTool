@@ -14,6 +14,7 @@ import { usePresetStore } from "../stores/presetStore";
 import { fermentableCalculationService } from "../../domain/services/FermentableCalculationService";
 import type { Fermentable } from "../../domain/models/Recipe";
 import type { FermentablePreset } from "../../domain/models/Presets";
+import { getFermentability } from "../../data/fermentablePresets";
 import CustomFermentableModal from "./CustomFermentableModal";
 import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
 
@@ -57,6 +58,7 @@ export default function FermentableSection() {
       efficiencyPercent:
         preset.type === "extract" || preset.type === "sugar" ? 100 : 75,
       originCode: preset.originCode,
+      fermentability: getFermentability(preset),
     };
     addFermentable(newFermentable);
     setIsPickerOpen(false);

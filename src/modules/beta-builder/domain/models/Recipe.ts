@@ -20,6 +20,8 @@ export type Fermentable = {
   efficiencyPercent: number;
   /** Origin country code (e.g., "US", "DE") */
   originCode?: string;
+  /** Fermentability 0-1 (e.g., 0.82 for base malt, 0 for lactose). If unset, inferred from name/category. */
+  fermentability?: number;
 };
 
 export type Hop = {
