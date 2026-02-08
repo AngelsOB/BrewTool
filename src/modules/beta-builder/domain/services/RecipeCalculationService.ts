@@ -17,7 +17,7 @@ export class RecipeCalculationService {
    */
   calculate(recipe: Recipe): RecipeCalculations {
     const og = this.calculateOG(recipe);
-    const fg = this.calculateFG(og, recipe);
+    const fg = this.calculateFG(recipe);
     const abv = this.calculateABV(og, fg);
     const ibu = this.calculateIBU(recipe, og);
     const srm = this.calculateSRM(recipe);
@@ -98,7 +98,7 @@ export class RecipeCalculationService {
    *
    * FG = 1 + (nonFermentablePts + fermentablePts × (1 − effAtt)) / 1000
    */
-  calculateFG(og: number, recipe: Recipe): number {
+  calculateFG(recipe: Recipe): number {
     const { fermentables, batchVolumeL, equipment } = recipe;
 
     // --- 1. Split gravity points by fermentability ---
