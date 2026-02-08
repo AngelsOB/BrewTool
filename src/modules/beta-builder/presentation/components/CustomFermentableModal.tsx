@@ -27,7 +27,7 @@ export default function CustomFermentableModal({
   const [potentialGu, setPotentialGu] = useState(37);
   const [colorLovibond, setColorLovibond] = useState(2);
   const [type, setType] = useState<FermentablePreset["type"]>("grain");
-  const [fermentabilityPct, setFermentabilityPct] = useState(82);
+  const [fermentabilityPct, setFermentabilityPct] = useState(100);
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -52,7 +52,7 @@ export default function CustomFermentableModal({
     setPotentialGu(37);
     setColorLovibond(2);
     setType("grain");
-    setFermentabilityPct(82);
+    setFermentabilityPct(100);
     onClose();
   };
 
@@ -136,7 +136,7 @@ export default function CustomFermentableModal({
                 setType(newType);
                 // Update fermentability default for the new type
                 const defaults: Record<FermentablePreset["type"], number> = {
-                  grain: 82, adjunct_mashable: 72, extract: 78, sugar: 100,
+                  grain: 100, adjunct_mashable: 100, extract: 78, sugar: 100,
                 };
                 setFermentabilityPct(defaults[newType]);
               }}
@@ -164,7 +164,7 @@ export default function CustomFermentableModal({
               max="100"
             />
             <p className="text-xs mt-1">
-              Base malts ~82%, Crystal ~60%, Sugar 100%, Lactose 0%
+              Base malts 100%, Crystal ~50%, Sugar 100%, Lactose 0%
             </p>
           </div>
         </div>

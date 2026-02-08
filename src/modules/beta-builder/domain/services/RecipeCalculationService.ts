@@ -156,7 +156,8 @@ export class RecipeCalculationService {
     for (const step of recipe.mashSteps) {
       const t = Math.max(0, step.durationMinutes || 0);
       stepTimeTotal += t;
-      tempAdjAcc += (66 - (step.temperatureC || 66)) * 0.006 * t;
+      // Braukaiser research: ~1% attenuation change per °C (6% over 64→70°C)
+      tempAdjAcc += (66 - (step.temperatureC || 66)) * 0.01 * t;
       if (step.type === 'decoction') decoAdjAcc += 0.005 * t;
     }
     const avgTempAdj = stepTimeTotal > 0 ? tempAdjAcc / stepTimeTotal : 0;

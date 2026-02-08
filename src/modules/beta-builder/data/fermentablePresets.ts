@@ -112,12 +112,12 @@ export function categorizeFermentable(preset: FermentablePreset): FermentableGro
  * the `fermentability` field on FermentablePreset or Recipe.Fermentable.
  */
 const CATEGORY_FERMENTABILITY: Record<FermentableGroup, number> = {
-  "Base malts": 0.82,               // Mostly maltose/maltotriose
-  "Crystal/Caramel": 0.60,          // Significant unfermentable dextrins from kilning
-  "Roasted": 0.60,                  // Similar to crystal — heavily modified starch
-  "Toasted & specialty": 0.72,      // Between base and crystal
-  "Adjuncts (mashable/flaked)": 0.72,// Varies, reasonable middle ground
-  "Extracts": 0.78,                 // Pre-converted, typical wort fermentability
+  "Base malts": 1.00,               // Pure starch — mash temp determines fermentable split
+  "Crystal/Caramel": 0.50,          // Pre-converted during kilning; ~40-50% fermentable when steeped alone
+  "Roasted": 0.60,                  // Heavily modified starch, partially pre-converted
+  "Toasted & specialty": 0.85,      // Lightly pre-converted, mostly mashable starch
+  "Adjuncts (mashable/flaked)": 1.00,// Pure starch (oats, wheat, rice) — mash temp handles the split
+  "Extracts": 0.78,                 // Pre-mashed wort, typical fermentability already set
   "Sugars": 1.00,                   // Fully fermentable (overridden for lactose/maltodextrin)
   "Lauter aids & other": 0.00,      // Rice hulls etc — no gravity contribution
 };
@@ -129,6 +129,8 @@ const CATEGORY_FERMENTABILITY: Record<FermentableGroup, number> = {
 const NAME_OVERRIDES: Array<{ pattern: RegExp; fermentability: number }> = [
   { pattern: /\blactose\b/i, fermentability: 0 },
   { pattern: /\bmaltodextrin\b/i, fermentability: 0 },
+  { pattern: /\bcara\s*pils\b/i, fermentability: 0.50 },  // Dextrine malt — adds body, low fermentability
+  { pattern: /\bdextrin[e]?\s*malt\b/i, fermentability: 0.50 },
 ];
 
 /**
