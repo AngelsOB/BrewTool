@@ -178,10 +178,18 @@ export function mergeChecklist(
 
   const userById = new Map(userItems.map(i => [i.id, i]));
 
-  // Replace defaults with user overrides where they exist
-  const merged: BrewDayChecklistItem[] = defaults.map(d =>
-    userById.has(d.id) ? userById.get(d.id)! : d
-  );
+  // Replace defaults with user overrides where they exist.
+  // For default items (generated targets), always use freshly-computed
+  // label/details/stage but preserve the user's enabled toggle so
+  // targets never go stale when the recipe changes.
+  const merged: BrewDayChecklistItem[] = defaults.map(d => {
+    const saved = userById.get(d.id);
+    if (!saved) return d;
+    if (d.id.startsWith('default-')) {
+      return { ...d, enabled: saved.enabled };
+    }
+    return saved;
+  });
 
   // Collect custom user items not present in defaults
   const defaultIds = new Set(defaults.map(d => d.id));
