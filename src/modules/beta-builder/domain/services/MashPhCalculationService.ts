@@ -37,7 +37,7 @@ export type GrainPhCategory =
 const GRAIN_DI_PH: Record<GrainPhCategory, { min: number; max: number }> = {
   base:       { min: 5.65, max: 5.72 },
   wheat:      { min: 5.95, max: 6.05 },  // deLange: wheat is less acidic than barley
-  munich:     { min: 5.45, max: 5.55 },
+  munich:     { min: 4.70, max: 5.55 },  // Interpolated by color: 4L→5.55, 200L+→4.70
   crystal:    { min: 4.50, max: 5.20 },
   roasted:    { min: 4.45, max: 4.60 },  // Tighter range per Bru'n Water data
   acidulated: { min: 3.35, max: 3.45 },
@@ -160,11 +160,20 @@ export function classifyGrainForPh(
 /**
  * Get the distilled-water mash pH for a grain based on its category and color.
  *
- * For crystal and roasted malts, interpolates within the DI pH range
- * based on color (darker = lower pH).
+ * For crystal, munich/kilned, and roasted malts, interpolates within the
+ * DI pH range based on color (darker = lower pH).
  */
 export function getGrainDiPh(category: GrainPhCategory, colorLovibond: number): number {
   const range = GRAIN_DI_PH[category];
+
+  if (category === 'munich') {
+    // Kilned malts: 4L → 5.55, 200L+ → 4.70
+    // Covers Vienna (4L) through Coffee Malt (230L)
+    const minColor = 4;
+    const maxColor = 200;
+    const t = Math.min(1, Math.max(0, (colorLovibond - minColor) / (maxColor - minColor)));
+    return range.max - t * (range.max - range.min);
+  }
 
   if (category === 'crystal') {
     // Interpolate: 10L → 5.20, 120L+ → 4.50
