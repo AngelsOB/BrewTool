@@ -284,14 +284,14 @@ function effectiveAlkalinityMeqPerL(profile: WaterProfile): number {
 /**
  * Proton balance function for bisection solver.
  *
- * f(pH) = waterAlk + Σ maltDeficit_i(pH) + acidMeq − baseMeq
+ * f(pH) = waterAlk + Σ maltDeficit_i(pH) − acidMeq + baseMeq
  *
  * At equilibrium f(pH) = 0.
  *
- * Water alkalinity (positive) resists the pH dropping below ~8.3.
- * Each malt pulls pH toward its own pHdi via its buffering capacity.
- * Acid adds protons (positive mEq) → drives pH down.
- * Base removes protons (positive mEq, subtracted) → drives pH up.
+ * Water alkalinity (positive when HCO3 dominates) resists pH drop.
+ * Each malt pulls pH toward its pHdi via buffering capacity.
+ * Acid provides H⁺ (consumes alkalinity → subtracted → lowers pH).
+ * Base provides OH⁻ (adds alkalinity → added → raises pH).
  */
 function protonBalance(
   pH: number,
@@ -304,7 +304,7 @@ function protonBalance(
   for (const g of grains) {
     maltDeficit += g.weightKg * MALT_BUFFERING_MEQ_KG_PH * (pH - g.pHdi);
   }
-  return waterAlkMeq + maltDeficit + acidMeq - baseMeq;
+  return waterAlkMeq + maltDeficit - acidMeq + baseMeq;
 }
 
 /**
