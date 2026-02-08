@@ -111,10 +111,26 @@ export function classifyGrainForPh(
     return 'wheat';
   }
 
-  // Munich / Vienna
+  // Munich / Vienna / kilned specialty malts
+  // These are significantly more acidic than pale base malt (pHdi ~5.3-5.5)
   if (
     n.includes('munich') ||
-    n.includes('vienna')
+    n.includes('vienna') ||
+    n.includes('biscuit') ||
+    n.includes('melanoidin') ||
+    n.includes('melano') ||
+    n.includes('aromatic') ||
+    n.includes('amber') ||
+    n.includes('brown') ||
+    n.includes('victory') ||
+    n.includes('special roast') ||
+    n.includes('honey malt') ||
+    n.includes('abbey') ||
+    n.includes('brumalt') ||
+    n.includes('cookie') ||
+    n.includes('coffee malt') ||
+    n.includes('red x') ||
+    n.includes('red ale')
   ) {
     return 'munich';
   }
@@ -131,7 +147,13 @@ export function classifyGrainForPh(
     return 'adjunct';
   }
 
-  // Default: base malt
+  // Color-based fallback: anything > 10L that didn't match above
+  // is a kilned specialty malt, not a pale base malt
+  if (colorLovibond > 10) {
+    return 'munich';
+  }
+
+  // Default: pale base malt
   return 'base';
 }
 
