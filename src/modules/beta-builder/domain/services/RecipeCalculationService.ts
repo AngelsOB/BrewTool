@@ -231,7 +231,44 @@ export class RecipeCalculationService {
   calculateSingleHopIBU(hop: Hop, og: number, batchVolumeGal: number): number {
     const { alphaAcid, grams, type, timeMinutes = 0, temperatureC = 80, whirlpoolTimeMinutes } = hop;
 
-    // AA utilization based on addition type
+    // --- Dry hop: humulinone dissolution model (not Tinseth) ---
+    // Dry hopping contributes bitterness via humulinone (oxidized alpha acid)
+    // extraction, NOT via thermal isomerization. Requires its own model.
+    //
+    // Science basis (Maye et al. 2016, Lafontaine & Shellhammer 2017):
+    //   - Pellet hops contain ~0.3-0.5% humulinones by weight (use 0.4% avg)
+    //   - ~75% of humulinones extract into beer at fermentation temps in 24h
+    //   - Extraction rate drops at very high dry-hop rates (saturation)
+    //   - Humulinones have an IBU spectrophotometer response factor of 0.54
+    //     (i.e. 1 mg/L humulinones ≈ 0.54 IBU on a spectrophotometer)
+    //   - Non-isomerized alpha acids also dissolve (~1% at fermentation temps),
+    //     contributing at ~0.62 IBU response factor per mg/L
+    if (type === 'dry hop') {
+      const batchVolumeL = batchVolumeGal / 0.264172;
+      const dryHopRateGL = grams / batchVolumeL;
+
+      // Humulinone contribution
+      const humulinoneFraction = 0.004;  // ~0.4% of hop weight is humulinones (pellets)
+      const humulinoneMg = grams * humulinoneFraction * 1000; // convert g → mg
+      // Extraction efficiency: ~75% at moderate rates, decreasing at high rates
+      // Maye 2016: ~98% at 0.5 lb/bbl (~4 g/L), ~47% at 2 lb/bbl (~16 g/L)
+      const extractionRate = 0.75 * Math.exp(-0.04 * Math.max(0, dryHopRateGL - 4));
+      const humulinonePpm = (humulinoneMg * extractionRate) / batchVolumeL;
+      const humulinoneIbu = humulinonePpm * 0.54;
+
+      // Non-isomerized alpha acid contribution
+      // ~1% of alpha acids dissolve at fermentation temps
+      // (5.9% figure from Alchemy Overlord SMPH is for hot-side oxidation, not cold dry hop)
+      // Calibrated against Maye 2016: 142g Centennial/10%AA/16L → +18.5 IBU measured
+      const alphaAcidMg = grams * (alphaAcid / 100) * 1000;
+      const dissolvedAaMg = alphaAcidMg * 0.01;
+      const dissolvedAaPpm = dissolvedAaMg / batchVolumeL;
+      const alphaAcidIbu = dissolvedAaPpm * 0.62;
+
+      return humulinoneIbu + alphaAcidIbu;
+    }
+
+    // --- All other types: Tinseth isomerization model ---
     let utilization = 0;
 
     switch (type) {
@@ -241,16 +278,16 @@ export class RecipeCalculationService {
       case 'first wort':
         utilization = this.tinsethUtilization(timeMinutes + 20, og); // FWH gets bonus time
         break;
-      case 'whirlpool':
+      case 'whirlpool': {
         // Use whirlpoolTimeMinutes if available, fallback to timeMinutes for backward compatibility
         const wpTime = whirlpoolTimeMinutes ?? timeMinutes ?? 15;
         utilization = this.whirlpoolUtilization(wpTime, temperatureC, og);
         break;
-      case 'dry hop':
-        utilization = 0.05; // 5% contribution from dry hopping
-        break;
+      }
       case 'mash':
-        utilization = 0.02; // 2% contribution from mash hopping
+        // BeerSmith approach: -80% reduction vs equivalent boil (i.e. 20% of boil utilization)
+        // Mash temps (~65°C) are well below isomerization threshold; minimal carryover
+        utilization = this.tinsethUtilization(timeMinutes || 5, og) * 0.20;
         break;
     }
 
