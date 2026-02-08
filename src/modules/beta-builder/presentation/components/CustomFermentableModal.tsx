@@ -27,6 +27,7 @@ export default function CustomFermentableModal({
   const [potentialGu, setPotentialGu] = useState(37);
   const [colorLovibond, setColorLovibond] = useState(2);
   const [type, setType] = useState<FermentablePreset["type"]>("grain");
+  const [fermentabilityPct, setFermentabilityPct] = useState(82);
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -39,6 +40,7 @@ export default function CustomFermentableModal({
       potentialGu,
       colorLovibond,
       type,
+      fermentability: fermentabilityPct / 100,
     };
 
     onSave(newPreset);
@@ -50,6 +52,7 @@ export default function CustomFermentableModal({
     setPotentialGu(37);
     setColorLovibond(2);
     setType("grain");
+    setFermentabilityPct(82);
     onClose();
   };
 
@@ -128,7 +131,15 @@ export default function CustomFermentableModal({
             </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as FermentablePreset["type"])}
+              onChange={(e) => {
+                const newType = e.target.value as FermentablePreset["type"];
+                setType(newType);
+                // Update fermentability default for the new type
+                const defaults: Record<FermentablePreset["type"], number> = {
+                  grain: 82, adjunct_mashable: 72, extract: 78, sugar: 100,
+                };
+                setFermentabilityPct(defaults[newType]);
+              }}
               className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
             >
               <option value="grain">Grain (Malt)</option>
@@ -136,6 +147,25 @@ export default function CustomFermentableModal({
               <option value="extract">Extract</option>
               <option value="sugar">Sugar</option>
             </select>
+          </div>
+
+          {/* Fermentability */}
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Fermentability (%)
+            </label>
+            <input
+              type="number"
+              value={fermentabilityPct}
+              onChange={(e) => setFermentabilityPct(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
+              step="1"
+              min="0"
+              max="100"
+            />
+            <p className="text-xs mt-1">
+              Base malts ~82%, Crystal ~60%, Sugar 100%, Lactose 0%
+            </p>
           </div>
         </div>
 

@@ -6,9 +6,10 @@
  * NO React dependencies, NO hooks, NO localStorage - pure logic only.
  */
 
-import type { Recipe, RecipeCalculations, Hop } from '../models/Recipe';
+import type { Recipe, RecipeCalculations, Hop, Fermentable } from '../models/Recipe';
 import { volumeCalculationService } from './VolumeCalculationService';
 import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculationService';
+import { inferFermentability } from '../../data/fermentablePresets';
 
 export class RecipeCalculationService {
   /**
@@ -88,26 +89,73 @@ export class RecipeCalculationService {
   /**
    * Calculate Final Gravity
    *
-   * Uses a multi-factor effective attenuation model that adjusts the base
-   * yeast attenuation for mash temperature, decoction steps, mash duration,
-   * fermentation temperature, and fermentation duration.
+   * Two-layer model:
+   *  1. Per-ingredient fermentability — splits each fermentable's gravity points
+   *     into a fermentable share and a non-fermentable share (e.g. lactose = 0%).
+   *  2. Effective attenuation — yeast base attenuation adjusted for mash temp,
+   *     decoction, mash duration, fermentation temp, and fermentation duration.
+   *     Applied only to the fermentable share.
    *
-   * Reference points (zero-adjustment): 66 °C mash, 60 min mash, 20 °C ferment, 10 days ferment.
+   * FG = 1 + (nonFermentablePts + fermentablePts × (1 − effAtt)) / 1000
    */
   calculateFG(og: number, recipe: Recipe): number {
-    // Base yeast attenuation
+    const { fermentables, batchVolumeL, equipment } = recipe;
+
+    // --- 1. Split gravity points by fermentability ---
+    const batchVolumeGal = batchVolumeL * 0.264172;
+    const efficiency = equipment.mashEfficiencyPercent / 100;
+
+    let fermentablePts = 0;
+    let nonFermentablePts = 0;
+
+    if (fermentables.length > 0 && batchVolumeGal > 0) {
+      for (const f of fermentables) {
+        const weightLbs = f.weightKg * 2.20462;
+        const pts = (f.ppg * weightLbs * efficiency) / batchVolumeGal;
+        const ferm = this.getFermentability(f);
+        fermentablePts += pts * ferm;
+        nonFermentablePts += pts * (1 - ferm);
+      }
+    }
+
+    const totalPts = fermentablePts + nonFermentablePts;
+    // Guard: if no gravity points, nothing to attenuate
+    if (totalPts <= 0) return 1.0;
+
+    // --- 2. Effective attenuation (yeast + process adjustments) ---
+    const effAtt = this.computeEffectiveAttenuation(recipe);
+
+    return 1 + (nonFermentablePts + fermentablePts * (1 - effAtt)) / 1000;
+  }
+
+  /**
+   * Get the fermentability (0-1) for a recipe fermentable.
+   * Uses the explicit value if set, otherwise infers from name/category.
+   */
+  private getFermentability(f: Fermentable): number {
+    if (f.fermentability != null) return f.fermentability;
+    return inferFermentability(f);
+  }
+
+  /**
+   * Compute effective attenuation from yeast base + process adjustments.
+   *
+   * Factors: mash temperature (ref 66 °C), decoction bonus, mash duration
+   * (ref 60 min), fermentation temperature (ref 20 °C), fermentation duration
+   * (ref 10 days). Result clamped to [0.60, 0.95].
+   */
+  private computeEffectiveAttenuation(recipe: Recipe): number {
     const baseAtt = recipe.yeasts?.length > 0
       ? recipe.yeasts[0].attenuation
       : 0.75;
 
-    // --- Mash adjustments ---
+    // Mash adjustments
     let stepTimeTotal = 0;
     let tempAdjAcc = 0;
     let decoAdjAcc = 0;
     for (const step of recipe.mashSteps) {
       const t = Math.max(0, step.durationMinutes || 0);
       stepTimeTotal += t;
-      // Lower temp → positive adj → higher attenuation → drier beer
       tempAdjAcc += (66 - (step.temperatureC || 66)) * 0.006 * t;
       if (step.type === 'decoction') decoAdjAcc += 0.005 * t;
     }
@@ -116,17 +164,14 @@ export class RecipeCalculationService {
     const totalMashTime = stepTimeTotal > 0 ? stepTimeTotal : 60;
     const mashTimeAdj = Math.max(-0.03, Math.min(0.03, ((totalMashTime - 60) / 15) * 0.005));
 
-    // --- Fermentation adjustments ---
+    // Fermentation adjustments
     const { fermentTempC, fermentDays } = this.computeFermentMetrics(recipe);
     const fermTempAdj = (fermentTempC - 20) * 0.004;
     const fermDaysAdj = (fermentDays - 10) * 0.002;
 
-    // Effective attenuation clamped to realistic brewing range
-    const effAtt = Math.max(0.6, Math.min(0.95,
+    return Math.max(0.6, Math.min(0.95,
       baseAtt + avgTempAdj + avgDecoAdj + mashTimeAdj + fermTempAdj + fermDaysAdj,
     ));
-
-    return 1 + (og - 1) * (1 - effAtt);
   }
 
   /**

@@ -11,6 +11,7 @@ export type FermentablePreset = {
   potentialGu: number; // GU/PPG at 100% conversion (as-is)
   type: "grain" | "adjunct_mashable" | "extract" | "sugar";
   originCode?: string; // ISO-3166-1 alpha-2 (e.g., US, DE, GB)
+  fermentability?: number; // 0-1, override for non-standard ingredients
 };
 
 export type HopFlavorProfile = {

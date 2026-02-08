@@ -105,6 +105,97 @@ export function categorizeFermentable(preset: FermentablePreset): FermentableGro
 }
 
 /**
+ * Default fermentability by category (0-1).
+ *
+ * Represents the fraction of extracted sugars that brewer's yeast can ferment.
+ * These are category-level defaults — individual ingredients may override via
+ * the `fermentability` field on FermentablePreset or Recipe.Fermentable.
+ */
+const CATEGORY_FERMENTABILITY: Record<FermentableGroup, number> = {
+  "Base malts": 0.82,               // Mostly maltose/maltotriose
+  "Crystal/Caramel": 0.60,          // Significant unfermentable dextrins from kilning
+  "Roasted": 0.60,                  // Similar to crystal — heavily modified starch
+  "Toasted & specialty": 0.72,      // Between base and crystal
+  "Adjuncts (mashable/flaked)": 0.72,// Varies, reasonable middle ground
+  "Extracts": 0.78,                 // Pre-converted, typical wort fermentability
+  "Sugars": 1.00,                   // Fully fermentable (overridden for lactose/maltodextrin)
+  "Lauter aids & other": 0.00,      // Rice hulls etc — no gravity contribution
+};
+
+/**
+ * Name patterns for known non-/partially-fermentable ingredients.
+ * Checked after category default, before explicit override.
+ */
+const NAME_OVERRIDES: Array<{ pattern: RegExp; fermentability: number }> = [
+  { pattern: /\blactose\b/i, fermentability: 0 },
+  { pattern: /\bmaltodextrin\b/i, fermentability: 0 },
+];
+
+/**
+ * Returns the fermentability (0-1) for a fermentable preset.
+ *
+ * Priority:
+ *  1. Explicit `preset.fermentability` if set (custom presets)
+ *  2. Name-based override (lactose, maltodextrin → 0)
+ *  3. Category default from CATEGORY_FERMENTABILITY
+ */
+export function getFermentability(preset: FermentablePreset): number {
+  // 1. Explicit override on preset
+  if (preset.fermentability != null) return preset.fermentability;
+
+  // 2. Name-based overrides
+  for (const { pattern, fermentability } of NAME_OVERRIDES) {
+    if (pattern.test(preset.name)) return fermentability;
+  }
+
+  // 3. Category default
+  const category = categorizeFermentable(preset);
+  return CATEGORY_FERMENTABILITY[category];
+}
+
+/**
+ * Returns the fermentability (0-1) for a recipe fermentable that may not have
+ * the full preset fields. Uses name heuristics matching categorizeFermentable logic.
+ */
+export function inferFermentability(fermentable: { name: string; colorLovibond: number }): number {
+  // Name-based overrides first
+  for (const { pattern, fermentability } of NAME_OVERRIDES) {
+    if (pattern.test(fermentable.name)) return fermentability;
+  }
+
+  // Build a minimal preset-like object to reuse categorizeFermentable
+  const pseudoPreset: FermentablePreset = {
+    name: fermentable.name,
+    colorLovibond: fermentable.colorLovibond,
+    potentialGu: 0, // Not used by categorizeFermentable
+    type: inferType(fermentable.name),
+  };
+  const category = categorizeFermentable(pseudoPreset);
+  return CATEGORY_FERMENTABILITY[category];
+}
+
+/** Infer the preset type from name (for recipe fermentables that don't store type) */
+function inferType(name: string): FermentablePreset["type"] {
+  const n = name.toLowerCase();
+  if (
+    n.includes("extract") || n.includes("lme") || n.includes("dme") ||
+    n.includes("liquid malt") || n.includes("dry malt")
+  ) return "extract";
+  if (
+    n.includes("sugar") || n.includes("honey") || n.includes("syrup") ||
+    n.includes("molasses") || n.includes("candi") || n.includes("candy") ||
+    n.includes("dextrose") || n.includes("sucrose") || n.includes("lactose") ||
+    n.includes("maltodextrin") || n.includes("agave") || n.includes("maple") ||
+    n.includes("invert") || n.includes("jaggery") || n.includes("treacle") ||
+    n.includes("corn sugar") || n.includes("cane")
+  ) return "sugar";
+  if (
+    n.includes("flaked") || n.includes("torrified")
+  ) return "adjunct_mashable";
+  return "grain";
+}
+
+/**
  * Groups fermentables by category
  */
 export function groupFermentables(
