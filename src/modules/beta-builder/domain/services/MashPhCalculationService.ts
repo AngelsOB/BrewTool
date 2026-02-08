@@ -1,12 +1,16 @@
 /**
  * Mash pH Calculation Service
  *
- * Predicts mash pH using the grain-type acidity model:
- * 1. Classify each grain by pH category
- * 2. Calculate weighted distilled-water pH from grain bill
- * 3. Apply Residual Alkalinity (RA) correction from water chemistry
+ * Predicts mash pH using a simplified proton deficit model:
+ * 1. Classify each grain by pH category → assign pHdi (distilled-water pH)
+ * 2. Calculate water effective alkalinity in mEq
+ * 3. Solve for equilibrium pH where total proton balance = 0
  *
- * References: Bru'n Water, Brewfather, Kai Troester's pH research
+ * Based on AJ deLange's proton deficit framework (MBAA TQ 2013/2015),
+ * as implemented by Bru'n Water. Uses a universal malt buffering capacity
+ * (~40 mEq/kg/pH) with category-specific pHdi values.
+ *
+ * References: AJ deLange (MBAA), Bru'n Water, Kai Troester (braukaiser.com)
  */
 
 import type { Recipe, Fermentable, OtherIngredient } from '../models/Recipe';
@@ -26,14 +30,17 @@ export type GrainPhCategory =
   | 'acidulated'
   | 'adjunct';
 
-/** Distilled-water mash pH ranges per grain category */
+/**
+ * Distilled-water mash pH ranges per grain category.
+ * Sources: AJ deLange (MBAA TQ), Bru'n Water grain data, Kai Troester.
+ */
 const GRAIN_DI_PH: Record<GrainPhCategory, { min: number; max: number }> = {
   base:       { min: 5.65, max: 5.72 },
-  wheat:      { min: 5.55, max: 5.65 },
+  wheat:      { min: 5.95, max: 6.05 },  // deLange: wheat is less acidic than barley
   munich:     { min: 5.45, max: 5.55 },
   crystal:    { min: 4.50, max: 5.20 },
-  roasted:    { min: 4.50, max: 4.80 },
-  acidulated: { min: 3.30, max: 3.50 },
+  roasted:    { min: 4.45, max: 4.60 },  // Tighter range per Bru'n Water data
+  acidulated: { min: 3.35, max: 3.45 },
   adjunct:    { min: 5.70, max: 5.80 },
 };
 
@@ -146,9 +153,9 @@ export function getGrainDiPh(category: GrainPhCategory, colorLovibond: number): 
   }
 
   if (category === 'roasted') {
-    // Interpolate: 300L → 4.80, 600L+ → 4.50
+    // Interpolate: 300L → 4.60, 500L+ → 4.45
     const minColor = 300;
-    const maxColor = 600;
+    const maxColor = 500;
     const t = Math.min(1, Math.max(0, (colorLovibond - minColor) / (maxColor - minColor)));
     return range.max - t * (range.max - range.min);
   }
@@ -176,20 +183,41 @@ export function calculateResidualAlkalinity(profile: WaterProfile): number {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Service                                                            */
+/*  Proton Deficit Model                                               */
+/* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  Proton Deficit Model Constants                                     */
+/*                                                                     */
+/*  Based on AJ deLange's work (MBAA TQ 2013/2015) as implemented by  */
+/*  Bru'n Water. Instead of a single RA-to-pH coefficient, we solve   */
+/*  for the pH where total proton deficit = 0.                         */
 /* ------------------------------------------------------------------ */
 
 /**
- * RA-to-pH conversion coefficient.
- *
- * Based on Kolbach's research: ~0.003 pH units per ppm RA (as CaCO3)
- * at a standard mash thickness of 3.0 L/kg. Scaled linearly with
- * mash thickness (thinner mash = more water influence).
+ * Universal malt buffering capacity in mEq per kg per pH unit.
+ * Negative: lowering pH requires adding protons (acid).
+ * Source: AJ deLange measurements, ~40-46 mEq/kg/pH for most malts.
  */
-const RA_PH_COEFFICIENT = 0.003;
+const MALT_BUFFERING_MEQ_KG_PH = -40;
 
-/** Standard mash thickness for RA coefficient (L/kg) */
-const STANDARD_THICKNESS_L_PER_KG = 3.0;
+/**
+ * 88% lactic acid: titratable acidity in mEq per mL.
+ * Derivation: 0.88 (w/w) × 1.209 (g/mL) × 1000 / 90.08 (MW) ≈ 11.81
+ */
+const LACTIC_88_MEQ_PER_ML = 11.81;
+
+/**
+ * Baking soda (NaHCO3) alkalinity in mEq per gram.
+ * 1 g / 84.006 g/mol × 1000 = 11.904 mEq
+ */
+const NAHCO3_MEQ_PER_G = 11.904;
+
+/** Bisection solver bounds and convergence */
+const BISECT_PH_LO = 3.0;
+const BISECT_PH_HI = 8.0;
+const BISECT_TOL = 0.001;
+const BISECT_MAX_ITER = 50;
 
 /**
  * Default mash pH target (room temperature measurement).
@@ -205,36 +233,88 @@ export const MASH_PH_RANGE = { min: 5.2, max: 5.6 } as const;
 export const MASH_PH_IDEAL = { min: 5.2, max: 5.4 } as const;
 
 /* ------------------------------------------------------------------ */
-/*  Acid / base adjustment constants                                   */
+/*  Proton Deficit Solver                                              */
 /* ------------------------------------------------------------------ */
 
 /**
- * Kolbach's factor: grams of 88% lactic acid per kg of grain
- * to lower mash pH by 0.1 units at standard mash thickness (~3 L/kg).
+ * Effective alkalinity of water in mEq/L.
  *
- * Source: Kolbach (1951), confirmed by Kai Troester's experiments.
+ * Accounts for Ca²⁺ and Mg²⁺ precipitation with malt phosphates
+ * (Kolbach's original divisors: 3.5 for Ca, 7 for Mg in mEq/L).
  */
-const LACTIC_88_G_PER_KG_PER_01_PH = 0.66;
-
-/** Density of 88% lactic acid in g/mL */
-const LACTIC_88_DENSITY_G_PER_ML = 1.209;
+function effectiveAlkalinityMeqPerL(profile: WaterProfile): number {
+  return (
+    profile.HCO3 / 61.016 -
+    profile.Ca / (40.078 * 3.5) -
+    profile.Mg / (24.305 * 7)
+  );
+}
 
 /**
- * Baking soda (NaHCO3) contributes ~726 ppm HCO3 per g/L.
- * Molar mass NaHCO3 = 84.006 g/mol, HCO3 fraction = 61.016/84.006 ≈ 0.7263.
- * Each gram in 1L → 726.3 ppm HCO3.
+ * Proton balance function for bisection solver.
  *
- * We estimate the pH-raising effect through RA:
- * +1g NaHCO3 per L → +726 ppm HCO3 → +595 ppm alkalinity as CaCO3
- * → +595 * 0.003 = +1.79 pH units per g/L (at standard thickness).
+ * f(pH) = waterAlk + Σ maltDeficit_i(pH) + acidMeq − baseMeq
  *
- * Inverted: to raise pH by 0.1, you need ~0.056 g/L of baking soda,
- * or equivalently 0.056 * mashWaterL grams total.
+ * At equilibrium f(pH) = 0.
  *
- * More practically, we solve it via the same RA framework:
- * grams_needed = (pH_delta / 0.1) * (totalGrainKg * factor) but for
- * base additions we go through the RA path for consistency.
+ * Water alkalinity (positive) resists the pH dropping below ~8.3.
+ * Each malt pulls pH toward its own pHdi via its buffering capacity.
+ * Acid adds protons (positive mEq) → drives pH down.
+ * Base removes protons (positive mEq, subtracted) → drives pH up.
  */
+function protonBalance(
+  pH: number,
+  waterAlkMeq: number,
+  grains: ReadonlyArray<{ weightKg: number; pHdi: number }>,
+  acidMeq: number,
+  baseMeq: number,
+): number {
+  let maltDeficit = 0;
+  for (const g of grains) {
+    maltDeficit += g.weightKg * MALT_BUFFERING_MEQ_KG_PH * (pH - g.pHdi);
+  }
+  return waterAlkMeq + maltDeficit + acidMeq - baseMeq;
+}
+
+/**
+ * Find equilibrium mash pH via bisection.
+ *
+ * Returns the pH where protonBalance() ≈ 0, or null on edge cases.
+ */
+function solvePhBisection(
+  waterAlkMeq: number,
+  grains: ReadonlyArray<{ weightKg: number; pHdi: number }>,
+  acidMeq: number,
+  baseMeq: number,
+): number | null {
+  let lo = BISECT_PH_LO;
+  let hi = BISECT_PH_HI;
+  let fLo = protonBalance(lo, waterAlkMeq, grains, acidMeq, baseMeq);
+  const fHi = protonBalance(hi, waterAlkMeq, grains, acidMeq, baseMeq);
+
+  // No sign change → return boundary closer to zero
+  if (fLo * fHi > 0) {
+    return Math.abs(fLo) < Math.abs(fHi) ? lo : hi;
+  }
+
+  for (let i = 0; i < BISECT_MAX_ITER; i++) {
+    const mid = (lo + hi) / 2;
+    const fMid = protonBalance(mid, waterAlkMeq, grains, acidMeq, baseMeq);
+
+    if (Math.abs(fMid) < BISECT_TOL || (hi - lo) / 2 < BISECT_TOL) {
+      return mid;
+    }
+
+    if (fMid * fLo < 0) {
+      hi = mid;
+    } else {
+      lo = mid;
+      fLo = fMid;
+    }
+  }
+
+  return (lo + hi) / 2;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Acid / base extraction from Other Ingredients                      */
@@ -319,100 +399,59 @@ export type MashPhAdjustment = {
 
 export class MashPhCalculationService {
   /**
-   * Predict mash pH for a recipe.
+   * Predict mash pH using the proton deficit model.
+   *
+   * Finds the pH where:
+   *   water_alkalinity(mEq) + Σ malt_deficit_i(pH) + acid − base = 0
    *
    * @param recipe The recipe with fermentables and optional water chemistry
-   * @param mashWaterL Mash water volume in liters (from volume calculations)
+   * @param mashWaterL Mash water volume in liters
    * @returns Estimated mash pH, or null if insufficient data
    */
   calculateMashPh(recipe: Recipe, mashWaterL: number): number | null {
-    const grainPh = this.calculateGrainOnlyPh(recipe.fermentables);
-    if (grainPh == null) return null;
+    // Build grain list with pHdi values
+    const grains = this.buildGrainList(recipe.fermentables);
+    if (grains.length === 0) return null;
 
-    const totalGrainKg = recipe.fermentables.reduce(
-      (sum, f) => sum + f.weightKg,
-      0,
-    );
-
-    let ph = grainPh;
-
-    // Apply RA adjustment from water chemistry
-    if (recipe.waterChemistry) {
-      const { sourceProfile, saltAdditions } = recipe.waterChemistry;
-
-      // Calculate the mash water profile (source + mash-portion salt additions)
+    // Water effective alkalinity (mEq)
+    let waterAlkMeq = 0;
+    if (recipe.waterChemistry && mashWaterL > 0) {
       const mashProfile = this.getMashWaterProfile(
-        sourceProfile,
-        saltAdditions,
+        recipe.waterChemistry.sourceProfile,
+        recipe.waterChemistry.saltAdditions,
         mashWaterL,
         recipe,
       );
-
-      // Calculate RA from the mash water
-      const ra = calculateResidualAlkalinity(mashProfile);
-
-      // Mash thickness factor
-      const thickness = totalGrainKg > 0 ? mashWaterL / totalGrainKg : STANDARD_THICKNESS_L_PER_KG;
-      const thicknessFactor = thickness / STANDARD_THICKNESS_L_PER_KG;
-
-      // Apply RA adjustment
-      ph += ra * RA_PH_COEFFICIENT * thicknessFactor;
+      waterAlkMeq = effectiveAlkalinityMeqPerL(mashProfile) * mashWaterL;
     }
 
-    // Apply acid/base additions from Other Ingredients (mash-timed only)
-    if (recipe.otherIngredients && recipe.otherIngredients.length > 0 && totalGrainKg > 0) {
+    // Acid / base from Other Ingredients
+    let acidMeq = 0;
+    let baseMeq = 0;
+    if (recipe.otherIngredients && recipe.otherIngredients.length > 0) {
       const { lacticAcid88Ml, bakingSodaG } = extractAcidBaseFromIngredients(recipe.otherIngredients);
-
-      if (lacticAcid88Ml > 0) {
-        // Reverse Kolbach: how much pH does this much lactic acid lower?
-        // lacticGrams = lacticMl * density
-        const lacticGrams = lacticAcid88Ml * LACTIC_88_DENSITY_G_PER_ML;
-        // reductionUnits = lacticGrams / (factor * totalGrainKg)
-        const reductionUnits = lacticGrams / (LACTIC_88_G_PER_KG_PER_01_PH * totalGrainKg);
-        ph -= reductionUnits * 0.1;
-      }
-
-      if (bakingSodaG > 0 && mashWaterL > 0) {
-        // Baking soda raises pH via RA framework
-        const thickness = mashWaterL / totalGrainKg;
-        const thicknessFactor = thickness / STANDARD_THICKNESS_L_PER_KG;
-        const hco3PpmPerGPerL = 726.3;
-        const alkalinityFactor = 50 / 61.016;
-        const raPerGPerL = hco3PpmPerGPerL * alkalinityFactor;
-        const gramsPerL = bakingSodaG / mashWaterL;
-        ph += gramsPerL * raPerGPerL * RA_PH_COEFFICIENT * thicknessFactor;
-      }
+      acidMeq = lacticAcid88Ml * LACTIC_88_MEQ_PER_ML;
+      baseMeq = bakingSodaG * NAHCO3_MEQ_PER_G;
     }
 
-    return ph;
+    return solvePhBisection(waterAlkMeq, grains, acidMeq, baseMeq);
   }
 
   /**
-   * Calculate the grain-only mash pH (distilled water assumption).
-   * Uses weight-weighted average of each grain's DI pH.
+   * Calculate the grain-only mash pH (distilled water, no additions).
+   * With zero alkalinity the equilibrium is the weight-weighted pHdi average.
    */
   calculateGrainOnlyPh(fermentables: Fermentable[]): number | null {
-    // Filter to mashable grains only
-    const mashGrains = fermentables.filter((f) => this.isMashable(f));
-    if (mashGrains.length === 0) return null;
-
-    const totalWeight = mashGrains.reduce((sum, f) => sum + f.weightKg, 0);
-    if (totalWeight <= 0) return null;
-
-    const weightedPh = mashGrains.reduce((sum, f) => {
-      const category = classifyGrainForPh(f.name, f.colorLovibond);
-      const diPh = getGrainDiPh(category, f.colorLovibond);
-      return sum + f.weightKg * diPh;
-    }, 0);
-
-    return weightedPh / totalWeight;
+    const grains = this.buildGrainList(fermentables);
+    if (grains.length === 0) return null;
+    return solvePhBisection(0, grains, 0, 0);
   }
 
   /**
    * Calculate the acid or base addition needed to reach the target mash pH.
    *
-   * Uses Kolbach's factor for lactic acid (0.66 g of 88% lactic per kg grain
-   * per 0.1 pH reduction). For baking soda, uses the RA framework.
+   * Uses the proton deficit model: mEq needed = |buffering| × grainKg × |ΔpH|,
+   * then converts to mL of 88% lactic acid or grams of NaHCO3.
    *
    * @param currentPh Current estimated mash pH
    * @param targetPh Target mash pH (default: 5.4)
@@ -424,51 +463,47 @@ export class MashPhCalculationService {
     currentPh: number,
     targetPh: number,
     totalGrainKg: number,
-    mashWaterL: number,
+    _mashWaterL: number,
   ): MashPhAdjustment | null {
     const delta = currentPh - targetPh;
 
     // If already at target (within 0.02 tolerance), no adjustment needed
     if (Math.abs(delta) < 0.02) return null;
 
-    if (delta > 0) {
-      // pH too high → need acid to lower it
-      // Kolbach: 0.66 g of 88% lactic per kg grain per 0.1 pH drop
-      const reductionUnits = delta / 0.1;
-      const lacticGrams = reductionUnits * LACTIC_88_G_PER_KG_PER_01_PH * totalGrainKg;
-      const lacticMl = lacticGrams / LACTIC_88_DENSITY_G_PER_ML;
+    // mEq needed to shift the malt buffer by |delta| pH
+    const meqNeeded = totalGrainKg * Math.abs(MALT_BUFFERING_MEQ_KG_PH) * Math.abs(delta);
 
+    if (delta > 0) {
+      // pH too high → need acid
+      const lacticMl = meqNeeded / LACTIC_88_MEQ_PER_ML;
       return {
         targetPh,
-        lacticAcid88Ml: Math.round(lacticMl * 10) / 10, // round to 0.1 mL
+        lacticAcid88Ml: Math.round(lacticMl * 10) / 10,
         bakingSodaG: 0,
       };
     } else {
-      // pH too low → need baking soda to raise it
-      // Each g of NaHCO3 per L of mash water adds ~726 ppm HCO3
-      // which translates to ~595 ppm RA (as CaCO3) → raises pH by ~1.79 per g/L
-      // Scaled by mash thickness.
-      const raiseNeeded = Math.abs(delta);
-      const thickness = totalGrainKg > 0 ? mashWaterL / totalGrainKg : STANDARD_THICKNESS_L_PER_KG;
-      const thicknessFactor = thickness / STANDARD_THICKNESS_L_PER_KG;
-
-      // From the RA coefficient: pH_shift = RA * 0.003 * thicknessFactor
-      // We need: raiseNeeded = (grams / mashWaterL * 726.3 * 50/61.016) * 0.003 * thicknessFactor
-      // Solving for grams:
-      const hco3PpmPerGPerL = 726.3; // ppm HCO3 per g/L of NaHCO3
-      const alkalinityFactor = 50 / 61.016; // HCO3 ppm → alkalinity as CaCO3
-      const raPerGPerL = hco3PpmPerGPerL * alkalinityFactor;
-      const phPerGPerL = raPerGPerL * RA_PH_COEFFICIENT * thicknessFactor;
-
-      const gramsPerL = raiseNeeded / phPerGPerL;
-      const totalGrams = gramsPerL * mashWaterL;
-
+      // pH too low → need base
+      const sodaG = meqNeeded / NAHCO3_MEQ_PER_G;
       return {
         targetPh,
         lacticAcid88Ml: 0,
-        bakingSodaG: Math.round(totalGrams * 10) / 10, // round to 0.1 g
+        bakingSodaG: Math.round(sodaG * 10) / 10,
       };
     }
+  }
+
+  /** Build a grain list with pHdi for the solver. */
+  private buildGrainList(
+    fermentables: Fermentable[],
+  ): Array<{ weightKg: number; pHdi: number }> {
+    const mashGrains = fermentables.filter((f) => this.isMashable(f));
+    const totalWeight = mashGrains.reduce((s, f) => s + f.weightKg, 0);
+    if (totalWeight <= 0) return [];
+
+    return mashGrains.map((f) => {
+      const cat = classifyGrainForPh(f.name, f.colorLovibond);
+      return { weightKg: f.weightKg, pHdi: getGrainDiPh(cat, f.colorLovibond) };
+    });
   }
 
   /**
