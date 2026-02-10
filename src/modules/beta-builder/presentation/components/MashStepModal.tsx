@@ -16,6 +16,7 @@ import ModalOverlay from "./ModalOverlay";
 import Input from "@components/Input";
 import Select from "@components/Select";
 import Button from "@components/Button";
+import { toast } from "../../../../stores/toastStore";
 
 type MashStepModalProps = {
   isOpen: boolean;
@@ -101,7 +102,7 @@ export default function MashStepModal({
 
   const handleSave = () => {
     if (!stepName.trim()) {
-      alert("Please enter a step name");
+      toast.warning("Please enter a step name");
       return;
     }
 
@@ -127,7 +128,7 @@ export default function MashStepModal({
     // Validate
     const errors = mashScheduleService.validateMashStep(newStep);
     if (errors.length > 0) {
-      alert("Validation errors:\n" + errors.join("\n"));
+      toast.error(errors.join(". "));
       return;
     }
 

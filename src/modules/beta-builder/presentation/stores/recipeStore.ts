@@ -12,6 +12,7 @@ import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';
 import { HOP_PRESETS } from '../../../../utils/presets';
+import { toast } from '../../../../stores/toastStore';
 
 /** Case-insensitive map from hop name → flavor profile */
 const hopFlavorLookup = new Map(
@@ -78,11 +79,23 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   // Load all recipes
   loadRecipes: () => {
     set({ isLoading: true, error: null });
-    try {
-      const recipes = recipeRepository.loadAll();
-      set({ recipes, isLoading: false });
-    } catch {
-      set({ error: 'Failed to load recipes', isLoading: false });
+    const result = recipeRepository.loadAllSafe();
+    if (result.ok) {
+      set({ recipes: result.data, isLoading: false });
+    } else {
+      // Data is corrupted but still in localStorage
+      const rawData = result.rawData;
+      set({ recipes: [], error: 'Recipe data appears corrupted', isLoading: false });
+      toast.error('Recipe data could not be loaded. Your data is still saved.', {
+        duration: 0, // Don't auto-dismiss
+        action: {
+          label: 'Copy Raw Data',
+          onClick: () => {
+            navigator.clipboard.writeText(rawData);
+            toast.success('Raw data copied to clipboard');
+          },
+        },
+      });
     }
   },
 

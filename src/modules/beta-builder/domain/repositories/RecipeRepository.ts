@@ -8,18 +8,34 @@
 
 import type { Recipe, RecipeId } from '../models/Recipe';
 
+/** Result type for loadAll - distinguishes "no data" from "corrupted data" */
+export type LoadResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: 'corrupted'; rawData: string };
+
 export class RecipeRepository {
   private readonly STORAGE_KEY = 'beer-recipes-v1';
 
   /**
-   * Load all recipes from storage
+   * Load all recipes from storage with explicit error handling.
+   * Returns a result object that distinguishes between:
+   * - No data (empty array)
+   * - Valid data (parsed recipes)
+   * - Corrupted data (parse failed, raw data preserved for recovery)
    */
-  loadAll(): Recipe[] {
-    try {
-      const json = localStorage.getItem(this.STORAGE_KEY);
-      if (!json) return [];
+  loadAllSafe(): LoadResult<Recipe[]> {
+    const json = localStorage.getItem(this.STORAGE_KEY);
+    if (!json) {
+      return { ok: true, data: [] };
+    }
 
+    try {
       const recipes = JSON.parse(json) as Recipe[];
+
+      // Validate that we got an array
+      if (!Array.isArray(recipes)) {
+        return { ok: false, error: 'corrupted', rawData: json };
+      }
 
       // Migrate old recipes to include currentVersion, otherIngredients, and yeasts fields
       const migratedRecipes = recipes.map(recipe => {
@@ -44,11 +60,24 @@ export class RecipeRepository {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(migratedRecipes));
       }
 
-      return migratedRecipes;
-    } catch (error) {
-      console.error('Failed to load recipes:', error);
-      return [];
+      return { ok: true, data: migratedRecipes };
+    } catch {
+      // JSON parse failed - data is corrupted
+      return { ok: false, error: 'corrupted', rawData: json };
     }
+  }
+
+  /**
+   * Load all recipes from storage (legacy method - wraps loadAllSafe)
+   * Returns empty array on corruption (logs error)
+   */
+  loadAll(): Recipe[] {
+    const result = this.loadAllSafe();
+    if (result.ok) {
+      return result.data;
+    }
+    console.error('Recipe data is corrupted. Raw data preserved in localStorage.');
+    return [];
   }
 
   /**

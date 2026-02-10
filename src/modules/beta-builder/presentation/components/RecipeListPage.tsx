@@ -10,7 +10,7 @@
  */
 
 import type React from "react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
@@ -22,9 +22,9 @@ import {
   sanitizeFileName,
 } from "../utils/recipeExport";
 import type { Recipe } from "../../domain/models/Recipe";
-import { useRef } from "react";
 import VersionHistoryModal from "./VersionHistoryModal";
 import RecipeSessionsBar from "./RecipeSessionsBar";
+import { toast } from "../../../../stores/toastStore";
 
 type SortOption =
   | "date-desc"
@@ -207,8 +207,9 @@ export default function RecipeListPage() {
                     const imported = importFromBeerXml(text);
                     if (imported) {
                       loadRecipes();
+                      toast.success(`Imported "${imported.name}"`);
                     } else {
-                      alert("Failed to import BeerXML");
+                      toast.error("Failed to import BeerXML file");
                     }
                   };
                   reader.readAsText(file);
@@ -237,8 +238,9 @@ export default function RecipeListPage() {
                     const imported = importFromJson(text);
                     if (imported) {
                       loadRecipes();
+                      toast.success(`Imported "${imported.name}"`);
                     } else {
-                      alert("Failed to import JSON");
+                      toast.error("Failed to import JSON file");
                     }
                   };
                   reader.readAsText(file);
@@ -302,7 +304,7 @@ export default function RecipeListPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4">
               <h3 className="text-lg font-semibold mb-4">Delete Recipe?</h3>
-              <p className="text-black mb-6">
+              <p className="text-[rgb(var(--text))] mb-6">
                 Are you sure you want to delete this recipe? This action cannot
                 be undone.
               </p>

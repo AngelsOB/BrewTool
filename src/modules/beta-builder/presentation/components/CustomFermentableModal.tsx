@@ -14,6 +14,7 @@ import type { FermentablePreset } from "../../domain/models/Presets";
 import Input from "@components/Input";
 import Select from "@components/Select";
 import Button from "@components/Button";
+import { toast } from "../../../../stores/toastStore";
 
 interface CustomFermentableModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ export default function CustomFermentableModal({
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert("Please enter a fermentable name");
+      toast.warning("Please enter a fermentable name");
       return;
     }
 

@@ -14,6 +14,7 @@ import { useState } from "react";
 import type { YeastPreset } from "../../domain/models/Presets";
 import Input from "@components/Input";
 import Button from "@components/Button";
+import { toast } from "../../../../stores/toastStore";
 
 interface CustomYeastModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export default function CustomYeastModal({
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert("Please enter a yeast name");
+      toast.warning("Please enter a yeast name");
       return;
     }
 

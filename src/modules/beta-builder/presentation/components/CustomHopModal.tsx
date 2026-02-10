@@ -13,6 +13,7 @@ import { useState } from "react";
 import type { HopPreset } from "../../domain/models/Presets";
 import Input from "@components/Input";
 import Button from "@components/Button";
+import { toast } from "../../../../stores/toastStore";
 
 interface CustomHopModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export default function CustomHopModal({
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert("Please enter a hop name");
+      toast.warning("Please enter a hop name");
       return;
     }
 
