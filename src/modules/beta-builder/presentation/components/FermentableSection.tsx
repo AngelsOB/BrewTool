@@ -263,10 +263,10 @@ export default function FermentableSection() {
             return (
               <div
                 key={fermentable.id}
-                className="grid grid-cols-12 gap-2 items-center p-3 bg-[rgb(var(--card))] rounded border border-[rgb(var(--border))] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
+                className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 gap-2 lg:gap-2 items-center p-3 bg-[rgb(var(--card))] rounded border border-[rgb(var(--border))] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
               >
-                {/* Name */}
-                <div className="col-span-4">
+                {/* Name - full width on mobile, 4 cols on desktop */}
+                <div className="col-span-2 sm:col-span-4 lg:col-span-4 flex items-center justify-between">
                   <span className="font-medium flex items-center gap-2">
                     {fermentable.originCode && (
                       <span className="text-lg" title={fermentable.originCode}>
@@ -275,13 +275,25 @@ export default function FermentableSection() {
                     )}
                     {fermentable.name}
                   </span>
+                  {/* Remove button - visible only on mobile, next to name */}
+                  <button
+                    onClick={() => removeFermentable(fermentable.id)}
+                    className="lg:hidden text-red-600 hover:text-red-800 text-xl font-bold"
+                    aria-label={`Remove ${fermentable.name}`}
+                  >
+                    ×
+                  </button>
                 </div>
 
                 {/* Weight/Percent - Inline Editable */}
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
+                  <label htmlFor={`fermentable-weight-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">
+                    {mode === "amount" ? "Weight" : "Percent"}
+                  </label>
                   {mode === "amount" ? (
-                    <>
+                    <div className="flex items-center gap-1">
                       <input
+                        id={`fermentable-weight-${fermentable.id}`}
                         type="number"
                         value={fermentable.weightKg}
                         onChange={(e) =>
@@ -294,10 +306,11 @@ export default function FermentableSection() {
                         min="0"
                       />
                       <span className="text-xs font-medium">kg</span>
-                    </>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex items-center gap-1">
                       <input
+                        id={`fermentable-weight-${fermentable.id}`}
                         type="number"
                         value={percentById[fermentable.id] ?? 0}
                         onChange={(e) =>
@@ -312,62 +325,73 @@ export default function FermentableSection() {
                         max="100"
                       />
                       <span className="text-xs font-medium">%</span>
-                    </>
+                    </div>
                   )}
                 </div>
 
                 {/* Color - Inline Editable */}
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    value={fermentable.colorLovibond}
-                    onChange={(e) =>
-                      updateFermentable(fermentable.id, {
-                        colorLovibond: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    step="1"
-                    min="0"
-                  />
-                  <span className="text-xs font-medium">°L</span>
+                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
+                  <label htmlFor={`fermentable-color-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">Color</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      id={`fermentable-color-${fermentable.id}`}
+                      type="number"
+                      value={fermentable.colorLovibond}
+                      onChange={(e) =>
+                        updateFermentable(fermentable.id, {
+                          colorLovibond: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      step="1"
+                      min="0"
+                    />
+                    <span className="text-xs font-medium">°L</span>
+                  </div>
                 </div>
 
                 {/* PPG - Inline Editable */}
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    value={fermentable.ppg}
-                    onChange={(e) =>
-                      updateFermentable(fermentable.id, {
-                        ppg: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    step="0.1"
-                    min="0"
-                  />
-                  <span className="text-xs font-medium">PPG</span>
+                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
+                  <label htmlFor={`fermentable-ppg-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">PPG</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      id={`fermentable-ppg-${fermentable.id}`}
+                      type="number"
+                      value={fermentable.ppg}
+                      onChange={(e) =>
+                        updateFermentable(fermentable.id, {
+                          ppg: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      step="0.1"
+                      min="0"
+                    />
+                    <span className="text-xs font-medium whitespace-nowrap">PPG</span>
+                  </div>
                 </div>
 
-                {/* Percentage or Weight (depends on mode) */}
-                <div className="col-span-1 text-right">
+                {/* Percentage or Weight display (depends on mode) */}
+                <div className="col-span-1 sm:col-span-1 lg:col-span-1 text-right">
+                  <span className="text-xs font-medium block mb-1 lg:hidden">
+                    {mode === "amount" ? "%" : "Weight"}
+                  </span>
                   {mode === "amount" ? (
                     <span className="text-sm font-medium">
                       {percentage.toFixed(1)}%
                     </span>
                   ) : (
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium whitespace-nowrap">
                       {fermentable.weightKg.toFixed(2)} kg
                     </span>
                   )}
                 </div>
 
-                {/* Remove Button */}
-                <div className="col-span-1 text-right">
+                {/* Remove Button - hidden on mobile (shown next to name), visible on desktop */}
+                <div className="hidden lg:block lg:col-span-1 text-right">
                   <button
                     onClick={() => removeFermentable(fermentable.id)}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    className="text-red-600 hover:text-red-800 text-xl font-bold"
                     aria-label={`Remove ${fermentable.name}`}
                   >
                     ×

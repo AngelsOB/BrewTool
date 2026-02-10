@@ -207,7 +207,203 @@ export default function HopSection() {
               key={hop.id}
               className="p-4 bg-[rgb(var(--card))] rounded border border-[rgb(var(--border))] hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors"
             >
-              <div className="grid grid-cols-12 gap-3 items-center">
+              {/* Mobile layout: stacked with remove button in header */}
+              <div className="lg:hidden">
+                {/* Header row with name and remove */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {hop.flavor && <HopFlavorMini flavor={hop.flavor} size={32} className="min-w-[32px]" />}
+                    <div>
+                      <span className="font-medium">{hop.name}</span>
+                      <div className="text-xs font-medium">
+                        {hop.alphaAcid.toFixed(1)}% AA
+                      </div>
+                      <div className="text-xs">
+                        {calculateHopIBU(hop).toFixed(1)} IBU • {(hop.grams / (currentRecipe?.batchVolumeL || 1)).toFixed(2)} g/L
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeHop(hop.id)}
+                    className="text-red-600 hover:text-red-800 text-xl font-bold"
+                    aria-label={`Remove ${hop.name}`}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Input grid for mobile */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {/* Weight */}
+                  <div>
+                    <label htmlFor={`hop-weight-mobile-${hop.id}`} className="text-xs font-semibold block mb-1">
+                      Weight
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        id={`hop-weight-mobile-${hop.id}`}
+                        type="number"
+                        value={hop.grams}
+                        onChange={(e) =>
+                          updateHop(hop.id, {
+                            grams: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded dark:bg-gray-800 dark:text-gray-100"
+                        step="1"
+                        min="0"
+                      />
+                      <span className="text-xs font-medium">g</span>
+                    </div>
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label htmlFor={`hop-type-mobile-${hop.id}`} className="text-xs font-semibold block mb-1">
+                      Type
+                    </label>
+                    <select
+                      id={`hop-type-mobile-${hop.id}`}
+                      value={hop.type}
+                      onChange={(e) =>
+                        updateHop(hop.id, {
+                          type: e.target.value as Hop["type"],
+                        })
+                      }
+                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded"
+                    >
+                      <option value="boil">Boil</option>
+                      <option value="whirlpool">Whirlpool</option>
+                      <option value="dry hop">Dry Hop</option>
+                      <option value="first wort">First Wort</option>
+                      <option value="mash">Mash</option>
+                    </select>
+                  </div>
+
+                  {/* Conditional timing fields */}
+                  {hop.type === "boil" && (
+                    <div>
+                      <label htmlFor={`hop-boil-time-mobile-${hop.id}`} className="text-xs font-semibold block mb-1">
+                        Boil Time
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          id={`hop-boil-time-mobile-${hop.id}`}
+                          type="number"
+                          value={hop.timeMinutes || 0}
+                          onChange={(e) =>
+                            updateHop(hop.id, {
+                              timeMinutes: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                          step="5"
+                          min="0"
+                        />
+                        <span className="text-xs font-medium">min</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {hop.type === "whirlpool" && (
+                    <>
+                      <div>
+                        <label htmlFor={`hop-whirlpool-temp-mobile-${hop.id}`} className="text-xs font-semibold block mb-1">
+                          Temp
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <input
+                            id={`hop-whirlpool-temp-mobile-${hop.id}`}
+                            type="number"
+                            value={hop.temperatureC || 80}
+                            onChange={(e) =>
+                              updateHop(hop.id, {
+                                temperatureC: parseFloat(e.target.value) || 80,
+                              })
+                            }
+                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            step="5"
+                            min="40"
+                            max="100"
+                          />
+                          <span className="text-xs font-medium">°C</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor={`hop-whirlpool-time-mobile-${hop.id}`} className="text-xs font-semibold block mb-1">
+                          Time
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <input
+                            id={`hop-whirlpool-time-mobile-${hop.id}`}
+                            type="number"
+                            value={hop.whirlpoolTimeMinutes || 15}
+                            onChange={(e) =>
+                              updateHop(hop.id, {
+                                whirlpoolTimeMinutes: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            step="5"
+                            min="0"
+                          />
+                          <span className="text-xs font-medium">min</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {hop.type === "dry hop" && (
+                    <>
+                      <div>
+                        <label htmlFor={`hop-dry-start-mobile-${hop.id}`} className="text-xs font-semibold block mb-1">
+                          Start Day
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <input
+                            id={`hop-dry-start-mobile-${hop.id}`}
+                            type="number"
+                            value={hop.dryHopStartDay ?? 0}
+                            onChange={(e) =>
+                              updateHop(hop.id, {
+                                dryHopStartDay: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            step="1"
+                            min="0"
+                          />
+                          <span className="text-xs font-medium">day</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor={`hop-dry-duration-mobile-${hop.id}`} className="text-xs font-semibold block mb-1">
+                          Duration
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <input
+                            id={`hop-dry-duration-mobile-${hop.id}`}
+                            type="number"
+                            value={hop.dryHopDays ?? 3}
+                            onChange={(e) =>
+                              updateHop(hop.id, {
+                                dryHopDays: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            step="1"
+                            min="0"
+                          />
+                          <span className="text-xs font-medium">days</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop layout: 12-column grid */}
+              <div className="hidden lg:grid grid-cols-12 gap-3 items-center">
                 {/* Name */}
                 <div className="col-span-3 overflow-hidden">
                   <div className="flex items-center gap-2 mb-1">
@@ -237,7 +433,7 @@ export default function HopSection() {
                           grams: parseFloat(e.target.value) || 0,
                         })
                       }
-                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded dark:bg-gray-800 dark:text-gray-100"
+                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded dark:bg-gray-800 dark:text-gray-100"
                       step="1"
                       min="0"
                     />
