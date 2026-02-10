@@ -104,13 +104,28 @@
   }
 
   .card-glass {
-    @apply relative rounded-2xl bg-[rgb(var(--card))]/65 backdrop-blur-md border border-white/10;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.45);
+    @apply relative rounded-2xl bg-[rgb(var(--card))] backdrop-blur-md border border-[rgb(var(--border))];
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: box-shadow 150ms ease;
+  }
+  .dark .card-glass {
+    @apply bg-[rgb(var(--card))]/65 border-white/10;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.45);
   }
   .card-inner-ring::after {
     content: "";
-    @apply pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10;
+    @apply pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-[rgb(var(--border))];
+  }
+  .dark .card-inner-ring::after {
+    @apply ring-white/10;
+  }
+
+  /* Theme-aware shadow-soft override */
+  .shadow-soft {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+  }
+  .dark .shadow-soft {
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.45) !important;
   }
 
   .neon-glow {

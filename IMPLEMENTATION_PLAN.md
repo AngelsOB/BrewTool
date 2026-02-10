@@ -10,12 +10,18 @@
 
 The app was clearly built dark-mode-first, and **light mode is largely non-functional**. Nearly every component uses hardcoded dark-mode assumptions:
 
-- [ ] **1. `index.css`** – `.bg-dashboard` gradient
-- [ ] **2. `index.css`** – `.card-glass` shadow
-- [ ] **3. `index.css`** – `.btn-neon` and `.btn-outline`
-- [ ] **5. Home.tsx / Calculators.tsx / CalculatorCard.tsx**
-- [ ] **6. SearchSelect.tsx**
-- [ ] **7. AbvCalculator / IbuCalculator / WaterSaltsCalc** – Labels use `text-neutral-700`, barely visible in dark mode
+- [x] **1. `index.css`** – `.bg-dashboard` gradient
+  - **Completed:** Added theme-aware CSS with light/dark mode variants
+- [x] **2. `index.css`** – `.card-glass` shadow
+  - **Completed:** Added theme-aware CSS with light/dark mode variants
+- [x] **3. `index.css`** – `.btn-neon` and `.btn-outline`
+  - **Completed:** Added theme-aware CSS with light/dark mode variants
+- [x] **5. Home.tsx / Calculators.tsx / CalculatorCard.tsx**
+  - **Completed:** Replaced hardcoded text-white/xx classes with text-muted and text-strong utilities
+- [x] **6. SearchSelect.tsx**
+  - **Completed:** Replaced bg-black/50, text-white/80 and bg-white/10 with theme-aware CSS variables
+- [x] **7. AbvCalculator / IbuCalculator / WaterSaltsCalc** – Labels use `text-neutral-700`, barely visible in dark mode
+  - **Completed:** Replaced text-neutral-700/600/900 with text-muted and text-strong utilities across AbvCalculator, IbuCalculator, WaterSaltsCalc, YeastPitchCalc, GrainBill, HopSchedule, WaterSettings, and SummaryStickyHeader
 
 ---
 
@@ -69,7 +75,8 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 
 - [ ] **28. FermentableSection / HopSection** – 12-column grids don’t collapse well on mobile
 - [ ] **29. HopSection.tsx** – Tooltip portal doesn’t handle viewport edge collision
-- [ ] **30. WaterSaltsCalc.tsx** – Typo: `text-white-400` → `text-white/40`
+- [x] **30. WaterSaltsCalc.tsx** – Typo: `text-white-400` → `text-white/40`
+  - **Completed:** Fixed typo
 - [ ] **31. RecipeCard** – Empty flex container in footer renders unused whitespace
 - [ ] **32. Section color-coding** – `border-t-4` color used inconsistently (Fermentables / Hops only)
 - [ ] **33. `tailwind.config.js`** – Custom shadow tokens use hardcoded dark-mode values that persist in light mode
@@ -78,9 +85,9 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 
 ### Highest-Impact TODOs
 
-- [ ] Fix theme system so light mode actually works (items 1–7)
+- [x] Fix theme system so light mode actually works (items 1–7) — All complete
 - [x] Create shared primitives: `Input`, `Button`, `Modal` (items 8–10) — All complete
-- [ ] Add NavBar navigation links (item 16)
+- [x] Add NavBar navigation links (item 16) — Complete
 - [ ] Extract duplicated sticky stats bar (item 13)
 
 

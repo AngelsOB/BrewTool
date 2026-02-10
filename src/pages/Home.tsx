@@ -9,7 +9,7 @@ export default function Home() {
             <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">
               Brew better beer.
             </h1>
-            <p className="mt-3 max-w-prose text-white/70 text-sm sm:text-base">
+            <p className="mt-3 max-w-prose text-muted text-sm sm:text-base">
               Fast calculators, a clean recipe builder, and opinionated defaults
               so you can focus on the craft.
             </p>
@@ -32,17 +32,17 @@ export default function Home() {
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 shadow-soft">
-              <div className="font-medium">ABV</div>
-              <div className="text-white/60">OG/FG quick math</div>
+            <div className="rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] dark:border-white/10 dark:bg-white/5 px-4 py-3 shadow-soft">
+              <div className="font-medium text-strong">ABV</div>
+              <div className="text-muted">OG/FG quick math</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 shadow-soft">
-              <div className="font-medium">Strike Temp</div>
-              <div className="text-white/60">Mash-in target</div>
+            <div className="rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] dark:border-white/10 dark:bg-white/5 px-4 py-3 shadow-soft">
+              <div className="font-medium text-strong">Strike Temp</div>
+              <div className="text-muted">Mash-in target</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 shadow-soft">
-              <div className="font-medium">IBU</div>
-              <div className="text-white/60">Tinseth est.</div>
+            <div className="rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] dark:border-white/10 dark:bg-white/5 px-4 py-3 shadow-soft">
+              <div className="font-medium text-strong">IBU</div>
+              <div className="text-muted">Tinseth est.</div>
             </div>
           </div>
         </div>
@@ -55,12 +55,12 @@ export default function Home() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="font-medium mb-1">Calculators</div>
-              <div className="text-sm text-white/70">
+              <div className="font-medium text-strong mb-1">Calculators</div>
+              <div className="text-sm text-muted">
                 ABV, IBU, SRM, Strike Temp, Priming
               </div>
             </div>
-            <span className="text-white/30">→</span>
+            <span className="text-muted opacity-50">→</span>
           </div>
         </Link>
       </section>
