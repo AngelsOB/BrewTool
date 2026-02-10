@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import App from "./App.tsx";
+import RouteErrorPage from "./components/RouteErrorPage.tsx";
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -11,6 +12,7 @@ const router = createBrowserRouter(
     {
       path: "/",
       element: <App />,
+      errorElement: <RouteErrorPage />,
       children: [
         {
           index: true,
@@ -101,13 +103,17 @@ const router = createBrowserRouter(
             Component: (await import("./pages/BrewMode.tsx")).default,
           }),
         },
-        {
-          path: "test",
-          lazy: async () => ({
-            Component: (await import("./components/DualUnitInputTest.tsx"))
-              .default,
-          }),
-        },
+        ...(import.meta.env.DEV
+          ? [
+              {
+                path: "test",
+                lazy: async () => ({
+                  Component: (await import("./components/DualUnitInputTest.tsx"))
+                    .default,
+                }),
+              },
+            ]
+          : []),
       ],
     },
   ],
