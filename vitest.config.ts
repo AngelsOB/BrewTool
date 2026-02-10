@@ -11,7 +11,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/calculators/**', 'src/modules/beta-builder/domain/**'],
+      include: ['src/calculators/**', 'src/modules/beta-builder/domain/**', 'src/utils/**'],
       exclude: ['**/*.test.ts', '**/*.test.tsx'],
     },
   },
