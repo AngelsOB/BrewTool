@@ -70,7 +70,7 @@ export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionR
                   onChange={(e) =>
                     onUpdate(hop.id, { temperatureC: parseFloat(e.target.value) || 80 })
                   }
-                  className="bg-transparent text-xs w-[36px] py-1.5 px-1.5 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
+                  className="bg-transparent text-xs w-[44px] py-1.5 px-1.5 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
                   style={{ color: "var(--fg-strong)" }}
                   step="5"
                   min="40"
@@ -87,7 +87,7 @@ export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionR
                   onChange={(e) =>
                     onUpdate(hop.id, { whirlpoolTimeMinutes: parseFloat(e.target.value) || 0 })
                   }
-                  className="bg-transparent text-xs w-[36px] py-1.5 px-1.5 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
+                  className="bg-transparent text-xs w-[44px] py-1.5 px-1.5 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
                   style={{ color: "var(--fg-strong)" }}
                   step="5"
                   min="0"
@@ -108,7 +108,7 @@ export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionR
                   onChange={(e) =>
                     onUpdate(hop.id, { dryHopStartDay: parseFloat(e.target.value) || 0 })
                   }
-                  className="bg-transparent text-xs w-[32px] py-1.5 px-1 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
+                  className="bg-transparent text-xs w-[40px] py-1.5 px-1 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
                   style={{ color: "var(--fg-strong)" }}
                   step="1"
                   min="0"
@@ -123,7 +123,7 @@ export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionR
                   onChange={(e) =>
                     onUpdate(hop.id, { dryHopDays: parseFloat(e.target.value) || 0 })
                   }
-                  className="bg-transparent text-xs w-[28px] py-1.5 px-1 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
+                  className="bg-transparent text-xs w-[40px] py-1.5 px-1 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
                   style={{ color: "var(--fg-strong)" }}
                   step="1"
                   min="0"
