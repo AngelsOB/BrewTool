@@ -78,7 +78,8 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 
 ### Low: Polish
 
-- [ ] **23. FermentableSection / HopSection** – 12-column grids don't collapse well on mobile
+- [x] **23. FermentableSection / HopSection** – 12-column grids don't collapse well on mobile
+  - **Completed:** Added responsive grid breakpoints (grid-cols-2 sm:grid-cols-4 lg:grid-cols-12). Mobile now shows 2-column layout with stacked fields and remove button next to name. HopSection uses separate mobile and desktop layouts for optimal UX on each form factor.
 - [ ] **24. HopSection.tsx** – Tooltip portal doesn't handle viewport edge collision
 - [x] **25. WaterSaltsCalc.tsx** – Typo: `text-white-400` → `text-white/40`
   - **Completed:** Fixed typo
