@@ -164,8 +164,9 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
   - Missing `role="dialog"` and `aria-modal="true"` attributes. No focus trap — keyboard users can tab to background content. Has ESC key handling and scroll lock, but no focus management.
   - **Completed:** Added role='dialog', aria-modal='true', aria-labelledby support, Tab/Shift+Tab focus trapping, and focus restoration
 
-- [ ] **`src/modules/beta-builder/presentation/components/BetaBuilderPage.tsx` - Missing Accessibility**
+- [x] **`src/modules/beta-builder/presentation/components/BetaBuilderPage.tsx` - Missing Accessibility**
   - Icon-only buttons (e.g., `×` delete buttons in FermentableSection, HopSection, YeastSection) lack `aria-label` attributes. No skip-to-content navigation link in App.tsx or index.html.
+  - **Completed:** Added aria-label to remove buttons in FermentableSection.tsx and HopSection.tsx (YeastSection already has proper text buttons, no icon-only buttons). Added aria-label to close button in FermentablePresetModal.tsx. Added skip-to-content link in App.tsx with sr-only styling that appears on focus. Added id="main-content" to main element as skip link target.
 
 - [x] **`src/modules/beta-builder/presentation/stores/brewSessionStore.ts` - Business Logic in Presentation**
   - **Completed:** Extracted `calculateSessionMetrics` to new `BrewSessionCalculationService` in domain layer with 26 unit tests. Store now calls the domain service instead of containing inline calculations.
