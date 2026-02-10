@@ -21,7 +21,7 @@ export type EquipmentProfile = {
 
   // Absorption settings
   grainAbsorptionL_kg: number;      // Water absorbed by grain (typically ~1.0 L/kg)
-  hopAbsorptionL_g: number;         // Water absorbed by hops (typically ~0.005 L/g)
+  hopAbsorptionL_kg: number;        // Water absorbed by hops (typically ~0.7 L/kg)
 
   // Efficiency settings
   mashEfficiency: number;           // Mash efficiency % (0-100)
@@ -44,7 +44,7 @@ export const DEFAULT_EQUIPMENT: EquipmentProfile = {
   kettleDeadspaceL: 0.95,           // ~1 quart
   fermenterLossL: 0.95,             // ~1 quart
   grainAbsorptionL_kg: 1.0,         // Industry standard
-  hopAbsorptionL_g: 0.005,          // ~0.15 L/oz
+  hopAbsorptionL_kg: 0.7,           // Industry standard for hop pellets
   mashEfficiency: 75,
   brewhouseEfficiency: 72,
   isCustom: false,
@@ -64,7 +64,7 @@ export const EQUIPMENT_PRESETS: EquipmentProfile[] = [
     kettleDeadspaceL: 0.95,
     fermenterLossL: 0.95,
     grainAbsorptionL_kg: 0.5,         // Less absorption with bag squeeze
-    hopAbsorptionL_g: 0.005,
+    hopAbsorptionL_kg: 0.7,
     mashEfficiency: 78,
     brewhouseEfficiency: 75,
     isCustom: false,
@@ -79,7 +79,7 @@ export const EQUIPMENT_PRESETS: EquipmentProfile[] = [
     kettleDeadspaceL: 1.9,
     fermenterLossL: 0.95,
     grainAbsorptionL_kg: 1.0,
-    hopAbsorptionL_g: 0.005,
+    hopAbsorptionL_kg: 0.7,
     mashEfficiency: 75,
     brewhouseEfficiency: 72,
     isCustom: false,
@@ -94,7 +94,7 @@ export const EQUIPMENT_PRESETS: EquipmentProfile[] = [
     kettleDeadspaceL: 3.5,
     fermenterLossL: 0.95,
     grainAbsorptionL_kg: 0.96,
-    hopAbsorptionL_g: 0.005,
+    hopAbsorptionL_kg: 0.7,
     mashEfficiency: 75,
     brewhouseEfficiency: 72,
     isCustom: false,
@@ -109,7 +109,7 @@ export const EQUIPMENT_PRESETS: EquipmentProfile[] = [
     kettleDeadspaceL: 1.9,
     fermenterLossL: 1.9,
     grainAbsorptionL_kg: 1.0,
-    hopAbsorptionL_g: 0.005,
+    hopAbsorptionL_kg: 0.7,
     mashEfficiency: 75,
     brewhouseEfficiency: 72,
     isCustom: false,
@@ -124,7 +124,7 @@ export const EQUIPMENT_PRESETS: EquipmentProfile[] = [
     kettleDeadspaceL: 2.8,
     fermenterLossL: 1.9,
     grainAbsorptionL_kg: 0.96,
-    hopAbsorptionL_g: 0.005,
+    hopAbsorptionL_kg: 0.7,
     mashEfficiency: 75,
     brewhouseEfficiency: 72,
     isCustom: false,

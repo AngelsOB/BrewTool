@@ -50,7 +50,7 @@ export const CustomEquipmentModal = ({
       kettleDeadspaceL: currentSettings.kettleLossLiters,
       fermenterLossL: currentSettings.fermenterLossLiters,
       grainAbsorptionL_kg: currentSettings.grainAbsorptionLPerKg,
-      hopAbsorptionL_g: currentSettings.hopsAbsorptionLPerKg / 1000, // Convert from L/kg to L/g
+      hopAbsorptionL_kg: currentSettings.hopsAbsorptionLPerKg,
       mashEfficiency: currentSettings.mashEfficiencyPercent,
       brewhouseEfficiency: currentSettings.mashEfficiencyPercent, // Use mash efficiency as default
       isCustom: true,

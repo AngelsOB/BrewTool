@@ -41,7 +41,7 @@ export const EquipmentSection: React.FC = () => {
     recipe.equipment.mashTunDeadspaceLiters !== currentProfile.mashTunDeadspaceL ||
     recipe.equipment.kettleLossLiters !== currentProfile.kettleDeadspaceL ||
     recipe.equipment.fermenterLossLiters !== currentProfile.fermenterLossL ||
-    Math.abs(recipe.equipment.hopsAbsorptionLPerKg - currentProfile.hopAbsorptionL_g * 1000) > 0.01
+    Math.abs(recipe.equipment.hopsAbsorptionLPerKg - currentProfile.hopAbsorptionL_kg) > 0.01
   );
 
   const handleSelectProfile = (profile: EquipmentProfile) => {
@@ -58,7 +58,7 @@ export const EquipmentSection: React.FC = () => {
         mashTunDeadspaceLiters: profile.mashTunDeadspaceL,
         kettleLossLiters: profile.kettleDeadspaceL,
         fermenterLossLiters: profile.fermenterLossL,
-        hopsAbsorptionLPerKg: profile.hopAbsorptionL_g * 1000, // Convert from L/g to L/kg
+        hopsAbsorptionLPerKg: profile.hopAbsorptionL_kg,
       },
     });
     setIsPickerOpen(false);
