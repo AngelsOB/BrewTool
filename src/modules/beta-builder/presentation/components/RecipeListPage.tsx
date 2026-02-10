@@ -698,12 +698,11 @@ function RecipeCard({
       )}
 
       {/* Version History Modal */}
-      {showVersionModal && (
-        <VersionHistoryModal
-          recipe={recipe}
-          onClose={() => setShowVersionModal(false)}
-        />
-      )}
+      <VersionHistoryModal
+        recipe={recipe}
+        isOpen={showVersionModal}
+        onClose={() => setShowVersionModal(false)}
+      />
     </div>
   );
 }

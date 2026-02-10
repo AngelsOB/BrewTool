@@ -14,6 +14,7 @@ import type { HopPreset } from "../../domain/models/Presets";
 import Input from "@components/Input";
 import Button from "@components/Button";
 import { toast } from "../../../../stores/toastStore";
+import ModalOverlay from "./ModalOverlay";
 
 interface CustomHopModalProps {
   isOpen: boolean;
@@ -54,19 +55,10 @@ export default function CustomHopModal({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[60]"
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-      onClick={handleClose}
-    >
-      <div
-        className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-md w-full p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-xl font-semibold mb-4">Create Custom Hop</h3>
+    <ModalOverlay isOpen={isOpen} onClose={handleClose} size="md">
+      <div className="p-6">
+        <h3 id="modal-title" className="text-xl font-semibold mb-4">Create Custom Hop</h3>
 
         <div className="space-y-4">
           {/* Name */}
@@ -117,7 +109,7 @@ export default function CustomHopModal({
             />
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+          <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-md p-3">
             <p className="text-xs">
               Note: Custom hops won't have flavor profile data. You can still use them for
               calculations and scheduling.
@@ -135,6 +127,6 @@ export default function CustomHopModal({
           </Button>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

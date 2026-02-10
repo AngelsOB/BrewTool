@@ -335,16 +335,15 @@ export const EquipmentSection: React.FC = () => {
       </details>
 
       {/* Equipment Profile Picker Modal */}
-      {isPickerOpen && (
-        <EquipmentProfileModal
-          onClose={() => setIsPickerOpen(false)}
-          onSelect={handleSelectProfile}
-          onCreateCustom={() => {
-            setIsPickerOpen(false);
-            setIsCustomModalOpen(true);
-          }}
-        />
-      )}
+      <EquipmentProfileModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={handleSelectProfile}
+        onCreateCustom={() => {
+          setIsPickerOpen(false);
+          setIsCustomModalOpen(true);
+        }}
+      />
 
       {/* Custom Equipment Modal */}
       <CustomEquipmentModal
