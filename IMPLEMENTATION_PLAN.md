@@ -127,8 +127,12 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 
 ## MEDIUM SEVERITY
 
-- [ ] **`eslint.config.js` - Missing Critical Rules**
-  - Only uses recommended presets. No `no-console` rule (29+ console statements ship to production). No `eqeqeq` enforcement. No `eslint-plugin-jsx-a11y` for accessibility linting. No import ordering rules.
+- [x] **`eslint.config.js` - Missing Critical Rules**
+  - **Completed:** Added eslint-plugin-jsx-a11y with recommended rules (downgraded to warnings for gradual adoption). Added `eqeqeq` rule (error, with null exception). Added `no-console` rule (warning, allows console.error). 135 accessibility warnings surfaced for future fixes:
+    - 69 label-has-associated-control (labels need htmlFor/id pairing)
+    - 26 click-events-have-key-events (clickable divs need keyboard support)
+    - 10 no-autofocus (appropriate in modals, downgraded to warning)
+    - 2 no-console (console.log in test file)
 
 - [ ] **No Prettier Configuration**
   - No `.prettierrc` or equivalent found. No Prettier in devDependencies. Add Prettier for consistent formatting.
@@ -231,3 +235,10 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 
 - [ ] **`src/modules/beta-builder/domain/services/MashPhCalculationService.ts` - Bisection Solver Fallback**
   - Lines 314-348: Bisection solver has proper convergence checking (`BISECT_TOL = 0.001`, `BISECT_MAX_ITER = 50`) and returns early on convergence. The fallback `return (lo + hi) / 2` after max iterations is mathematically sound but could optionally log a warning.
+
+- [ ] **Accessibility Warnings from eslint-plugin-jsx-a11y**
+  - 135 warnings surfaced across the codebase. Key categories:
+    - `label-has-associated-control` (69 instances): Labels need `htmlFor` attribute matching input `id`
+    - `click-events-have-key-events` / `no-static-element-interactions` (26 instances): Clickable divs need keyboard support (onKeyDown/onKeyUp handlers)
+    - `no-autofocus` (10 instances): autoFocus can reduce accessibility; consider alternative patterns
+  - These are set to "warn" to allow builds while we address them incrementally
