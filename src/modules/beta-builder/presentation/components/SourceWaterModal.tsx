@@ -70,6 +70,7 @@ export default function SourceWaterModal({
             <h2 className="text-2xl font-bold">Select Source Water Profile</h2>
             <button
               onClick={onClose}
+              aria-label="Close modal"
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               <svg
@@ -77,6 +78,7 @@ export default function SourceWaterModal({
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
