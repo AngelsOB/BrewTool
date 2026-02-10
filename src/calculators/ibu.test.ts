@@ -210,4 +210,159 @@ describe('Tinseth IBU Calculations', () => {
       expect(total).toBeLessThan(150);
     });
   });
+
+  describe('Input Validation - Edge Cases', () => {
+    const validAddition: HopAddition = {
+      weightGrams: 28,
+      alphaAcidPercent: 10,
+      boilTimeMinutes: 60,
+      type: 'boil',
+    };
+
+    describe('tinsethGravityFactor', () => {
+      test('returns 0 for NaN gravity', () => {
+        expect(tinsethGravityFactor(NaN)).toBe(0);
+      });
+
+      test('returns 0 for Infinity gravity', () => {
+        expect(tinsethGravityFactor(Infinity)).toBe(0);
+        expect(tinsethGravityFactor(-Infinity)).toBe(0);
+      });
+    });
+
+    describe('tinsethTimeFactor', () => {
+      test('returns 0 for NaN minutes', () => {
+        expect(tinsethTimeFactor(NaN)).toBe(0);
+      });
+
+      test('returns 0 for negative minutes', () => {
+        expect(tinsethTimeFactor(-10)).toBe(0);
+      });
+
+      test('returns 0 for Infinity minutes', () => {
+        expect(tinsethTimeFactor(Infinity)).toBe(0);
+      });
+    });
+
+    describe('whirlpoolUtilization', () => {
+      test('returns 0 for NaN temperature', () => {
+        expect(whirlpoolUtilization(30, NaN, 1.050)).toBe(0);
+      });
+
+      test('returns 0 for Infinity temperature', () => {
+        expect(whirlpoolUtilization(30, Infinity, 1.050)).toBe(0);
+      });
+    });
+
+    describe('ibuSingleAddition - volume validation', () => {
+      test('returns 0 for zero volume (prevents division by zero)', () => {
+        expect(ibuSingleAddition(validAddition, 0, 1.050)).toBe(0);
+      });
+
+      test('returns 0 for negative volume', () => {
+        expect(ibuSingleAddition(validAddition, -20, 1.050)).toBe(0);
+      });
+
+      test('returns 0 for NaN volume', () => {
+        expect(ibuSingleAddition(validAddition, NaN, 1.050)).toBe(0);
+      });
+
+      test('returns 0 for Infinity volume', () => {
+        expect(ibuSingleAddition(validAddition, Infinity, 1.050)).toBe(0);
+      });
+    });
+
+    describe('ibuSingleAddition - weight validation', () => {
+      test('returns 0 for zero weight', () => {
+        const zeroWeight = { ...validAddition, weightGrams: 0 };
+        expect(ibuSingleAddition(zeroWeight, 20, 1.050)).toBe(0);
+      });
+
+      test('returns 0 for negative weight', () => {
+        const negativeWeight = { ...validAddition, weightGrams: -28 };
+        expect(ibuSingleAddition(negativeWeight, 20, 1.050)).toBe(0);
+      });
+
+      test('returns 0 for NaN weight', () => {
+        const nanWeight = { ...validAddition, weightGrams: NaN };
+        expect(ibuSingleAddition(nanWeight, 20, 1.050)).toBe(0);
+      });
+    });
+
+    describe('ibuSingleAddition - alpha acid validation', () => {
+      test('returns 0 for negative alpha acid', () => {
+        const negativeAA = { ...validAddition, alphaAcidPercent: -5 };
+        expect(ibuSingleAddition(negativeAA, 20, 1.050)).toBe(0);
+      });
+
+      test('returns 0 for NaN alpha acid', () => {
+        const nanAA = { ...validAddition, alphaAcidPercent: NaN };
+        expect(ibuSingleAddition(nanAA, 20, 1.050)).toBe(0);
+      });
+
+      test('handles zero alpha acid (valid edge case, returns 0 IBU)', () => {
+        const zeroAA = { ...validAddition, alphaAcidPercent: 0 };
+        expect(ibuSingleAddition(zeroAA, 20, 1.050)).toBe(0);
+      });
+
+      test('handles high alpha acid values (e.g., 20%)', () => {
+        const highAA = { ...validAddition, alphaAcidPercent: 20 };
+        const ibu = ibuSingleAddition(highAA, 20, 1.050);
+        expect(ibu).toBeGreaterThan(0);
+        expect(Number.isFinite(ibu)).toBe(true);
+      });
+    });
+
+    describe('ibuSingleAddition - gravity validation', () => {
+      test('returns 0 for NaN gravity', () => {
+        expect(ibuSingleAddition(validAddition, 20, NaN)).toBe(0);
+      });
+
+      test('returns 0 for Infinity gravity', () => {
+        expect(ibuSingleAddition(validAddition, 20, Infinity)).toBe(0);
+      });
+
+      test('handles extreme low gravity (edge case)', () => {
+        // Very low gravity (like 1.000) is valid but unusual
+        const ibu = ibuSingleAddition(validAddition, 20, 1.000);
+        expect(Number.isFinite(ibu)).toBe(true);
+        expect(ibu).toBeGreaterThan(0);
+      });
+
+      test('handles extreme high gravity (edge case)', () => {
+        // Very high gravity (like 1.150) is valid for barleywines
+        const ibu = ibuSingleAddition(validAddition, 20, 1.150);
+        expect(Number.isFinite(ibu)).toBe(true);
+        expect(ibu).toBeGreaterThan(0);
+      });
+    });
+
+    describe('ibuTotal - edge cases', () => {
+      test('handles null-like additions array', () => {
+        // TypeScript prevents null, but at runtime could happen
+        expect(ibuTotal(null as unknown as HopAddition[], 20, 1.050)).toBe(0);
+        expect(ibuTotal(undefined as unknown as HopAddition[], 20, 1.050)).toBe(0);
+      });
+
+      test('filters out invalid additions within array', () => {
+        const mixedAdditions: HopAddition[] = [
+          validAddition, // valid
+          { ...validAddition, weightGrams: -10 }, // invalid weight
+          { ...validAddition, alphaAcidPercent: NaN }, // invalid AA
+        ];
+        // Only the first valid addition should contribute
+        const total = ibuTotal(mixedAdditions, 20, 1.050);
+        const single = ibuSingleAddition(validAddition, 20, 1.050);
+        expect(total).toBeCloseTo(single, 5);
+      });
+
+      test('returns 0 for all invalid additions', () => {
+        const invalidAdditions: HopAddition[] = [
+          { ...validAddition, weightGrams: 0 },
+          { ...validAddition, alphaAcidPercent: -5 },
+        ];
+        expect(ibuTotal(invalidAdditions, 20, 1.050)).toBe(0);
+      });
+    });
+  });
 });

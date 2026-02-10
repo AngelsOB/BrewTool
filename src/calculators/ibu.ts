@@ -1,4 +1,8 @@
 // Tinseth IBU calculation utilities
+//
+// Input validation: All functions guard against invalid inputs (NaN, Infinity,
+// negative values, division by zero) and return 0 or a safe default for edge cases.
+// This ensures callers don't need to pre-validate every input.
 
 export type HopTimingType =
   | "boil"
@@ -8,21 +12,32 @@ export type HopTimingType =
   | "mash";
 
 export type HopAddition = {
-  weightGrams: number; // grams
-  alphaAcidPercent: number; // e.g. 10 means 10%
-  boilTimeMinutes: number; // only relevant for 'boil' type
+  weightGrams: number; // grams (expected: >= 0)
+  alphaAcidPercent: number; // e.g. 10 means 10% (expected: 0-100)
+  boilTimeMinutes: number; // only relevant for 'boil' type (expected: >= 0)
   type: HopTimingType;
   // Whirlpool-specific (optional)
-  whirlpoolTimeMinutes?: number;
+  whirlpoolTimeMinutes?: number; // expected: >= 0
   whirlpoolTempC?: number; // typical 65–99°C
 };
 
+/**
+ * Check if a number is valid (finite and not NaN)
+ */
+function isValidNumber(n: number): boolean {
+  return Number.isFinite(n);
+}
+
 export function tinsethGravityFactor(wortGravity: number): number {
+  // Guard: return 0 for invalid gravity (would produce NaN/Infinity)
+  if (!isValidNumber(wortGravity)) return 0;
   // Tinseth gravity correction factor
   return 1.65 * Math.pow(0.000125, wortGravity - 1.0);
 }
 
 export function tinsethTimeFactor(minutes: number): number {
+  // Guard: return 0 for invalid or negative time
+  if (!isValidNumber(minutes) || minutes < 0) return 0;
   // Tinseth time utilization factor
   return (1 - Math.exp(-0.04 * minutes)) / 4.15;
 }
@@ -31,6 +46,7 @@ export function tinsethUtilization(
   minutes: number,
   wortGravity: number
 ): number {
+  // Guards handled by sub-functions; returns 0 if either factor is invalid
   return tinsethGravityFactor(wortGravity) * tinsethTimeFactor(minutes);
 }
 
@@ -43,9 +59,12 @@ export function whirlpoolUtilization(
   tempC: number,
   wortGravity: number
 ): number {
+  // Guard: return 0 for invalid temperature
+  if (!isValidNumber(tempC)) return 0;
   const clampedTemp = Math.max(60, Math.min(100, tempC));
   // Exponential temperature factor: 0 at 60°C, 1 at 100°C
   const tempFactor = tempC <= 60 ? 0 : Math.pow((clampedTemp - 60) / 40, 1.8);
+  // Minutes and gravity guards handled by sub-functions
   return (
     tinsethGravityFactor(wortGravity) * tinsethTimeFactor(minutes) * tempFactor
   );
@@ -56,6 +75,20 @@ export function ibuSingleAddition(
   postBoilVolumeLiters: number,
   wortGravity: number
 ): number {
+  // Guard: return 0 for invalid volume (prevents division by zero / Infinity)
+  if (!isValidNumber(postBoilVolumeLiters) || postBoilVolumeLiters <= 0) {
+    return 0;
+  }
+
+  // Guard: return 0 for invalid weight or alpha acid
+  const weight = addition.weightGrams;
+  const alphaAcid = addition.alphaAcidPercent;
+  if (!isValidNumber(weight) || weight <= 0) return 0;
+  if (!isValidNumber(alphaAcid) || alphaAcid < 0) return 0;
+
+  // Guard: return 0 for invalid gravity (gravity near 1.0 is typical; extreme values are unusual)
+  if (!isValidNumber(wortGravity)) return 0;
+
   let utilization = 0;
   switch (addition.type) {
     case "boil":
@@ -89,11 +122,7 @@ export function ibuSingleAddition(
   }
 
   const mgPerL =
-    (addition.weightGrams *
-      (addition.alphaAcidPercent / 100) *
-      1000 *
-      utilization) /
-    postBoilVolumeLiters;
+    (weight * (alphaAcid / 100) * 1000 * utilization) / postBoilVolumeLiters;
   return mgPerL; // 1 IBU = 1 mg iso-alpha per liter
 }
 
@@ -102,6 +131,10 @@ export function ibuTotal(
   postBoilVolumeLiters: number,
   wortGravity: number
 ): number {
+  // Guard: return 0 for empty additions or invalid parameters
+  // Individual addition validation handled by ibuSingleAddition
+  if (!additions || additions.length === 0) return 0;
+
   return additions.reduce(
     (sum, add) =>
       sum + ibuSingleAddition(add, postBoilVolumeLiters, wortGravity),
