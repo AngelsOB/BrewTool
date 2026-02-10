@@ -134,17 +134,14 @@ export default function RecipeListPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[rgb(var(--bg))] p-8">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-center">Loading recipes...</p>
-        </div>
+      <div className="max-w-6xl mx-auto py-4">
+        <p className="text-center">Loading recipes...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--bg))] p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto py-4">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">My Recipes</h1>
@@ -325,7 +322,6 @@ export default function RecipeListPage() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }
@@ -347,6 +343,7 @@ function RecipeCard({
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
   const [showVariationDialog, setShowVariationDialog] = useState(false);
+  const variationNameRef = useRef<HTMLInputElement>(null);
   const { createNewVersion, createVariation } = useRecipeStore();
   const { createSession, saveCurrentSession } = useBrewSessionStore();
 
@@ -664,7 +661,7 @@ function RecipeCard({
             <input
               type="text"
               defaultValue={`${recipe.name} - Variation`}
-              id="variation-name"
+              ref={variationNameRef}
               className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md mb-4"
               placeholder="New recipe name"
             />
@@ -681,10 +678,7 @@ function RecipeCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const input = document.getElementById(
-                    "variation-name"
-                  ) as HTMLInputElement;
-                  const newName = input?.value || `${recipe.name} - Variation`;
+                  const newName = variationNameRef.current?.value || `${recipe.name} - Variation`;
                   createVariation(recipe.id, newName);
                   setShowVariationDialog(false);
                 }}

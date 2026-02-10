@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="space-y-8">
       <section className="card-glass card-inner-ring neon-glow p-6 sm:p-10">
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div>
@@ -50,14 +50,42 @@ export default function Home() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link
-          to="/calculators#abv"
+          to="/calculators"
           className="card-glass card-inner-ring p-5 neon-glow"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="font-medium text-strong mb-1">Calculators</div>
               <div className="text-sm text-muted">
-                ABV, IBU, SRM, Strike Temp, Priming
+                ABV, IBU, water chemistry, and more
+              </div>
+            </div>
+            <span className="text-muted opacity-50">→</span>
+          </div>
+        </Link>
+        <Link
+          to="/recipes"
+          className="card-glass card-inner-ring p-5 neon-glow"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium text-strong mb-1">Recipe Builder</div>
+              <div className="text-sm text-muted">
+                Create and manage your brewing recipes
+              </div>
+            </div>
+            <span className="text-muted opacity-50">→</span>
+          </div>
+        </Link>
+        <Link
+          to="/beta-builder"
+          className="card-glass card-inner-ring p-5 neon-glow"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium text-strong mb-1">Beta Builder</div>
+              <div className="text-sm text-muted">
+                Advanced recipe builder with brew sessions
               </div>
             </div>
             <span className="text-muted opacity-50">→</span>

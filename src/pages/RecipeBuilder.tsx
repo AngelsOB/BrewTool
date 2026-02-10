@@ -1849,7 +1849,7 @@ export default function RecipeBuilder() {
   };
 
   return (
-    <div className="page-recipe max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+    <div className="page-recipe max-w-6xl mx-auto space-y-6 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div className="flex-1">
           <h1 className="text-3xl font-semibold tracking-tight">

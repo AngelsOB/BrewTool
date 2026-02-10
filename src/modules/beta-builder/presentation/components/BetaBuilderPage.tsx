@@ -110,7 +110,7 @@ export default function BetaBuilderPage() {
 
   if (!currentRecipe) {
     return (
-      <div className="p-8">
+      <div className="max-w-4xl mx-auto py-4">
         {isReadOnly ? (
           <div className="text-center">
             <p className="mb-4">Version not found.</p>
@@ -134,7 +134,7 @@ export default function BetaBuilderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--bg))] p-8 transition-colors duration-200">
+    <div className="max-w-4xl mx-auto py-4">
       {/* Sticky Stats Bars */}
       {calculations && (
         <>
@@ -150,8 +150,6 @@ export default function BetaBuilderPage() {
           />
         </>
       )}
-
-      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-[rgb(var(--card))] border-b border-[rgb(var(--border))] pb-6 mb-6 rounded-t-lg transition-colors">
           <div className="flex items-center justify-between">
@@ -379,7 +377,6 @@ export default function BetaBuilderPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Style Selector Modal */}
       <StyleSelectorModal

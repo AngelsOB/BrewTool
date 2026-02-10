@@ -62,7 +62,7 @@ export default function BrewSessionPage() {
 
   if (!currentSession) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center py-20">
         <div className="text-lg">Loading session...</div>
       </div>
     );
@@ -159,8 +159,7 @@ export default function BrewSessionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--bg))] p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto py-4 space-y-6">
         <BrewSessionHeader
           recipeName={currentSession.recipeName}
           brewDate={currentSession.brewDate}
@@ -203,7 +202,6 @@ export default function BrewSessionPage() {
           notes={currentSession.notes}
           onNotesChange={handleNotesChange}
         />
-      </div>
 
       <BrewedVersionModal
         isOpen={isEditModalOpen}
