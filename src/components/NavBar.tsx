@@ -1,20 +1,199 @@
-import { Link } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { Link, NavLink } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 
-export default function NavBar() {
+const navLinks = [
+  { to: "/calculators", label: "Calculators" },
+  { to: "/recipes", label: "Recipes" },
+  { to: "/beta-builder", label: "Recipe Builder" },
+] as const;
+
+function NavLinkItem({
+  to,
+  label,
+  onClick,
+}: {
+  to: string;
+  label: string;
+  onClick?: () => void;
+}) {
   return (
-    <nav className="top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--surface))]/80 backdrop-blur">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <Link
-          to="/"
-          className="text-lg sm:text-xl font-semibold tracking-tight"
-        >
-          <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-            Beer App
-          </span>
-        </Link>
-        <ThemeToggle />
+    <NavLink
+      to={to}
+      onClick={onClick}
+      className={({ isActive }) =>
+        [
+          "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+          isActive
+            ? "bg-[color-mix(in_oklch,var(--coral-600)_15%,transparent)] text-[var(--coral-600)]"
+            : "text-[var(--fg-muted)] hover:text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_8%,transparent)]",
+        ].join(" ")
+      }
+    >
+      {label}
+    </NavLink>
+  );
+}
+
+function MobileNavLinkItem({
+  to,
+  label,
+  onClick,
+}: {
+  to: string;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <NavLink
+      to={to}
+      onClick={onClick}
+      className={({ isActive }) =>
+        [
+          "block px-4 py-3 text-base font-medium transition-colors",
+          isActive
+            ? "bg-[color-mix(in_oklch,var(--coral-600)_12%,transparent)] text-[var(--coral-600)] border-l-2 border-[var(--coral-600)]"
+            : "text-[var(--fg-muted)] hover:text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]",
+        ].join(" ")
+      }
+    >
+      {label}
+    </NavLink>
+  );
+}
+
+export default function NavBar() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Close menu on Escape key
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  return (
+    <nav className="sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--surface))]/80 backdrop-blur">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-14 items-center justify-between">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="text-lg sm:text-xl font-semibold tracking-tight"
+          >
+            <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+              Beer App
+            </span>
+          </Link>
+
+          {/* Desktop navigation */}
+          <div className="hidden sm:flex sm:items-center sm:gap-1">
+            {navLinks.map((link) => (
+              <NavLinkItem key={link.to} to={link.to} label={link.label} />
+            ))}
+            <div className="ml-2 pl-2 border-l border-[rgb(var(--border))]">
+              <ThemeToggle />
+            </div>
+          </div>
+
+          {/* Mobile menu button and theme toggle */}
+          <div className="flex items-center gap-2 sm:hidden">
+            <ThemeToggle />
+            <button
+              ref={buttonRef}
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-[var(--fg-muted)] hover:text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_8%,transparent)] transition-colors"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {mobileMenuOpen ? (
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div
+          ref={menuRef}
+          id="mobile-menu"
+          className="sm:hidden border-t border-[rgb(var(--border))] bg-[rgb(var(--surface))]"
+        >
+          <div className="py-2">
+            {navLinks.map((link) => (
+              <MobileNavLinkItem
+                key={link.to}
+                to={link.to}
+                label={link.label}
+                onClick={closeMobileMenu}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
