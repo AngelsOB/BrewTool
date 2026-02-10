@@ -144,7 +144,7 @@ export class RecipeCalculationService {
    * (ref 10 days). Result clamped to [0.60, 0.95].
    */
   private computeEffectiveAttenuation(recipe: Recipe): number {
-    const baseAtt = recipe.yeasts?.length > 0
+    const baseAtt = recipe.yeasts.length > 0
       ? recipe.yeasts[0].attenuation
       : 0.75;
 

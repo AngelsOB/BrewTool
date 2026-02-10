@@ -47,8 +47,11 @@
 - [x] **`src/modules/beta-builder/domain/repositories/EquipmentRepository.ts` - Unnecessary Async**
   - Added comment documenting that async signatures are intentional for future API migration.
 
-- [ ] **`src/modules/beta-builder/domain/models/Recipe.ts` - Inconsistent Null vs Undefined**
-  - Some optional fields use `?` (e.g., `fermentability?: number`) while others use `| null` (e.g., `estimatedMashPh: number | null`). Pick one convention for "no value."
+- [x] **`src/modules/beta-builder/domain/models/Recipe.ts` - Null vs Undefined Convention**
+  - Upon analysis, the current pattern is **intentional and semantically correct**:
+    - `?` (undefined) for optional input fields that may not be provided by the user
+    - `| null` for computed values that cannot be calculated (e.g., mash pH for extract-only recipes)
+  - This distinction is meaningful: undefined = "not provided", null = "not computable"
 
 - [x] **`package.json` - Missing `engines` Field**
   - Added `"engines": { "node": ">=22.0.0" }` to package.json.
@@ -64,3 +67,14 @@
     - `label-has-associated-control` warnings fixed by configuring ESLint to recognize custom components (InputWithSuffix, DualUnitInput, InlineEditableNumber, AutoWidthUnitSelect, NotesTextarea, SearchSelect)
     - Modal backdrop click handlers now have proper eslint-disable comments since keyboard handling is done via document listeners
     - VersionHistoryModal now has proper keyboard handlers and ARIA roles for interactive elements
+
+## BUG FIXES
+
+- [x] **`brewSessionStore.ts` - Shallow Copy of Recipe Objects**
+  - `createSession()` used spread operator (`{ ...recipe }`) which only shallow-copies.
+  - Nested objects (equipment, waterChemistry, arrays) would be shared between originalRecipe and brewDayRecipe.
+  - Fixed by using `deepCloneRecipe()` utility (moved to `domain/models/Recipe.ts` as shared utility).
+
+- [x] **`RecipeCalculationService.ts` - Unnecessary Optional Chaining on Required Array**
+  - `recipe.yeasts?.length` used optional chaining on a required field (type: `Yeast[]`).
+  - Cleaned up to `recipe.yeasts.length` since the type guarantees the array exists.

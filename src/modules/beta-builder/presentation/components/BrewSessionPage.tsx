@@ -11,7 +11,7 @@ import { useBrewSessionStore } from '../stores/brewSessionStore';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
 import type { SessionStatus } from '../../domain/models/BrewSession';
-import type { Recipe, RecipeVersion } from '../../domain/models/Recipe';
+import { type Recipe, type RecipeVersion, deepCloneRecipe } from '../../domain/models/Recipe';
 import { waterChemistryService } from '../../domain/services/WaterChemistryService';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import { volumeCalculationService } from '../../domain/services/VolumeCalculationService';
@@ -23,13 +23,6 @@ import {
   BrewNotesSection,
   BrewedVersionModal,
 } from './brew-session';
-
-function deepCloneRecipe(recipe: Recipe): Recipe {
-  if (typeof structuredClone === 'function') {
-    return structuredClone(recipe) as Recipe;
-  }
-  return JSON.parse(JSON.stringify(recipe)) as Recipe;
-}
 
 export default function BrewSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();

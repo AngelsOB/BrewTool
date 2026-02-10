@@ -349,3 +349,14 @@ export type RecipeVersion = {
   /** Full snapshot of the recipe at this version */
   recipeSnapshot: Recipe;
 };
+
+/**
+ * Deep clone a Recipe object.
+ * Uses structuredClone when available, falls back to JSON serialization.
+ */
+export function deepCloneRecipe(recipe: Recipe): Recipe {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(recipe);
+  }
+  return JSON.parse(JSON.stringify(recipe));
+}

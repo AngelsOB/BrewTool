@@ -12,7 +12,7 @@ import type {
   SessionActuals,
   SessionStatus,
 } from '../../domain/models/BrewSession';
-import type { Recipe } from '../../domain/models/Recipe';
+import { type Recipe, deepCloneRecipe } from '../../domain/models/Recipe';
 import { brewSessionRepository } from '../../domain/repositories/BrewSessionRepository';
 import { brewSessionCalculationService } from '../../domain/services/BrewSessionCalculationService';
 
@@ -83,8 +83,8 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
       recipeId: recipe.id,
       recipeVersionNumber: recipe.currentVersion,
       recipeName: recipe.name,
-      originalRecipe: { ...recipe }, // Snapshot original
-      brewDayRecipe: { ...recipe },  // Clone for modifications
+      originalRecipe: deepCloneRecipe(recipe), // Snapshot original
+      brewDayRecipe: deepCloneRecipe(recipe),  // Clone for modifications
       actuals: {},
       brewDate: new Date().toISOString(),
       status: 'planning',
