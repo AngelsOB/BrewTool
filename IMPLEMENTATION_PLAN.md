@@ -106,8 +106,8 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [x] **`src/modules/beta-builder/domain/repositories/RecipeRepository.ts` - Corrupted Data Returns Empty**
   - **Completed:** Fixed with loadAllSafe() that returns a Result type and surfaces errors to users via toast
 
-- [ ] **`src/modules/beta-builder/domain/models/Equipment.ts` - Inconsistent Unit Convention**
-  - Equipment.ts line 24 uses `hopAbsorptionL_g` (liters per **gram**, typical value 0.005). Recipe.ts line 244 uses `hopsAbsorptionLPerKg` (liters per **kilogram**, typical value 0.7). Conversions exist in EquipmentSection.tsx (`* 1000`) and CustomEquipmentModal.tsx (`/ 1000`) but the mismatch across models invites future bugs. Standardize on one unit.
+- [x] **`src/modules/beta-builder/domain/models/Equipment.ts` - Inconsistent Unit Convention**
+  - **Completed:** Renamed hopAbsorptionL_g to hopAbsorptionL_kg, fixed preset values from incorrect 5 L/kg (0.005 L/g) to industry-standard 0.7 L/kg, removed manual conversions from EquipmentSection.tsx and CustomEquipmentModal.tsx
 
 - [ ] **`.github/workflows/deploy.yml` - Missing Quality Gates**
   - No `npm run lint` or `npm audit` step before build. TypeScript type-checking runs as part of the build (`tsc -b && vite build`), but linting errors and known dependency vulnerabilities won't block deployment.

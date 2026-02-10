@@ -33,7 +33,7 @@ export default function AbvCalculator() {
     <CalculatorCard title="ABV (OG/FG)">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">
+          <div className="text-sm text-muted mb-1">
             Original Gravity (OG)
           </div>
           <input
@@ -49,7 +49,7 @@ export default function AbvCalculator() {
           />
         </label>
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">
+          <div className="text-sm text-muted mb-1">
             Final Gravity (FG)
           </div>
           <input
@@ -68,10 +68,10 @@ export default function AbvCalculator() {
 
       <div className="mt-3">
         {error ? (
-          <div className="text-sm text-neutral-600">{error}</div>
+          <div className="text-sm text-muted">{error}</div>
         ) : (
           <div className="rounded-lg border bg-emerald-500/10 px-4 py-3">
-            <div className="text-sm text-neutral-700">Estimated ABV</div>
+            <div className="text-sm text-muted">Estimated ABV</div>
             <div className="text-3xl font-semibold tracking-tight">
               {abv != null ? `${abv.toFixed(2)}%` : "—"}
             </div>

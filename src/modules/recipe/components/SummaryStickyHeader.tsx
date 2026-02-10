@@ -92,20 +92,20 @@ export default function BatchSummary({
         <FitToWidth className="min-w-0 flex-1" align="right" minScale={0.75}>
           <div className="inline-flex flex-wrap items-center justify-end gap-3">
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
-              <span className="text-neutral-600">OG</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
+              <span className="text-muted">OG</span>
+              <span className="font-semibold tracking-tight text-strong">
                 {ogUsed.toFixed(3)}
               </span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
-              <span className="text-neutral-600">ABV</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
+              <span className="text-muted">ABV</span>
+              <span className="font-semibold tracking-tight text-strong">
                 {abv.toFixed(2)}%
               </span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
-              <span className="text-neutral-600">SRM</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
+              <span className="text-muted">SRM</span>
+              <span className="font-semibold tracking-tight text-strong">
                 {srm.toFixed(1)}
               </span>
               <span
@@ -114,28 +114,28 @@ export default function BatchSummary({
               />
             </div>
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
-              <span className="text-neutral-600">IBU</span>
-              <span className="font-semibold tracking-tight text-neutral-900">
+              <span className="text-muted">IBU</span>
+              <span className="font-semibold tracking-tight text-strong">
                 {ibu.toFixed(0)}
               </span>
             </div>
             <div className="relative group inline-flex">
               <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/50 px-3 py-1.5 text-sm shadow-soft shadow-lg shadow-black/30 hover:shadow-sm">
-                <span className="text-neutral-600">Batch</span>
-                <span className="font-semibold tracking-tight text-neutral-900">
+                <span className="text-muted">Batch</span>
+                <span className="font-semibold tracking-tight text-strong">
                   {batchVolumeL.toFixed(1)} L
                 </span>
               </div>
               <div className="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max flex-col gap-2 rounded-lg border border-white/20 bg-white/90 px-3 py-2 text-xs shadow-2xl shadow-black/30 backdrop-blur-2xl ring-1 ring-white/50 supports-[backdrop-filter]:bg-white/70 group-hover:flex">
                 <div className="inline-flex items-center gap-2 whitespace-nowrap">
-                  <span className="text-neutral-600">Pre-boil</span>
-                  <span className="font-semibold tracking-tight text-neutral-900">
+                  <span className="text-muted">Pre-boil</span>
+                  <span className="font-semibold tracking-tight text-strong">
                     {preBoilVolumeL.toFixed(1)} L
                   </span>
                 </div>
                 <div className="inline-flex items-center gap-2 whitespace-nowrap">
-                  <span className="text-neutral-600">Mash / Sparge</span>
-                  <span className="font-semibold tracking-tight text-neutral-900">
+                  <span className="text-muted">Mash / Sparge</span>
+                  <span className="font-semibold tracking-tight text-strong">
                     {finalMashL.toFixed(1)} / {finalSpargeL.toFixed(1)} L
                   </span>
                 </div>

@@ -245,7 +245,7 @@ export function GrainBill({
                         <button
                           type="button"
                           title="Save preset"
-                          className="rounded border px-2 py-1 text-[10px] text-neutral-700 hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
+                          className="rounded border px-2 py-1 text-[10px] text-muted hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
                           onClick={() => {
                             const name = (g.name || "").trim();
                             if (!name) return;
@@ -419,7 +419,7 @@ export function GrainBill({
                 </>
               )}
               <div
-                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-600 px-2 py-0.5"
+                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted px-2 py-0.5"
                 aria-hidden="true"
               >
                 {g.colorLovibond}°L

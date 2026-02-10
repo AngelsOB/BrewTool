@@ -143,7 +143,7 @@ export function HopSchedule({
                         <button
                           type="button"
                           title="Save preset"
-                          className="rounded border px-2 py-1 text-[10px] text-neutral-700 hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
+                          className="rounded border px-2 py-1 text-[10px] text-muted hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
                           onClick={() => {
                             const name = (h.name || "").trim();
                             if (!name) return;
