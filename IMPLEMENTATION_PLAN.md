@@ -181,8 +181,9 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [ ] **`src/hooks/useRecipeStore.ts` - Weak UUID Fallback (Legacy Store)**
   - Lines 46-49 and 310-314: Falls back to `Date.now()` when `crypto.randomUUID()` is unavailable. Can produce collisions on rapid recipe creation. Use `crypto.getRandomValues` fallback or drop legacy browser support.
 
-- [ ] **`src/calculators/ibu.ts` - Missing Input Validation**
+- [x] **`src/calculators/ibu.ts` - Missing Input Validation**
   - `ibuSingleAddition()` has no guards: negative `weightGrams` → negative IBUs, `postBoilVolumeLiters = 0` → Infinity/NaN, `alphaAcidPercent > 100` → inflated IBUs. Add boundary checks or document expected input ranges.
+  - **Completed:** Added isValidNumber guards to all exported functions. Returns 0 for invalid inputs (NaN, Infinity, negative values, zero volume). 25 edge case tests added.
 
 - [ ] **`src/types/store.local.ts` - Uses `any[]` Types (Legacy Store)**
   - Lines 60-101: All ingredient storage accessors (`fermentables`, `hops`, `yeasts`) use `any[]` instead of domain types like `Fermentable[]`, `Hop[]`, `Yeast[]`. Bypasses TypeScript safety.
