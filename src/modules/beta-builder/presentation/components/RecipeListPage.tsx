@@ -166,10 +166,11 @@ export default function RecipeListPage() {
 
             {/* Sort */}
             <div className="flex gap-2 items-center">
-              <label className="text-sm font-medium whitespace-nowrap">
+              <label htmlFor="recipe-sort-select" className="text-sm font-medium whitespace-nowrap">
                 Sort by:
               </label>
               <select
+                id="recipe-sort-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-[var(--coral-600)]"
@@ -401,10 +402,20 @@ function RecipeCard({
     navigate(`/beta-builder/sessions/${session.id}`);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onView();
+    }
+  };
+
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onView}
-      className="relative group rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-visible z-10"
+      onKeyDown={handleKeyDown}
+      className="relative group rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-visible z-10 focus:outline-none focus:ring-2 focus:ring-[var(--coral-600)] focus:ring-offset-2"
     >
       {/* Version Badge Menu */}
       <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
@@ -599,17 +610,26 @@ function RecipeCard({
       {/* New Version Dialog */}
       {showNewVersionDialog && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-version-dialog-title"
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           onClick={(e) => {
             e.stopPropagation();
             setShowNewVersionDialog(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.stopPropagation();
+              setShowNewVersionDialog(false);
+            }
           }}
         >
           <div
             className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4">Create New Version</h3>
+            <h3 id="new-version-dialog-title" className="text-lg font-semibold mb-4">Create New Version</h3>
             <p className="text-sm mb-4">
               This will save the current state of "{recipe.name}" as version{" "}
               {recipe.currentVersion} and increment to version{" "}
@@ -643,17 +663,26 @@ function RecipeCard({
       {/* Create Variation Dialog */}
       {showVariationDialog && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-variation-dialog-title"
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           onClick={(e) => {
             e.stopPropagation();
             setShowVariationDialog(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.stopPropagation();
+              setShowVariationDialog(false);
+            }
           }}
         >
           <div
             className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4">Create Variation</h3>
+            <h3 id="create-variation-dialog-title" className="text-lg font-semibold mb-4">Create Variation</h3>
             <p className="text-sm mb-4">
               This will create a new recipe based on "{recipe.name}" (v
               {recipe.currentVersion}).

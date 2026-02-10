@@ -63,10 +63,11 @@ export default function CustomYeastModal({
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-yeast-name" className="block text-sm font-semibold mb-2">
               Yeast Name *
             </label>
             <Input
+              id="custom-yeast-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -78,10 +79,11 @@ export default function CustomYeastModal({
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-yeast-category" className="block text-sm font-semibold mb-2">
               Category
             </label>
             <Input
+              id="custom-yeast-category"
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -92,10 +94,11 @@ export default function CustomYeastModal({
 
           {/* Attenuation */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-yeast-attenuation" className="block text-sm font-semibold mb-2">
               Attenuation %
             </label>
             <Input
+              id="custom-yeast-attenuation"
               type="number"
               value={attenuationPercent}
               onChange={(e) => setAttenuationPercent(parseFloat(e.target.value) || 0)}

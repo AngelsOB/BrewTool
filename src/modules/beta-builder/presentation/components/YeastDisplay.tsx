@@ -42,11 +42,12 @@ export default function YeastDisplay({
 
         {/* Attenuation */}
         <div className="col-span-5">
-          <label className="text-xs font-semibold block mb-1">
+          <label htmlFor="yeast-attenuation" className="text-xs font-semibold block mb-1">
             Attenuation
           </label>
           <div className="flex items-center gap-2">
             <input
+              id="yeast-attenuation"
               type="number"
               value={(yeast.attenuation * 100).toFixed(0)}
               onChange={(e) =>

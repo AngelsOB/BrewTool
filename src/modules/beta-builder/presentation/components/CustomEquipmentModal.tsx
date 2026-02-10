@@ -83,10 +83,11 @@ export const CustomEquipmentModal = ({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="equipment-profile-name" className="block text-sm font-semibold mb-2">
               Profile Name *
             </label>
             <Input
+              id="equipment-profile-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -97,10 +98,11 @@ export const CustomEquipmentModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="equipment-profile-description" className="block text-sm font-semibold mb-2">
               Description (optional)
             </label>
             <Textarea
+              id="equipment-profile-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your equipment setup..."

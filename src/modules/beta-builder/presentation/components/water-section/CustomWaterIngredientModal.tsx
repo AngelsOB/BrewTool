@@ -45,10 +45,11 @@ export default function CustomWaterIngredientModal({
         <h3 className="text-lg font-semibold mb-4">Custom Ingredient</h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+            <label htmlFor="custom-water-ingredient-name" className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
               Name
             </label>
             <input
+              id="custom-water-ingredient-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -61,10 +62,11 @@ export default function CustomWaterIngredientModal({
             />
           </div>
           <div>
-            <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+            <label htmlFor="custom-water-ingredient-category" className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
               Category
             </label>
             <select
+              id="custom-water-ingredient-category"
               value={category}
               onChange={(e) => setCategory(e.target.value as OtherIngredientCategory)}
               className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"

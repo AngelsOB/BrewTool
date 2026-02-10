@@ -63,10 +63,11 @@ export default function CustomHopModal({
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-hop-name" className="block text-sm font-semibold mb-2">
               Hop Name *
             </label>
             <Input
+              id="custom-hop-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -78,10 +79,11 @@ export default function CustomHopModal({
 
           {/* Alpha Acid */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-hop-alpha-acid" className="block text-sm font-semibold mb-2">
               Alpha Acid %
             </label>
             <Input
+              id="custom-hop-alpha-acid"
               type="number"
               value={alphaAcidPercent}
               onChange={(e) => setAlphaAcidPercent(parseFloat(e.target.value) || 0)}
@@ -97,10 +99,11 @@ export default function CustomHopModal({
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-hop-category" className="block text-sm font-semibold mb-2">
               Category
             </label>
             <Input
+              id="custom-hop-category"
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}

@@ -161,10 +161,11 @@ export default function MashStepModal({
         <div className="px-6 py-4 space-y-4">
           {/* Step Name */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="mash-step-name" className="block text-sm font-semibold mb-2">
               Step Name *
             </label>
             <Input
+              id="mash-step-name"
               type="text"
               value={stepName}
               onChange={(e) => setStepName(e.target.value)}
@@ -175,10 +176,11 @@ export default function MashStepModal({
 
           {/* Step Type */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="mash-step-type" className="block text-sm font-semibold mb-2">
               Step Type *
             </label>
             <Select
+              id="mash-step-type"
               value={stepType}
               onChange={(e) => setStepType(e.target.value as MashStepType)}
               fullWidth
@@ -197,10 +199,11 @@ export default function MashStepModal({
           <div className="grid grid-cols-2 gap-4">
             {/* Temperature */}
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label htmlFor="mash-step-temperature" className="block text-sm font-semibold mb-2">
                 Temperature (°C) *
               </label>
               <Input
+                id="mash-step-temperature"
                 type="number"
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
@@ -213,10 +216,11 @@ export default function MashStepModal({
 
             {/* Duration */}
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label htmlFor="mash-step-duration" className="block text-sm font-semibold mb-2">
                 Duration (minutes) *
               </label>
               <Input
+                id="mash-step-duration"
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value))}
@@ -230,10 +234,11 @@ export default function MashStepModal({
           {/* Infusion Volume (for infusion steps only) */}
           {stepType === "infusion" && (
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label htmlFor="mash-step-infusion-volume" className="block text-sm font-semibold mb-2">
                 Infusion Volume (Liters) - Optional
               </label>
               <Input
+                id="mash-step-infusion-volume"
                 type="number"
                 value={infusionVolume ?? ""}
                 onChange={(e) => setInfusionVolume(e.target.value ? parseFloat(e.target.value) : null)}

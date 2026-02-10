@@ -100,10 +100,11 @@ export const EquipmentSection: React.FC = () => {
       {/* Basic Settings */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label htmlFor="equipment-batch-volume" className="block text-sm font-semibold mb-2">
             Batch Volume (L)
           </label>
           <input
+            id="equipment-batch-volume"
             type="number"
             value={recipe.batchVolumeL}
             onChange={(e) =>
@@ -114,10 +115,11 @@ export const EquipmentSection: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label htmlFor="equipment-mash-efficiency" className="block text-sm font-semibold mb-2">
             Mash Efficiency (%)
           </label>
           <input
+            id="equipment-mash-efficiency"
             type="number"
             value={recipe.equipment.mashEfficiencyPercent}
             onChange={(e) =>
@@ -133,10 +135,11 @@ export const EquipmentSection: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label htmlFor="equipment-boil-time" className="block text-sm font-semibold mb-2">
             Boil Time (min)
           </label>
           <input
+            id="equipment-boil-time"
             type="number"
             value={recipe.equipment.boilTimeMin}
             onChange={(e) =>
@@ -161,10 +164,11 @@ export const EquipmentSection: React.FC = () => {
 
         <div className="grid grid-cols-3 gap-4 pl-4 border-l-2 border-blue-200 dark:border-blue-800">
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-boil-off-rate" className="block text-xs font-semibold mb-2">
               Boil-Off Rate (L/hr)
             </label>
             <input
+              id="equipment-boil-off-rate"
               type="number"
               value={recipe.equipment.boilOffRateLPerHour}
               onChange={(e) =>
@@ -180,10 +184,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-mash-thickness" className="block text-xs font-semibold mb-2">
               Mash Thickness (L/kg)
             </label>
             <input
+              id="equipment-mash-thickness"
               type="number"
               value={recipe.equipment.mashThicknessLPerKg}
               onChange={(e) =>
@@ -199,10 +204,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-grain-absorption" className="block text-xs font-semibold mb-2">
               Grain Absorption (L/kg)
             </label>
             <input
+              id="equipment-grain-absorption"
               type="number"
               value={recipe.equipment.grainAbsorptionLPerKg}
               onChange={(e) =>
@@ -218,10 +224,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-mash-tun-deadspace" className="block text-xs font-semibold mb-2">
               Mash Tun Deadspace (L)
             </label>
             <input
+              id="equipment-mash-tun-deadspace"
               type="number"
               value={recipe.equipment.mashTunDeadspaceLiters}
               onChange={(e) =>
@@ -237,10 +244,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-kettle-loss" className="block text-xs font-semibold mb-2">
               Kettle Loss (L)
             </label>
             <input
+              id="equipment-kettle-loss"
               type="number"
               value={recipe.equipment.kettleLossLiters}
               onChange={(e) =>
@@ -256,10 +264,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-hop-absorption" className="block text-xs font-semibold mb-2">
               Hop Absorption (L/kg)
             </label>
             <input
+              id="equipment-hop-absorption"
               type="number"
               value={recipe.equipment.hopsAbsorptionLPerKg}
               onChange={(e) =>
@@ -275,10 +284,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-chiller-loss" className="block text-xs font-semibold mb-2">
               Chiller Loss (L)
             </label>
             <input
+              id="equipment-chiller-loss"
               type="number"
               value={recipe.equipment.chillerLossLiters}
               onChange={(e) =>
@@ -294,10 +304,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-fermenter-loss" className="block text-xs font-semibold mb-2">
               Fermenter Loss (L)
             </label>
             <input
+              id="equipment-fermenter-loss"
               type="number"
               value={recipe.equipment.fermenterLossLiters}
               onChange={(e) =>
@@ -313,10 +324,11 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-cooling-shrinkage" className="block text-xs font-semibold mb-2">
               Cooling Shrinkage (%)
             </label>
             <input
+              id="equipment-cooling-shrinkage"
               type="number"
               value={recipe.equipment.coolingShrinkagePercent}
               onChange={(e) =>

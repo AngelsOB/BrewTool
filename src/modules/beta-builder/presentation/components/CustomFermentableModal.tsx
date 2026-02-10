@@ -69,10 +69,11 @@ export default function CustomFermentableModal({
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-fermentable-name" className="block text-sm font-semibold mb-2">
               Fermentable Name *
             </label>
             <Input
+              id="custom-fermentable-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -84,10 +85,11 @@ export default function CustomFermentableModal({
 
           {/* PPG */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-fermentable-potential-gu" className="block text-sm font-semibold mb-2">
               Potential GU (Gravity Units / PPG)
             </label>
             <Input
+              id="custom-fermentable-potential-gu"
               type="number"
               value={potentialGu}
               onChange={(e) => setPotentialGu(parseFloat(e.target.value) || 0)}
@@ -103,10 +105,11 @@ export default function CustomFermentableModal({
 
           {/* Color */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-fermentable-color" className="block text-sm font-semibold mb-2">
               Color (°Lovibond)
             </label>
             <Input
+              id="custom-fermentable-color"
               type="number"
               value={colorLovibond}
               onChange={(e) => setColorLovibond(parseFloat(e.target.value) || 0)}
@@ -122,10 +125,11 @@ export default function CustomFermentableModal({
 
           {/* Type */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-fermentable-type" className="block text-sm font-semibold mb-2">
               Type
             </label>
             <Select
+              id="custom-fermentable-type"
               value={type}
               onChange={(e) => {
                 const newType = e.target.value as FermentablePreset["type"];
@@ -147,10 +151,11 @@ export default function CustomFermentableModal({
 
           {/* Fermentability */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-fermentable-fermentability" className="block text-sm font-semibold mb-2">
               Fermentability (%)
             </label>
             <Input
+              id="custom-fermentable-fermentability"
               type="number"
               value={fermentabilityPct}
               onChange={(e) => setFermentabilityPct(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}

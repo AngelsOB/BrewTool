@@ -112,8 +112,9 @@ export default function WaterChemistrySection({
           {/* Source and Target Profiles */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">Source Water</label>
+              <span id="water-source-label" className="block text-sm font-semibold mb-2">Source Water</span>
               <button
+                aria-labelledby="water-source-label"
                 onClick={onOpenSourceModal}
                 className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-left hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"
               >
@@ -122,8 +123,9 @@ export default function WaterChemistrySection({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Target Style</label>
+              <span id="water-target-label" className="block text-sm font-semibold mb-2">Target Style</span>
               <button
+                aria-labelledby="water-target-label"
                 onClick={onOpenTargetModal}
                 className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-left hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"
               >

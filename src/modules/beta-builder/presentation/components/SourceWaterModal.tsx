@@ -183,10 +183,11 @@ export default function SourceWaterModal({
             <div className="space-y-4">
               {/* Profile Name Input */}
               <div>
-                <label className="block text-sm font-semibold mb-2">
+                <label htmlFor="water-profile-name" className="block text-sm font-semibold mb-2">
                   Profile Name
                 </label>
                 <input
+                  id="water-profile-name"
                   type="text"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
@@ -201,11 +202,12 @@ export default function SourceWaterModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {ION_LABELS.map(({ key, label, unit }) => (
                     <div key={key}>
-                      <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+                      <label htmlFor={`water-ion-${key}`} className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
                         {label}
                       </label>
                       <div className="relative">
                         <input
+                          id={`water-ion-${key}`}
                           type="number"
                           value={customProfile[key] || ""}
                           onChange={(e) =>

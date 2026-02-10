@@ -224,11 +224,12 @@ export default function HopSection() {
 
                 {/* Weight */}
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold block mb-1">
+                  <label htmlFor={`hop-weight-${hop.id}`} className="text-xs font-semibold block mb-1">
                     Weight
                   </label>
                   <div className="flex items-center gap-1">
                     <input
+                      id={`hop-weight-${hop.id}`}
                       type="number"
                       value={hop.grams}
                       onChange={(e) =>
@@ -246,10 +247,11 @@ export default function HopSection() {
 
                 {/* Type */}
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold block mb-1">
+                  <label htmlFor={`hop-type-${hop.id}`} className="text-xs font-semibold block mb-1">
                     Type
                   </label>
                   <select
+                    id={`hop-type-${hop.id}`}
                     value={hop.type}
                     onChange={(e) =>
                       updateHop(hop.id, {
@@ -269,11 +271,12 @@ export default function HopSection() {
                 {/* Boil Time */}
                 {hop.type === "boil" && (
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold block mb-1">
+                    <label htmlFor={`hop-boil-time-${hop.id}`} className="text-xs font-semibold block mb-1">
                       Boil Time
                     </label>
                     <div className="flex items-center gap-1">
                       <input
+                        id={`hop-boil-time-${hop.id}`}
                         type="number"
                         value={hop.timeMinutes || 0}
                         onChange={(e) =>
@@ -293,11 +296,12 @@ export default function HopSection() {
                 {/* Whirlpool Temperature */}
                 {hop.type === "whirlpool" && (
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold block mb-1">
+                    <label htmlFor={`hop-whirlpool-temp-${hop.id}`} className="text-xs font-semibold block mb-1">
                       Temp
                     </label>
                     <div className="flex items-center gap-1">
                       <input
+                        id={`hop-whirlpool-temp-${hop.id}`}
                         type="number"
                         value={hop.temperatureC || 80}
                         onChange={(e) =>
@@ -318,11 +322,12 @@ export default function HopSection() {
                 {/* Whirlpool Time */}
                 {hop.type === "whirlpool" && (
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold block mb-1">
+                    <label htmlFor={`hop-whirlpool-time-${hop.id}`} className="text-xs font-semibold block mb-1">
                       Time
                     </label>
                     <div className="flex items-center gap-1">
                       <input
+                        id={`hop-whirlpool-time-${hop.id}`}
                         type="number"
                         value={hop.whirlpoolTimeMinutes || 15}
                         onChange={(e) =>
@@ -342,11 +347,12 @@ export default function HopSection() {
                 {/* Dry Hop Start Day */}
                 {hop.type === "dry hop" && (
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold block mb-1">
+                    <label htmlFor={`hop-dry-start-${hop.id}`} className="text-xs font-semibold block mb-1">
                       Start Day
                     </label>
                     <div className="flex items-center gap-1">
                       <input
+                        id={`hop-dry-start-${hop.id}`}
                         type="number"
                         value={hop.dryHopStartDay ?? 0}
                         onChange={(e) =>
@@ -366,11 +372,12 @@ export default function HopSection() {
                 {/* Dry Hop Duration */}
                 {hop.type === "dry hop" && (
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold block mb-1">
+                    <label htmlFor={`hop-dry-duration-${hop.id}`} className="text-xs font-semibold block mb-1">
                       Duration
                     </label>
                     <div className="flex items-center gap-1">
                       <input
+                        id={`hop-dry-duration-${hop.id}`}
                         type="number"
                         value={hop.dryHopDays ?? 3}
                         onChange={(e) =>

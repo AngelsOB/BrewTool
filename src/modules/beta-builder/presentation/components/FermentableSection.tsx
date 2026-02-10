@@ -223,8 +223,9 @@ export default function FermentableSection() {
           {/* Target ABV input (percent mode only) */}
           {mode === "percent" && (
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold">Target ABV</label>
+              <label htmlFor="fermentable-target-abv" className="text-xs font-semibold">Target ABV</label>
               <input
+                id="fermentable-target-abv"
                 type="number"
                 value={targetABV}
                 onChange={(e) => setTargetABV(parseFloat(e.target.value) || 0)}

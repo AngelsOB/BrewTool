@@ -179,10 +179,11 @@ export default function BetaBuilderPage() {
         {/* Recipe Name & Metadata */}
         <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 space-y-4">
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="recipe-name" className="block text-sm font-semibold mb-2">
               Recipe Name
             </label>
             <input
+              id="recipe-name"
               type="text"
               value={currentRecipe.name}
               onChange={(e) => updateRecipe({ name: e.target.value })}
@@ -192,10 +193,11 @@ export default function BetaBuilderPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <span id="bjcp-style-label" className="block text-sm font-semibold mb-2">
                 BJCP Style
-              </label>
+              </span>
               <button
+                aria-labelledby="bjcp-style-label"
                 onClick={() => setIsStyleModalOpen(true)}
                 className="w-full px-3 py-2 text-left border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] focus:ring-2 focus:ring-[rgb(var(--accent))] focus:border-[rgb(var(--accent))]"
               >
@@ -204,10 +206,11 @@ export default function BetaBuilderPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label htmlFor="recipe-tags" className="block text-sm font-semibold mb-2">
                 Tags (comma-separated)
               </label>
               <input
+                id="recipe-tags"
                 type="text"
                 value={currentRecipe.tags?.join(', ') || ''}
                 onChange={(e) => {
@@ -320,10 +323,11 @@ export default function BetaBuilderPage() {
           )}
 
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="recipe-notes" className="block text-sm font-semibold mb-2">
               Notes
             </label>
             <textarea
+              id="recipe-notes"
               value={currentRecipe.notes || ''}
               onChange={(e) => updateRecipe({ notes: e.target.value || undefined })}
               placeholder="Brew notes, tasting notes, recipe inspiration..."

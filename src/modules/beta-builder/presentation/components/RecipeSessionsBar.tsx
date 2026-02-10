@@ -68,8 +68,16 @@ export default function RecipeSessionsBar({
     return "";
   };
 
+  const handleSessionKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      navigate(`/beta-builder/sessions/${sessionId}`);
+    }
+  };
+
   return (
-    <div onClick={(e) => e.stopPropagation()} className="group">
+    <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation" className="group">
       <div className="-mt-[4px] mx-auto w-[96%] rounded-b-lg bg-[rgb(var(--card))] border border-[rgb(var(--border))] border-t-0 shadow-sm relative z-0 transition-all duration-200 ease-out group-hover:bg-gray-100 dark:group-hover:bg-gray-800/60 group-hover:scale-[0.99]">
         {/* Expanded Session List */}
         <div
@@ -83,11 +91,14 @@ export default function RecipeSessionsBar({
             {sessions.map((session) => (
               <div
                 key={session.id}
+                role="button"
+                tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/beta-builder/sessions/${session.id}`);
                 }}
-                className="px-4 py-3 hover:bg-[rgb(var(--bg))] cursor-pointer transition-colors"
+                onKeyDown={(e) => handleSessionKeyDown(e, session.id)}
+                className="px-4 py-3 hover:bg-[rgb(var(--bg))] cursor-pointer transition-colors focus:outline-none focus:bg-[rgb(var(--bg))]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
