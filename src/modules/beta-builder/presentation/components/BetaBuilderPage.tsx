@@ -22,6 +22,7 @@ import { srmToRgb } from '../../utils/srmColorUtils';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import BrewDayChecklistSection from './BrewDayChecklistSection';
 import StickyStatsBar from './StickyStatsBar';
+import SectionSidebar from './SectionSidebar';
 
 export default function BetaBuilderPage() {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
@@ -134,7 +135,8 @@ export default function BetaBuilderPage() {
   };
 
   return (
-    <div className="brew-theme max-w-4xl mx-auto py-6 px-2">
+    <div className="brew-theme has-section-sidebar max-w-4xl mx-auto py-6 px-4">
+      <SectionSidebar />
       {/* Sticky Stats Bars */}
       {calculations && (
         <>

@@ -282,6 +282,178 @@
 }
 
 
+/* =============================================
+   Section Sidebar — Raw Materials–inspired nav
+   Fixed left sidebar with scroll-driven expansion
+   ============================================= */
+
+.section-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 230px;
+  height: 100vh;
+  z-index: 40;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  padding: 16px 0 24px 16px;
+  pointer-events: none;
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .section-sidebar {
+    display: block;
+  }
+}
+
+.section-sidebar::-webkit-scrollbar {
+  width: 0;
+}
+
+.section-sidebar-track {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-top: 56px; /* Clear the navbar */
+}
+
+.section-sidebar-item {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 190px;
+  min-height: 88px;
+  border-radius: 14px;
+  cursor: pointer;
+  pointer-events: all;
+  overflow: hidden;
+
+  /*
+   * Springy height transition — overshoots slightly then settles.
+   * Combined with transforms for a playful, organic feel.
+   */
+  transition:
+    height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    min-height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.4s ease,
+    filter 0.25s ease,
+    opacity 0.35s ease,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.section-sidebar-item:not(.is-active) {
+  opacity: 0.65;
+  transform: scale(0.96);
+}
+
+.section-sidebar-item:hover {
+  opacity: 1;
+  filter: brightness(1.08);
+  transform: scale(1.02);
+}
+
+.section-sidebar-item.is-active {
+  opacity: 1;
+  transform: scale(1);
+  width: 196px;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px -4px oklch(0% 0 0 / 0.18),
+    0 0 0 1px oklch(100% 0 0 / 0.06) inset;
+}
+
+/* Number label — floats to position with a micro-delay */
+.section-sidebar-number {
+  position: absolute;
+  top: 11px;
+  left: 13px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.3s ease 0.05s, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(0);
+}
+
+.section-sidebar-item.is-active .section-sidebar-number {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+/* Section label — slides up into view when active */
+.section-sidebar-label {
+  position: absolute;
+  bottom: 12px;
+  left: 13px;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  transition:
+    opacity 0.35s ease 0.1s,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.05s;
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.section-sidebar-item:not(.is-active) .section-sidebar-label {
+  transform: translateY(3px);
+  opacity: 0.85;
+}
+
+/*
+ * Scroll-progress dot — acts as a mini-scrollbar within the active tile.
+ * `top` is set via inline style and must NOT be transitioned (needs to track scroll instantly).
+ * `opacity` and `transform` (scale) DO transition for a playful enter/exit animation.
+ */
+.section-sidebar-dot {
+  position: absolute;
+  right: 13px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  /* No transition on `top` — only on visual show/hide properties */
+  transition:
+    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 0.3s ease,
+    height 0.3s ease;
+  will-change: top;
+}
+
+/* Active dot gets a subtle glow */
+.section-sidebar-item.is-active .section-sidebar-dot {
+  box-shadow: 0 0 6px 1px oklch(100% 0 0 / 0.25);
+}
+
+/* When sidebar is visible, shift main content leftward to reduce gap */
+@media (min-width: 1280px) {
+  .has-section-sidebar {
+    padding-left: 240px;
+    padding-right: 24px;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+  }
+
+  /* Content container takes the space after the sidebar, left-aligned */
+  .has-section-sidebar > .brew-section,
+  .has-section-sidebar > div {
+    max-width: 56rem; /* ~896px, similar to max-w-4xl but left-aligned */
+  }
+}
+
+
 @layer utilities {
   .bg-dashboard {
     /* Theme-aware background */
