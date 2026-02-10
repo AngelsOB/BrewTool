@@ -86,7 +86,7 @@ export default function IbuCalculator() {
               inputMode="decimal"
               min="0.1"
               step="0.1"
-              className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
               value={postBoilVolume}
               onChange={(e) => setPostBoilVolume(e.target.value)}
               placeholder={volumeUnit === "L" ? "20" : "5"}

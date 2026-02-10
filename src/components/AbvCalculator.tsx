@@ -42,7 +42,7 @@ export default function AbvCalculator() {
             step="0.001"
             min="0.99"
             max="1.2"
-            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
             value={ogInput}
             onChange={(e) => setOgInput(e.target.value)}
             placeholder="1.050"
@@ -58,7 +58,7 @@ export default function AbvCalculator() {
             step="0.001"
             min="0.99"
             max="1.2"
-            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
             value={fgInput}
             onChange={(e) => setFgInput(e.target.value)}
             placeholder="1.010"

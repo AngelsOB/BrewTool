@@ -42,7 +42,7 @@ const variantClasses: Record<ButtonVariant, string> = {
     "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition bg-red-600 text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2",
   ghost:
     "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_10%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)] focus-visible:ring-offset-2",
-  link: "inline-flex items-center gap-1 font-medium underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+  link: "inline-flex items-center gap-1 font-medium underline text-[var(--coral-600)] dark:text-[var(--coral-500)] hover:text-[var(--coral-700)] dark:hover:text-[var(--coral-400)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]",
 };
 
 // Size classes - btn-neon/outline/tonal have their own padding, so we only add size for inline variants

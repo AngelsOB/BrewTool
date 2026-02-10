@@ -163,7 +163,7 @@ export default function RecipeListPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search recipes by name, style, or tags..."
-                className="w-full px-4 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]"
               />
             </div>
 
@@ -175,7 +175,7 @@ export default function RecipeListPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-[var(--coral-600)]"
               >
                 <option value="date-desc">Newest First</option>
                 <option value="date-asc">Oldest First</option>

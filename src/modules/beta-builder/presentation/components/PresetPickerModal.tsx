@@ -81,22 +81,22 @@ export default function PresetPickerModal<T>({
 }: PresetPickerModalProps<T>) {
   const titleId = useId();
 
-  // Color scheme classes
+  // Color scheme classes - focus rings use consistent coral-600 theme color
   const colorClasses = {
     blue: {
       filterActive:
         "bg-blue-100 text-blue-600 border-blue-300 dark:bg-blue-900/60 dark:text-blue-200 dark:border-blue-700",
-      focusRing: "focus:ring-blue-500 focus:border-blue-500",
+      focusRing: "focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
     },
     green: {
       filterActive:
         "bg-green-100 text-green-600 border-green-300 dark:bg-green-900/60 dark:text-green-200 dark:border-green-700",
-      focusRing: "focus:ring-amber-500 focus:border-amber-500",
+      focusRing: "focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
     },
     amber: {
       filterActive:
         "bg-amber-100 text-amber-600 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-700",
-      focusRing: "focus:ring-amber-500 focus:border-amber-500",
+      focusRing: "focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
     },
   };
 

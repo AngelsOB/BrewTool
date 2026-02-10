@@ -266,7 +266,7 @@ function ChecklistItemRow({
             type="checkbox"
             checked={item.enabled}
             onChange={() => onToggle(item.id)}
-            className="mt-0.5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 rounded border-gray-300 dark:border-gray-600 text-[var(--coral-600)] focus:ring-[var(--coral-600)]"
           />
           <div className={`flex-1 ${!item.enabled ? 'opacity-50 line-through' : ''}`}>
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
