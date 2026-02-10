@@ -5,6 +5,7 @@
  * Follows the repository pattern to abstract data access.
  */
 
+import { devError } from '../../../../utils/logger';
 import type { EquipmentProfile } from '../models/Equipment';
 import { EQUIPMENT_PRESETS } from '../models/Equipment';
 
@@ -95,7 +96,7 @@ class EquipmentRepositoryImpl {
       if (!stored) return [];
       return JSON.parse(stored) as EquipmentProfile[];
     } catch (error) {
-      console.error('Failed to load custom equipment profiles:', error);
+      devError('Failed to load custom equipment profiles:', error);
       return [];
     }
   }

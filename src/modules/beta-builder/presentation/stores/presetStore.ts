@@ -6,6 +6,7 @@
  */
 
 import { create } from "zustand";
+import { devError } from "../../../../utils/logger";
 import type { FermentablePreset, HopPreset, YeastPreset } from "../../domain/models/Presets";
 import { presetRepository } from "../../domain/repositories/PresetRepository";
 import type { FermentableGroup } from "../../data/fermentablePresets";
@@ -58,7 +59,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       set({ fermentablePresets, fermentablePresetsGrouped, isLoading: false });
     } catch (error) {
       set({ error: "Failed to load fermentable presets", isLoading: false });
-      console.error("Error loading fermentable presets:", error);
+      devError("Error loading fermentable presets:", error);
     }
   },
 
@@ -76,7 +77,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       set({ hopPresets, hopPresetsGrouped, isLoading: false });
     } catch (error) {
       set({ error: "Failed to load hop presets", isLoading: false });
-      console.error("Error loading hop presets:", error);
+      devError("Error loading hop presets:", error);
     }
   },
 
@@ -94,7 +95,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       set({ yeastPresets, yeastPresetsGrouped, isLoading: false });
     } catch (error) {
       set({ error: "Failed to load yeast presets", isLoading: false });
-      console.error("Error loading yeast presets:", error);
+      devError("Error loading yeast presets:", error);
     }
   },
 
@@ -111,7 +112,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       get().loadFermentablePresets();
     } catch (error) {
       set({ error: "Failed to save fermentable preset" });
-      console.error("Error saving fermentable preset:", error);
+      devError("Error saving fermentable preset:", error);
     }
   },
 
@@ -125,7 +126,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       get().loadHopPresets();
     } catch (error) {
       set({ error: "Failed to save hop preset" });
-      console.error("Error saving hop preset:", error);
+      devError("Error saving hop preset:", error);
     }
   },
 
@@ -139,7 +140,7 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
       get().loadYeastPresets();
     } catch (error) {
       set({ error: "Failed to save yeast preset" });
-      console.error("Error saving yeast preset:", error);
+      devError("Error saving yeast preset:", error);
     }
   },
 

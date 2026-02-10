@@ -35,10 +35,7 @@ export default function DualUnitInputTest() {
           </label>
           <DualUnitInput
             value={volume}
-            onChange={(newValue) => {
-              console.log("Volume changed from", volume, "to", newValue);
-              setVolume(newValue);
-            }}
+            onChange={setVolume}
             unitType="volume"
             placeholder="20.0"
           />
@@ -53,15 +50,7 @@ export default function DualUnitInputTest() {
           </label>
           <DualUnitInput
             value={temperature}
-            onChange={(newValue) => {
-              console.log(
-                "Temperature changed from",
-                temperature,
-                "to",
-                newValue
-              );
-              setTemperature(newValue);
-            }}
+            onChange={setTemperature}
             unitType="temperature"
             placeholder="20.0"
           />
@@ -94,7 +83,7 @@ export default function DualUnitInputTest() {
           <li>• Rounding should occur when switching units</li>
           <li>• All calculations should use the primary unit (kg, L, °C)</li>
           <li>• The read-only input should not allow unit toggling</li>
-          <li>• Check browser console for debug logs</li>
+          <li>• Check the displayed current value updates correctly</li>
         </ul>
       </div>
     </div>

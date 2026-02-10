@@ -12,6 +12,7 @@
  * - Saving custom presets
  */
 
+import { devError } from "../../../../utils/logger";
 import type { FermentablePreset, HopPreset, YeastPreset } from "../models/Presets";
 import {
   FERMENTABLE_PRESETS,
@@ -118,7 +119,7 @@ export class PresetRepository {
 
       return parsed;
     } catch (error) {
-      console.error("Error loading custom fermentables:", error);
+      devError("Error loading custom fermentables:", error);
       return [];
     }
   }
@@ -178,7 +179,7 @@ export class PresetRepository {
 
       return parsed;
     } catch (error) {
-      console.error("Error loading custom hops:", error);
+      devError("Error loading custom hops:", error);
       return [];
     }
   }
@@ -262,7 +263,7 @@ export class PresetRepository {
 
       return parsed;
     } catch (error) {
-      console.error("Error loading custom yeasts:", error);
+      devError("Error loading custom yeasts:", error);
       return [];
     }
   }

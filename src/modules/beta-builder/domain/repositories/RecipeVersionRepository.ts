@@ -5,6 +5,7 @@
  * Each time a recipe is modified, a new version snapshot is created.
  */
 
+import { devError } from '../../../../utils/logger';
 import type { RecipeVersion } from '../models/Recipe';
 
 export class RecipeVersionRepository {
@@ -20,7 +21,7 @@ export class RecipeVersionRepository {
         .filter((v) => v.recipeId === recipeId)
         .sort((a, b) => a.versionNumber - b.versionNumber);
     } catch (error) {
-      console.error('Failed to load recipe versions:', error);
+      devError('Failed to load recipe versions:', error);
       return [];
     }
   }
@@ -33,7 +34,7 @@ export class RecipeVersionRepository {
       const versions = this.loadByRecipeId(recipeId);
       return versions.find((v) => v.versionNumber === versionNumber) ?? null;
     } catch (error) {
-      console.error('Failed to load recipe version:', error);
+      devError('Failed to load recipe version:', error);
       return null;
     }
   }
@@ -49,7 +50,7 @@ export class RecipeVersionRepository {
       const versions = JSON.parse(json) as RecipeVersion[];
       return versions;
     } catch (error) {
-      console.error('Failed to load all versions:', error);
+      devError('Failed to load all versions:', error);
       return [];
     }
   }
@@ -76,7 +77,7 @@ export class RecipeVersionRepository {
 
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(allVersions));
     } catch (error) {
-      console.error('Failed to save recipe version:', error);
+      devError('Failed to save recipe version:', error);
       throw new Error('Could not save recipe version. Storage may be full.');
     }
   }
@@ -90,7 +91,7 @@ export class RecipeVersionRepository {
       const filtered = allVersions.filter((v) => v.recipeId !== recipeId);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to delete recipe versions:', error);
+      devError('Failed to delete recipe versions:', error);
       throw new Error('Could not delete recipe versions.');
     }
   }
@@ -102,7 +103,7 @@ export class RecipeVersionRepository {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
     } catch (error) {
-      console.error('Failed to clear recipe versions:', error);
+      devError('Failed to clear recipe versions:', error);
     }
   }
 

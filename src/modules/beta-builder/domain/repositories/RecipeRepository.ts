@@ -6,6 +6,7 @@
  * Services use this instead of touching localStorage directly.
  */
 
+import { devError } from '../../../../utils/logger';
 import type { Recipe, RecipeId } from '../models/Recipe';
 
 /** Result type for loadAll - distinguishes "no data" from "corrupted data" */
@@ -76,7 +77,7 @@ export class RecipeRepository {
     if (result.ok) {
       return result.data;
     }
-    console.error('Recipe data is corrupted. Raw data preserved in localStorage.');
+    devError('Recipe data is corrupted. Raw data preserved in localStorage.');
     return [];
   }
 
@@ -111,7 +112,7 @@ export class RecipeRepository {
 
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(recipes));
     } catch (error) {
-      console.error('Failed to save recipe:', error);
+      devError('Failed to save recipe:', error);
       throw new Error('Could not save recipe. Storage may be full.');
     }
   }
@@ -125,7 +126,7 @@ export class RecipeRepository {
       const filtered = recipes.filter((r) => r.id !== id);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to delete recipe:', error);
+      devError('Failed to delete recipe:', error);
       throw new Error('Could not delete recipe.');
     }
   }
@@ -137,7 +138,7 @@ export class RecipeRepository {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
     } catch (error) {
-      console.error('Failed to clear recipes:', error);
+      devError('Failed to clear recipes:', error);
     }
   }
 

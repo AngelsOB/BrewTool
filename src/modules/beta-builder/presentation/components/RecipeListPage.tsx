@@ -598,12 +598,11 @@ function RecipeCard({
           </div>
         )}
 
-        {/* Footer with Actions */}
-        <div className="p-3 bg-[rgb(var(--bg))] border-t border-[rgb(var(--border))] flex items-center justify-between rounded-b-lg">
+        {/* Footer */}
+        <div className="p-3 bg-[rgb(var(--bg))] border-t border-[rgb(var(--border))] rounded-b-lg">
           <div className="text-xs">
             {new Date(recipe.updatedAt).toLocaleDateString()}
           </div>
-          <div className="flex gap-2 flex-wrap justify-end"></div>
         </div>
       </div>
 

@@ -1,3 +1,5 @@
+import { devError } from './logger';
+
 export type StoredValue<T> = {
   version: number;
   value: T;
@@ -94,13 +96,13 @@ export function loadJson<T>(key: string, defaultValue: T): T {
 
   // Log meaningful errors (not 'not_found' which is normal)
   if (result.error === 'parse_error') {
-    console.error(
+    devError(
       `[storage] Corrupted data for key "${key}". Raw data length: ${result.rawData?.length ?? 0} bytes.`
     );
   } else if (result.error === 'storage_unavailable') {
-    console.error(`[storage] Storage unavailable for key "${key}": ${result.message}`);
+    devError(`[storage] Storage unavailable for key "${key}": ${result.message}`);
   } else if (result.error === 'quota_exceeded') {
-    console.error(`[storage] Quota exceeded when reading key "${key}"`);
+    devError(`[storage] Quota exceeded when reading key "${key}"`);
   }
 
   return defaultValue;
@@ -150,7 +152,7 @@ export function saveJson<T>(key: string, value: T, version = 1): void {
       result.error === 'quota_exceeded'
         ? `Storage quota exceeded when saving key "${key}"`
         : `Storage unavailable when saving key "${key}": ${result.message}`;
-    console.error(`[storage] ${errorMsg}`);
+    devError(`[storage] ${errorMsg}`);
     throw new Error(errorMsg);
   }
 }
@@ -166,7 +168,7 @@ export function deleteJson(key: string): boolean {
     localStorage.removeItem(key);
     return true;
   } catch (e) {
-    console.error(`[storage] Failed to delete key "${key}": ${e}`);
+    devError(`[storage] Failed to delete key "${key}": ${e}`);
     return false;
   }
 }
