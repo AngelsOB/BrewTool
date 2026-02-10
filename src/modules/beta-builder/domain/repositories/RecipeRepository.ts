@@ -6,20 +6,37 @@
  * Services use this instead of touching localStorage directly.
  */
 
+import { devError } from '../../../../utils/logger';
 import type { Recipe, RecipeId } from '../models/Recipe';
+
+/** Result type for loadAll - distinguishes "no data" from "corrupted data" */
+export type LoadResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: 'corrupted'; rawData: string };
 
 export class RecipeRepository {
   private readonly STORAGE_KEY = 'beer-recipes-v1';
 
   /**
-   * Load all recipes from storage
+   * Load all recipes from storage with explicit error handling.
+   * Returns a result object that distinguishes between:
+   * - No data (empty array)
+   * - Valid data (parsed recipes)
+   * - Corrupted data (parse failed, raw data preserved for recovery)
    */
-  loadAll(): Recipe[] {
-    try {
-      const json = localStorage.getItem(this.STORAGE_KEY);
-      if (!json) return [];
+  loadAllSafe(): LoadResult<Recipe[]> {
+    const json = localStorage.getItem(this.STORAGE_KEY);
+    if (!json) {
+      return { ok: true, data: [] };
+    }
 
+    try {
       const recipes = JSON.parse(json) as Recipe[];
+
+      // Validate that we got an array
+      if (!Array.isArray(recipes)) {
+        return { ok: false, error: 'corrupted', rawData: json };
+      }
 
       // Migrate old recipes to include currentVersion, otherIngredients, and yeasts fields
       const migratedRecipes = recipes.map(recipe => {
@@ -44,11 +61,24 @@ export class RecipeRepository {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(migratedRecipes));
       }
 
-      return migratedRecipes;
-    } catch (error) {
-      console.error('Failed to load recipes:', error);
-      return [];
+      return { ok: true, data: migratedRecipes };
+    } catch {
+      // JSON parse failed - data is corrupted
+      return { ok: false, error: 'corrupted', rawData: json };
     }
+  }
+
+  /**
+   * Load all recipes from storage (legacy method - wraps loadAllSafe)
+   * Returns empty array on corruption (logs error)
+   */
+  loadAll(): Recipe[] {
+    const result = this.loadAllSafe();
+    if (result.ok) {
+      return result.data;
+    }
+    devError('Recipe data is corrupted. Raw data preserved in localStorage.');
+    return [];
   }
 
   /**
@@ -82,7 +112,7 @@ export class RecipeRepository {
 
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(recipes));
     } catch (error) {
-      console.error('Failed to save recipe:', error);
+      devError('Failed to save recipe:', error);
       throw new Error('Could not save recipe. Storage may be full.');
     }
   }
@@ -96,7 +126,7 @@ export class RecipeRepository {
       const filtered = recipes.filter((r) => r.id !== id);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to delete recipe:', error);
+      devError('Failed to delete recipe:', error);
       throw new Error('Could not delete recipe.');
     }
   }
@@ -108,7 +138,7 @@ export class RecipeRepository {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
     } catch (error) {
-      console.error('Failed to clear recipes:', error);
+      devError('Failed to clear recipes:', error);
     }
   }
 

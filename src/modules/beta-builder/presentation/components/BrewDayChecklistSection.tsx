@@ -96,20 +96,20 @@ export default function BrewDayChecklistSection() {
   if (!currentRecipe) return null;
 
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6">
+    <div className="brew-section brew-animate-in brew-stagger-8" data-accent="checklist">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between text-left"
       >
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold">Brew Day Checklist</h2>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <h2 className="brew-section-title">Brew Day Checklist</h2>
+          <span className="brew-tag">
             {enabledCount} items
           </span>
         </div>
         <svg
-          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+          className={`w-5 h-5 text-muted transition-transform duration-200 ${
             isExpanded ? 'rotate-180' : ''
           }`}
           fill="none"
@@ -120,7 +120,7 @@ export default function BrewDayChecklistSection() {
         </svg>
       </button>
 
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+      <p className="text-sm text-muted mt-1">
         Smart reminders for gravity readings, pH checks, and more — included in your brew day printout.
       </p>
 
@@ -131,7 +131,7 @@ export default function BrewDayChecklistSection() {
             <div className="flex justify-end">
               <button
                 onClick={handleResetToDefaults}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-xs brew-link hover:underline"
               >
                 Reset to smart defaults
               </button>
@@ -140,7 +140,7 @@ export default function BrewDayChecklistSection() {
 
           {/* Stage groups */}
           {groups.length === 0 && checklist.length > 0 && (
-            <p className="text-sm text-gray-400 italic">All items are disabled.</p>
+            <p className="text-sm text-muted italic">All items are disabled.</p>
           )}
 
           {/* Show ALL items grouped by stage, including disabled ones for editing */}
@@ -151,8 +151,8 @@ export default function BrewDayChecklistSection() {
               if (stageItems.length === 0) return null;
 
               return (
-                <div key={stage} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <div key={stage} className="border-l-2 pl-4" style={{ borderColor: 'rgb(var(--brew-border))' }}>
+                  <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--fg-strong)' }}>
                     {meta.label}
                   </h3>
                   <ul className="space-y-2">
@@ -169,7 +169,7 @@ export default function BrewDayChecklistSection() {
 
                   {/* Add custom item button */}
                   {addingToStage === stage ? (
-                    <div className="mt-2 ml-6 space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                    <div className="mt-2 ml-6 space-y-2 p-3 rounded-md" style={{ background: 'rgb(var(--brew-card-inset))' }}>
                       <input
                         type="text"
                         placeholder="Item label (e.g., 'Check refractometer calibration')"
@@ -179,7 +179,7 @@ export default function BrewDayChecklistSection() {
                           if (e.key === 'Enter') handleAddItem(stage as BrewDayStage);
                           if (e.key === 'Escape') setAddingToStage(null);
                         }}
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2 text-sm"
                         autoFocus
                       />
                       <input
@@ -191,13 +191,13 @@ export default function BrewDayChecklistSection() {
                           if (e.key === 'Enter') handleAddItem(stage as BrewDayStage);
                           if (e.key === 'Escape') setAddingToStage(null);
                         }}
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2 text-sm"
                       />
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleAddItem(stage as BrewDayStage)}
                           disabled={!newItemLabel.trim()}
-                          className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="brew-btn-primary text-xs px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Add
                         </button>
@@ -207,7 +207,7 @@ export default function BrewDayChecklistSection() {
                             setNewItemLabel('');
                             setNewItemDetails('');
                           }}
-                          className="px-3 py-1 text-xs border border-[rgb(var(--border))] rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="brew-btn-ghost text-xs px-3 py-1"
                         >
                           Cancel
                         </button>
@@ -220,7 +220,7 @@ export default function BrewDayChecklistSection() {
                         setNewItemLabel('');
                         setNewItemDetails('');
                       }}
-                      className="mt-1 ml-6 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      className="mt-1 ml-6 text-xs brew-link hover:underline"
                     >
                       + Add custom item
                     </button>
@@ -266,14 +266,14 @@ function ChecklistItemRow({
             type="checkbox"
             checked={item.enabled}
             onChange={() => onToggle(item.id)}
-            className="mt-0.5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 rounded text-[var(--brew-accent-600)] focus:ring-[var(--brew-accent-600)]" style={{ borderColor: 'rgb(var(--brew-border))' }}
           />
           <div className={`flex-1 ${!item.enabled ? 'opacity-50 line-through' : ''}`}>
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            <span className="text-sm font-medium" style={{ color: 'var(--fg-strong)' }}>
               {item.label}
             </span>
             {item.details && !isEditing && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 {item.details}
               </p>
             )}
@@ -287,7 +287,7 @@ function ChecklistItemRow({
               setEditValue(item.details ?? '');
               setIsEditing(!isEditing);
             }}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="p-1 transition-colors" style={{ color: 'var(--fg-muted)' }}
             title="Edit details"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,7 +297,7 @@ function ChecklistItemRow({
           {onRemove && (
             <button
               onClick={() => onRemove(item.id)}
-              className="p-1 text-gray-400 hover:text-red-500"
+              className="p-1 brew-danger-text transition-colors"
               title="Remove custom item"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -321,12 +321,12 @@ function ChecklistItemRow({
                 if (e.key === 'Escape') setIsEditing(false);
               }}
               placeholder="Add details / instructions..."
-              className="flex-1 px-2 py-1 text-xs border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input flex-1 px-2 py-1 text-xs"
               autoFocus
             />
             <button
               onClick={handleSaveDetails}
-              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="brew-btn-primary text-xs px-2 py-1"
             >
               Save
             </button>

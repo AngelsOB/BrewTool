@@ -40,7 +40,7 @@ export default function WaterSettings({
       {show && (
         <section className="grid grid-cols-1 sm:grid-cols-6 gap-4">
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">Mash Thickness</div>
+            <div className="text-sm text-muted mb-1">Mash Thickness</div>
             <InputWithSuffix
               value={state.mashThicknessLPerKg}
               onChange={(n: number) => onChange({ mashThicknessLPerKg: n })}
@@ -51,7 +51,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">Brew Method</div>
+            <div className="text-sm text-muted mb-1">Brew Method</div>
             <select
               className="w-full rounded-md border px-2 py-2.5"
               value={state.brewMethod}
@@ -68,7 +68,7 @@ export default function WaterSettings({
             </select>
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">
+            <div className="text-sm text-muted mb-1">
               Grain Absorption
             </div>
             <InputWithSuffix
@@ -81,7 +81,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">
+            <div className="text-sm text-muted mb-1">
               Mash Tun Deadspace
             </div>
             <InputWithSuffix
@@ -94,7 +94,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">
+            <div className="text-sm text-muted mb-1">
               Mash Tun Capacity
             </div>
             <InputWithSuffix
@@ -111,7 +111,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">Boil Time</div>
+            <div className="text-sm text-muted mb-1">Boil Time</div>
             <InputWithSuffix
               value={state.boilTimeMin}
               onChange={(n: number) => onChange({ boilTimeMin: n })}
@@ -122,7 +122,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">Boil-off Rate</div>
+            <div className="text-sm text-muted mb-1">Boil-off Rate</div>
             <InputWithSuffix
               value={state.boilOffRateLPerHour}
               onChange={(n: number) => onChange({ boilOffRateLPerHour: n })}
@@ -133,7 +133,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">
+            <div className="text-sm text-muted mb-1">
               Cooling Shrinkage (%)
             </div>
             <InlineEditableNumber
@@ -146,7 +146,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">Hop Absorption</div>
+            <div className="text-sm text-muted mb-1">Hop Absorption</div>
             <InputWithSuffix
               value={state.hopsAbsorptionLPerKg ?? 0.7}
               onChange={(n: number) => onChange({ hopsAbsorptionLPerKg: n })}
@@ -157,7 +157,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">Kettle Loss</div>
+            <div className="text-sm text-muted mb-1">Kettle Loss</div>
             <InputWithSuffix
               value={state.kettleLossL}
               onChange={(n: number) => onChange({ kettleLossL: n })}
@@ -168,7 +168,7 @@ export default function WaterSettings({
             />
           </label>
           <label className="block">
-            <div className="text-sm text-neutral-700 mb-1">Chiller Loss</div>
+            <div className="text-sm text-muted mb-1">Chiller Loss</div>
             <InputWithSuffix
               value={state.chillerLossL}
               onChange={(n: number) => onChange({ chillerLossL: n })}

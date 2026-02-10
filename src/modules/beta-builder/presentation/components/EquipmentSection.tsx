@@ -41,7 +41,7 @@ export const EquipmentSection: React.FC = () => {
     recipe.equipment.mashTunDeadspaceLiters !== currentProfile.mashTunDeadspaceL ||
     recipe.equipment.kettleLossLiters !== currentProfile.kettleDeadspaceL ||
     recipe.equipment.fermenterLossLiters !== currentProfile.fermenterLossL ||
-    Math.abs(recipe.equipment.hopsAbsorptionLPerKg - currentProfile.hopAbsorptionL_g * 1000) > 0.01
+    Math.abs(recipe.equipment.hopsAbsorptionLPerKg - currentProfile.hopAbsorptionL_kg) > 0.01
   );
 
   const handleSelectProfile = (profile: EquipmentProfile) => {
@@ -58,7 +58,7 @@ export const EquipmentSection: React.FC = () => {
         mashTunDeadspaceLiters: profile.mashTunDeadspaceL,
         kettleLossLiters: profile.kettleDeadspaceL,
         fermenterLossLiters: profile.fermenterLossL,
-        hopsAbsorptionLPerKg: profile.hopAbsorptionL_g * 1000, // Convert from L/g to L/kg
+        hopsAbsorptionLPerKg: profile.hopAbsorptionL_kg,
       },
     });
     setIsPickerOpen(false);
@@ -73,26 +73,27 @@ export const EquipmentSection: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+    <div className="brew-section brew-animate-in brew-stagger-1" data-accent="equipment">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="brew-section-title">
           Equipment & Volumes
         </h2>
         <div className="flex gap-2">
           {hasUnsavedChanges && (
             <button
               onClick={() => setIsCustomModalOpen(true)}
-              className="px-3 py-1.5 text-sm border-2 border-orange-600 text-orange-600 dark:border-orange-500 dark:text-orange-500 rounded-md hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              className="brew-btn-ghost text-xs px-3 py-1.5"
+              style={{ borderColor: 'var(--brew-accent-400)', color: 'var(--brew-accent-700)' }}
             >
-              💾 Save as Custom
+              Save as Custom
             </button>
           )}
           <button
             onClick={() => setIsPickerOpen(true)}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className="brew-btn-primary text-xs px-3 py-1.5"
           >
-            {currentProfile ? `📋 ${currentProfile.name}` : 'Select Profile'}
+            {currentProfile ? currentProfile.name : 'Select Profile'}
           </button>
         </div>
       </div>
@@ -100,24 +101,26 @@ export const EquipmentSection: React.FC = () => {
       {/* Basic Settings */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label htmlFor="equipment-batch-volume" className="block text-sm font-semibold mb-2">
             Batch Volume (L)
           </label>
           <input
+            id="equipment-batch-volume"
             type="number"
             value={recipe.batchVolumeL}
             onChange={(e) =>
               updateRecipe({ batchVolumeL: parseFloat(e.target.value) || 0 })
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="brew-input w-full"
             step="0.1"
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label htmlFor="equipment-mash-efficiency" className="block text-sm font-semibold mb-2">
             Mash Efficiency (%)
           </label>
           <input
+            id="equipment-mash-efficiency"
             type="number"
             value={recipe.equipment.mashEfficiencyPercent}
             onChange={(e) =>
@@ -128,15 +131,16 @@ export const EquipmentSection: React.FC = () => {
                 },
               })
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="brew-input w-full"
             step="1"
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label htmlFor="equipment-boil-time" className="block text-sm font-semibold mb-2">
             Boil Time (min)
           </label>
           <input
+            id="equipment-boil-time"
             type="number"
             value={recipe.equipment.boilTimeMin}
             onChange={(e) =>
@@ -147,7 +151,7 @@ export const EquipmentSection: React.FC = () => {
                 },
               })
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="brew-input w-full"
             step="1"
           />
         </div>
@@ -155,16 +159,17 @@ export const EquipmentSection: React.FC = () => {
 
       {/* Advanced Settings - Collapsible */}
       <details className="group">
-        <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mb-4">
+        <summary className="cursor-pointer text-sm font-medium mb-4 transition-colors brew-link">
           Advanced Equipment Settings
         </summary>
 
-        <div className="grid grid-cols-3 gap-4 pl-4 border-l-2 border-blue-200 dark:border-blue-800">
+        <div className="grid grid-cols-3 gap-4 pl-4 border-l-2" style={{ borderColor: 'var(--brew-accent-300)' }}>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-boil-off-rate" className="block text-xs font-semibold mb-2">
               Boil-Off Rate (L/hr)
             </label>
             <input
+              id="equipment-boil-off-rate"
               type="number"
               value={recipe.equipment.boilOffRateLPerHour}
               onChange={(e) =>
@@ -175,15 +180,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-mash-thickness" className="block text-xs font-semibold mb-2">
               Mash Thickness (L/kg)
             </label>
             <input
+              id="equipment-mash-thickness"
               type="number"
               value={recipe.equipment.mashThicknessLPerKg}
               onChange={(e) =>
@@ -194,15 +200,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-grain-absorption" className="block text-xs font-semibold mb-2">
               Grain Absorption (L/kg)
             </label>
             <input
+              id="equipment-grain-absorption"
               type="number"
               value={recipe.equipment.grainAbsorptionLPerKg}
               onChange={(e) =>
@@ -213,15 +220,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.01"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-mash-tun-deadspace" className="block text-xs font-semibold mb-2">
               Mash Tun Deadspace (L)
             </label>
             <input
+              id="equipment-mash-tun-deadspace"
               type="number"
               value={recipe.equipment.mashTunDeadspaceLiters}
               onChange={(e) =>
@@ -232,15 +240,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-kettle-loss" className="block text-xs font-semibold mb-2">
               Kettle Loss (L)
             </label>
             <input
+              id="equipment-kettle-loss"
               type="number"
               value={recipe.equipment.kettleLossLiters}
               onChange={(e) =>
@@ -251,15 +260,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-hop-absorption" className="block text-xs font-semibold mb-2">
               Hop Absorption (L/kg)
             </label>
             <input
+              id="equipment-hop-absorption"
               type="number"
               value={recipe.equipment.hopsAbsorptionLPerKg}
               onChange={(e) =>
@@ -270,15 +280,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-chiller-loss" className="block text-xs font-semibold mb-2">
               Chiller Loss (L)
             </label>
             <input
+              id="equipment-chiller-loss"
               type="number"
               value={recipe.equipment.chillerLossLiters}
               onChange={(e) =>
@@ -289,15 +300,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-fermenter-loss" className="block text-xs font-semibold mb-2">
               Fermenter Loss (L)
             </label>
             <input
+              id="equipment-fermenter-loss"
               type="number"
               value={recipe.equipment.fermenterLossLiters}
               onChange={(e) =>
@@ -308,15 +320,16 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-2">
+            <label htmlFor="equipment-cooling-shrinkage" className="block text-xs font-semibold mb-2">
               Cooling Shrinkage (%)
             </label>
             <input
+              id="equipment-cooling-shrinkage"
               type="number"
               value={recipe.equipment.coolingShrinkagePercent}
               onChange={(e) =>
@@ -327,7 +340,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -335,16 +348,15 @@ export const EquipmentSection: React.FC = () => {
       </details>
 
       {/* Equipment Profile Picker Modal */}
-      {isPickerOpen && (
-        <EquipmentProfileModal
-          onClose={() => setIsPickerOpen(false)}
-          onSelect={handleSelectProfile}
-          onCreateCustom={() => {
-            setIsPickerOpen(false);
-            setIsCustomModalOpen(true);
-          }}
-        />
-      )}
+      <EquipmentProfileModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={handleSelectProfile}
+        onCreateCustom={() => {
+          setIsPickerOpen(false);
+          setIsCustomModalOpen(true);
+        }}
+      />
 
       {/* Custom Equipment Modal */}
       <CustomEquipmentModal

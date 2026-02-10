@@ -3,8 +3,13 @@
  *
  * Handles loading and caching of equipment profiles from presets and localStorage.
  * Follows the repository pattern to abstract data access.
+ *
+ * Note: Methods are async despite current synchronous localStorage operations.
+ * This maintains a consistent API for consumers and allows future migration
+ * to an async backend (e.g., IndexedDB, remote API) without breaking changes.
  */
 
+import { devError } from '../../../../utils/logger';
 import type { EquipmentProfile } from '../models/Equipment';
 import { EQUIPMENT_PRESETS } from '../models/Equipment';
 
@@ -95,7 +100,7 @@ class EquipmentRepositoryImpl {
       if (!stored) return [];
       return JSON.parse(stored) as EquipmentProfile[];
     } catch (error) {
-      console.error('Failed to load custom equipment profiles:', error);
+      devError('Failed to load custom equipment profiles:', error);
       return [];
     }
   }

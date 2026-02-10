@@ -11,14 +11,8 @@ import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';
-import { HOP_PRESETS } from '../../../../utils/presets';
-
-/** Case-insensitive map from hop name → flavor profile */
-const hopFlavorLookup = new Map(
-  HOP_PRESETS
-    .filter((p) => p.flavor)
-    .map((p) => [p.name.toLowerCase(), p.flavor!])
-);
+import { hopEnrichmentService } from '../../domain/services/HopEnrichmentService';
+import { toast } from '../../../../stores/toastStore';
 
 type RecipeStore = {
   // State (like @Published properties)
@@ -78,11 +72,23 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   // Load all recipes
   loadRecipes: () => {
     set({ isLoading: true, error: null });
-    try {
-      const recipes = recipeRepository.loadAll();
-      set({ recipes, isLoading: false });
-    } catch (error) {
-      set({ error: 'Failed to load recipes', isLoading: false });
+    const result = recipeRepository.loadAllSafe();
+    if (result.ok) {
+      set({ recipes: result.data, isLoading: false });
+    } else {
+      // Data is corrupted but still in localStorage
+      const rawData = result.rawData;
+      set({ recipes: [], error: 'Recipe data appears corrupted', isLoading: false });
+      toast.error('Recipe data could not be loaded. Your data is still saved.', {
+        duration: 0, // Don't auto-dismiss
+        action: {
+          label: 'Copy Raw Data',
+          onClick: () => {
+            navigator.clipboard.writeText(rawData);
+            toast.success('Raw data copied to clipboard');
+          },
+        },
+      });
     }
   },
 
@@ -92,7 +98,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     try {
       const recipe = recipeRepository.loadById(id);
       set({ currentRecipe: recipe, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load recipe', isLoading: false });
     }
   },
@@ -160,7 +166,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Load all recipes to update the list
       const recipes = recipeRepository.loadAll();
       set({ recipes, currentRecipe: duplicate, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to duplicate recipe', isLoading: false });
     }
   },
@@ -188,7 +194,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes list
       get().loadRecipes();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to save recipe' });
     }
   },
@@ -205,7 +211,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes list
       get().loadRecipes();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to delete recipe' });
     }
   },
@@ -227,7 +233,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const recipes = recipeRepository.loadAll();
       set({ recipes, error: null });
       return recipe;
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to import BeerXML' });
       return null;
     }
@@ -244,11 +250,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const now = new Date().toISOString();
       // Enrich hops missing flavor profiles from presets
       const hops = Array.isArray(parsed.hops)
-        ? parsed.hops.map((h: Record<string, unknown>) => {
-            if (h.flavor) return h;
-            const flavor = hopFlavorLookup.get((h.name as string || '').toLowerCase());
-            return flavor ? { ...h, flavor } : h;
-          })
+        ? hopEnrichmentService.enrichHops(parsed.hops)
         : parsed.hops;
       const recipe: Recipe = {
         ...parsed,
@@ -264,7 +266,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const recipes = recipeRepository.loadAll();
       set({ recipes, error: null });
       return recipe;
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to import JSON' });
       return null;
     }
@@ -521,7 +523,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes
       get().loadRecipes();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to create new version' });
     }
   },
@@ -554,7 +556,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Load all recipes to update the list
       const recipes = recipeRepository.loadAll();
       set({ recipes, currentRecipe: variation, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to create variation', isLoading: false });
     }
   },
@@ -563,7 +565,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   loadVersionHistory: (recipeId: RecipeId): RecipeVersion[] => {
     try {
       return recipeVersionRepository.loadByRecipeId(recipeId);
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load version history' });
       return [];
     }
@@ -608,7 +610,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes and set as current
       const recipes = recipeRepository.loadAll();
       set({ recipes, currentRecipe: restoredRecipe, error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to restore version' });
     }
   },

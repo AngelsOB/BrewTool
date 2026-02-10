@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { loadJson, saveJson } from "../utils/storage";
+import { generateId } from "../utils/id";
 import type { Recipe } from "../types/recipe";
 
 type State = {
@@ -43,10 +44,7 @@ export const useRecipeStore = create<State>((set, get) => ({
 
 function createDemoRecipePaterbier(): Recipe {
   const now = new Date().toISOString();
-  const id =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}`;
+  const id = generateId();
   return {
     id,
     name: "Mini 🇧🇪 Tripel - Pseudo Belgian Single / Patersbier",
@@ -308,10 +306,7 @@ function createDemoRecipePaterbier(): Recipe {
 
 export function createEmptyRecipe(name: string): Recipe {
   const now = new Date().toISOString();
-  const id =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}`;
+  const id = generateId();
   return {
     id,
     name,

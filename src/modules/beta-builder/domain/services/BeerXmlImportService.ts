@@ -1,7 +1,5 @@
-
 import type { Recipe, Fermentable, Hop, MashStep, FermentationStep, Yeast, OtherIngredient, OtherIngredientCategory } from '../models/Recipe';
-import { HOP_PRESETS } from '../../../../utils/presets';
-
+import { hopEnrichmentService } from './HopEnrichmentService';
 
 const text = (parent: Element | null, tag: string): string | undefined => {
   const el = parent?.getElementsByTagName(tag)?.[0];
@@ -29,13 +27,6 @@ const yieldToPpg = (yieldPercent: number | undefined): number | undefined => {
   if (yieldPercent == null) return undefined;
   return Math.round((yieldPercent / 100) * 46);
 };
-
-/** Case-insensitive map from hop name → flavor profile */
-const hopFlavorLookup = new Map(
-  HOP_PRESETS
-    .filter((p) => p.flavor)
-    .map((p) => [p.name.toLowerCase(), p.flavor!])
-);
 
 class BeerXmlImportService {
   parse(xml: string): Recipe {
@@ -96,9 +87,8 @@ class BeerXmlImportService {
         else if (use.includes('aroma') || use.includes('whirlpool') || use.includes('flameout')) type = 'whirlpool';
 
         const hopName = text(h, 'NAME') || 'Hop';
-        const flavor = hopFlavorLookup.get(hopName.toLowerCase());
 
-        hops.push({
+        hops.push(hopEnrichmentService.enrichHop({
           id: crypto.randomUUID(),
           name: hopName,
           alphaAcid: alpha,
@@ -109,8 +99,7 @@ class BeerXmlImportService {
           temperatureC: type === 'whirlpool' ? toNumber(text(h, 'TEMPERATURE')) : undefined,
           dryHopStartDay: type === 'dry hop' ? 7 : undefined,
           dryHopDays: type === 'dry hop' ? 3 : undefined,
-          flavor,
-        });
+        }));
       });
     }
 

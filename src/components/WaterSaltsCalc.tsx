@@ -96,7 +96,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <div className="text-sm text-neutral-700 mb-1">{label}</div>
+      <div className="text-sm text-muted mb-1">{label}</div>
       {children}
     </label>
   );
@@ -561,7 +561,7 @@ export default function WaterSaltsCalc({
               </>
             ) : (
               <>
-                <div className="flex flex-col justify-center text-sm py-6 text-neutral-700">
+                <div className="flex flex-col justify-center text-sm py-6 text-muted">
                   <div>Mash: {effectiveMashVol.toFixed(1)} L</div>
                   <div>Sparge: {effectiveSpargeVol.toFixed(1)} L</div>
                 </div>
@@ -880,8 +880,8 @@ function renderSaltInputs(
 function renderSplitPreview(mash: SaltAdditions, sparge: SaltAdditions) {
   const Row = ({ label, m, s }: { label: string; m?: number; s?: number }) => (
     <div className="flex items-center justify-between rounded border px-2 py-1 bg-white/40">
-      <span className="text-white-400">{label}</span>
-      <span className="text-neutral-900 font-medium">
+      <span className="text-white/40">{label}</span>
+      <span className="text-strong font-medium">
         M {m ? m.toFixed(1) : "0.0"} g • S {s ? s.toFixed(1) : "0.0"} g
       </span>
     </div>
@@ -1017,7 +1017,7 @@ function CustomProfileEditor({
       <div className="grid grid-cols-3 gap-2">
         {ION_KEYS.map((k) => (
           <label key={k} className="block text-sm">
-            <div className="text-neutral-700 mb-1">{k}</div>
+            <div className="text-muted mb-1">{k}</div>
             <input
               type="number"
               className="w-full rounded-md border px-3 py-2"

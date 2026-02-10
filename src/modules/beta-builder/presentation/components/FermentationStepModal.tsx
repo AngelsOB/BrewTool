@@ -85,9 +85,10 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
             </h2>
             <button
               onClick={onClose}
+              aria-label="Close modal"
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -97,8 +98,9 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
         <div className="p-6 space-y-4">
           {/* Step Type */}
           <div>
-            <label className="block text-sm font-semibold mb-2">Step Type</label>
+            <label htmlFor="fermentation-step-type" className="block text-sm font-semibold mb-2">Step Type</label>
             <select
+              id="fermentation-step-type"
               value={stepType}
               onChange={(e) => handleTypeChange(e.target.value as FermentationStepType)}
               className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
@@ -113,8 +115,9 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
 
           {/* Step Name */}
           <div>
-            <label className="block text-sm font-semibold mb-2">Step Name</label>
+            <label htmlFor="fermentation-step-name" className="block text-sm font-semibold mb-2">Step Name</label>
             <input
+              id="fermentation-step-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -126,8 +129,9 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
           {/* Duration and Temperature */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">Duration (days)</label>
+              <label htmlFor="fermentation-step-duration" className="block text-sm font-semibold mb-2">Duration (days)</label>
               <input
+                id="fermentation-step-duration"
                 type="number"
                 value={durationDays}
                 onChange={(e) => setDurationDays(parseFloat(e.target.value) || 0)}
@@ -138,8 +142,9 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Temperature (°C)</label>
+              <label htmlFor="fermentation-step-temperature" className="block text-sm font-semibold mb-2">Temperature (°C)</label>
               <input
+                id="fermentation-step-temperature"
                 type="number"
                 value={temperatureC}
                 onChange={(e) => setTemperatureC(parseFloat(e.target.value) || 0)}
@@ -151,8 +156,9 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-semibold mb-2">Notes (optional)</label>
+            <label htmlFor="fermentation-step-notes" className="block text-sm font-semibold mb-2">Notes (optional)</label>
             <textarea
+              id="fermentation-step-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g., Add dry hops on day 7, Cold crash before packaging"

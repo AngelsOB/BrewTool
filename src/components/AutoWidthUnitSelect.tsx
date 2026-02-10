@@ -27,12 +27,14 @@ export default function AutoWidthUnitSelect({
 
   useLayoutEffect(() => {
     updateWidth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateWidth is stable, runs when value changes
   }, [value]);
 
   useEffect(() => {
     const onResize = () => updateWidth();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
   }, []);
 
   return (

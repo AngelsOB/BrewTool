@@ -434,19 +434,19 @@ export default function YeastPitchCalc({
             {/* Row 2: Inline, non-editable text */}
             <div className="text-sm text-neutral-800 flex flex-wrap gap-x-6 gap-y-2">
               <span>
-                <span className="text-neutral-600">Available:</span>{" "}
+                <span className="text-muted">Available:</span>{" "}
                 <span className="font-semibold text-neutral-400">
                   {cellsAvailableB.toFixed(0)} B
                 </span>
               </span>
               <span>
-                <span className="text-neutral-600">Required:</span>{" "}
+                <span className="text-muted">Required:</span>{" "}
                 <span className="font-semibold text-neutral-400">
                   {requiredCellsB.toFixed(0)} B
                 </span>
               </span>
               <span>
-                <span className="text-neutral-600">Diff:</span>{" "}
+                <span className="text-muted">Diff:</span>{" "}
                 <span
                   className={`font-semibold ${
                     diffB < 0 ? "text-red-700" : "text-emerald-600"

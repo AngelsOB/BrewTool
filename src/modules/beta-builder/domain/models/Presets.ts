@@ -14,6 +14,19 @@ export type FermentablePreset = {
   fermentability?: number; // 0-1, override for non-standard ingredients
 };
 
+// Hop flavor keys in radar order
+export const HOP_FLAVOR_KEYS = [
+  "citrus",
+  "tropicalFruit",
+  "stoneFruit",
+  "berry",
+  "floral",
+  "spice",
+  "herbal",
+  "grassy",
+  "resinPine",
+] as const;
+
 export type HopFlavorProfile = {
   citrus: number;
   tropicalFruit: number;

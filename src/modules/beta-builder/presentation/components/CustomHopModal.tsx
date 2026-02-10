@@ -11,6 +11,10 @@
 
 import { useState } from "react";
 import type { HopPreset } from "../../domain/models/Presets";
+import Input from "@components/Input";
+import Button from "@components/Button";
+import { toast } from "../../../../stores/toastStore";
+import ModalOverlay from "./ModalOverlay";
 
 interface CustomHopModalProps {
   isOpen: boolean;
@@ -29,7 +33,7 @@ export default function CustomHopModal({
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert("Please enter a hop name");
+      toast.warning("Please enter a hop name");
       return;
     }
 
@@ -51,49 +55,42 @@ export default function CustomHopModal({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[60]"
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-      onClick={handleClose}
-    >
-      <div
-        className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-md w-full p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-xl font-semibold mb-4">Create Custom Hop</h3>
+    <ModalOverlay isOpen={isOpen} onClose={handleClose} size="md">
+      <div className="p-6">
+        <h3 id="modal-title" className="text-xl font-semibold mb-4">Create Custom Hop</h3>
 
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-hop-name" className="block text-sm font-semibold mb-2">
               Hop Name *
             </label>
-            <input
+            <Input
+              id="custom-hop-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Custom Hop Blend"
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              fullWidth
               autoFocus
             />
           </div>
 
           {/* Alpha Acid */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-hop-alpha-acid" className="block text-sm font-semibold mb-2">
               Alpha Acid %
             </label>
-            <input
+            <Input
+              id="custom-hop-alpha-acid"
               type="number"
               value={alphaAcidPercent}
               onChange={(e) => setAlphaAcidPercent(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
-              step="0.1"
-              min="0"
-              max="25"
+              fullWidth
+              step={0.1}
+              min={0}
+              max={25}
             />
             <p className="text-xs mt-1">
               Typical range: Aroma hops 3-6%, Dual-purpose 6-12%, Bittering 12-18%
@@ -102,19 +99,20 @@ export default function CustomHopModal({
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label htmlFor="custom-hop-category" className="block text-sm font-semibold mb-2">
               Category
             </label>
-            <input
+            <Input
+              id="custom-hop-category"
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="e.g., Custom, Bittering, Aroma, Dual-Purpose"
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
+              fullWidth
             />
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+          <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-md p-3">
             <p className="text-xs">
               Note: Custom hops won't have flavor profile data. You can still use them for
               calculations and scheduling.
@@ -124,20 +122,14 @@ export default function CustomHopModal({
 
         {/* Actions */}
         <div className="flex gap-3 mt-6">
-          <button
-            onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] transition-colors"
-          >
+          <Button variant="outline" onClick={handleClose} fullWidth>
             Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
+          </Button>
+          <Button variant="neon" onClick={handleSave} fullWidth>
             Create Preset
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

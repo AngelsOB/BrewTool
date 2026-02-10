@@ -10,7 +10,7 @@
  */
 
 import type React from "react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
@@ -22,9 +22,10 @@ import {
   sanitizeFileName,
 } from "../utils/recipeExport";
 import type { Recipe } from "../../domain/models/Recipe";
-import { useRef } from "react";
+import { srmToRgb } from "../../utils/srmColorUtils";
 import VersionHistoryModal from "./VersionHistoryModal";
 import RecipeSessionsBar from "./RecipeSessionsBar";
+import { toast } from "../../../../stores/toastStore";
 
 type SortOption =
   | "date-desc"
@@ -134,27 +135,24 @@ export default function RecipeListPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[rgb(var(--bg))] p-8">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-center">Loading recipes...</p>
-        </div>
+      <div className="brew-theme max-w-6xl mx-auto py-6 px-2">
+        <p className="text-center text-muted">Loading recipes...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--bg))] p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="brew-theme max-w-6xl mx-auto py-6 px-2">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">My Recipes</h1>
-          <p>
-            {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"} saved
-          </p>
+          <h1 className="brew-section-title text-3xl">My Recipes</h1>
+          <span className="brew-tag mt-2 inline-block">
+            {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"}
+          </span>
         </div>
 
         {/* Search and Controls */}
-        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-4 mb-6">
+        <div className="brew-section mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -163,19 +161,20 @@ export default function RecipeListPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search recipes by name, style, or tags..."
-                className="w-full px-4 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="brew-input w-full"
               />
             </div>
 
             {/* Sort */}
             <div className="flex gap-2 items-center">
-              <label className="text-sm font-medium whitespace-nowrap">
+              <label htmlFor="recipe-sort-select" className="text-sm font-medium whitespace-nowrap">
                 Sort by:
               </label>
               <select
+                id="recipe-sort-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500"
+                className="brew-input"
               >
                 <option value="date-desc">Newest First</option>
                 <option value="date-asc">Oldest First</option>
@@ -187,7 +186,7 @@ export default function RecipeListPage() {
             {/* Create New Button */}
             <button
               onClick={handleCreateNew}
-              className="px-6 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors whitespace-nowrap"
+              className="brew-btn-primary whitespace-nowrap"
             >
               + New Recipe
             </button>
@@ -207,8 +206,9 @@ export default function RecipeListPage() {
                     const imported = importFromBeerXml(text);
                     if (imported) {
                       loadRecipes();
+                      toast.success(`Imported "${imported.name}"`);
                     } else {
-                      alert("Failed to import BeerXML");
+                      toast.error("Failed to import BeerXML file");
                     }
                   };
                   reader.readAsText(file);
@@ -218,7 +218,7 @@ export default function RecipeListPage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] whitespace-nowrap"
+                className="brew-btn-ghost text-xs whitespace-nowrap"
               >
                 Import BeerXML
               </button>
@@ -237,8 +237,9 @@ export default function RecipeListPage() {
                     const imported = importFromJson(text);
                     if (imported) {
                       loadRecipes();
+                      toast.success(`Imported "${imported.name}"`);
                     } else {
-                      alert("Failed to import JSON");
+                      toast.error("Failed to import JSON file");
                     }
                   };
                   reader.readAsText(file);
@@ -247,7 +248,7 @@ export default function RecipeListPage() {
               />
               <button
                 onClick={() => jsonFileInputRef.current?.click()}
-                className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] whitespace-nowrap"
+                className="brew-btn-ghost text-xs whitespace-nowrap"
               >
                 Import JSON
               </button>
@@ -260,22 +261,23 @@ export default function RecipeListPage() {
           <div className="text-center py-16">
             {searchQuery ? (
               <div>
-                <p className="text-xl mb-4">
+                <p className="text-xl mb-4 text-muted">
                   No recipes found matching "{searchQuery}"
                 </p>
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                  className="brew-link hover:underline"
                 >
                   Clear search
                 </button>
               </div>
             ) : (
               <div>
-                <p className="text-xl mb-4">No recipes yet</p>
+                <p className="text-xl mb-2">Your brew log is empty</p>
+                <p className="text-sm text-muted mb-6">Start crafting your first recipe</p>
                 <button
                   onClick={handleCreateNew}
-                  className="px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors"
+                  className="brew-btn-primary text-base px-8 py-3"
                 >
                   Create Your First Recipe
                 </button>
@@ -299,23 +301,23 @@ export default function RecipeListPage() {
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="brew-modal max-w-md mx-4 p-6">
               <h3 className="text-lg font-semibold mb-4">Delete Recipe?</h3>
-              <p className="text-black mb-6">
+              <p className="text-muted mb-6">
                 Are you sure you want to delete this recipe? This action cannot
                 be undone.
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={handleDeleteCancel}
-                  className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+                  className="brew-btn-ghost"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  className="px-4 py-2 rounded-lg transition-colors" style={{ background: 'var(--brew-danger)', color: 'white' }}
                 >
                   Delete
                 </button>
@@ -323,7 +325,6 @@ export default function RecipeListPage() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }
@@ -345,6 +346,7 @@ function RecipeCard({
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
   const [showVariationDialog, setShowVariationDialog] = useState(false);
+  const variationNameRef = useRef<HTMLInputElement>(null);
   const { createNewVersion, createVariation } = useRecipeStore();
   const { createSession, saveCurrentSession } = useBrewSessionStore();
 
@@ -402,16 +404,27 @@ function RecipeCard({
     navigate(`/beta-builder/sessions/${session.id}`);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onView();
+    }
+  };
+
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onView}
-      className="relative group rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-visible z-10"
+      onKeyDown={handleKeyDown}
+      className="relative group brew-recipe-card cursor-pointer overflow-visible z-10 focus:outline-none focus:ring-2 focus:ring-[var(--brew-accent-400)] focus:ring-offset-2"
     >
       {/* Version Badge Menu */}
       <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
         <button
           onClick={handleStartSession}
-          className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700 flex items-center justify-center text-amber-700 dark:text-amber-300 shadow-sm hover:bg-amber-200 dark:hover:bg-amber-800/60 transition-transform hover:-rotate-12"
+          className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm transition-transform hover:-rotate-12"
+          style={{ background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-700)', border: '1px solid var(--brew-accent-300)' }}
           title="Brew this beer"
         >
           <svg
@@ -440,23 +453,24 @@ function RecipeCard({
             e.stopPropagation();
             setIsVersionMenuOpen((prev) => !prev);
           }}
-          className="px-2 py-1 text-xs font-semibold rounded-full bg-[rgb(var(--bg))] border border-[rgb(var(--border))] shadow-sm hover:bg-white dark:hover:bg-gray-800"
+          className="brew-tag shadow-sm"
           title="Version actions"
         >
           v{recipe.currentVersion}
         </button>
         {isVersionMenuOpen && (
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
           <div
             className="absolute right-0 mt-2 p-4 -m-4"
             onMouseLeave={() => setIsVersionMenuOpen(false)}
           >
-            <div className="w-40 rounded-md bg-white dark:bg-gray-900 border border-[rgb(var(--border))] shadow-lg overflow-hidden">
+            <div className="w-40 rounded-lg bg-[rgb(var(--brew-card))] border border-[rgb(var(--brew-border))] shadow-lg overflow-hidden">
               <button
                 onClick={(e) => {
                   handleNewVersion(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="brew-menu-item w-full text-left"
               >
                 New version
               </button>
@@ -465,7 +479,7 @@ function RecipeCard({
                   handleCreateVariation(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="brew-menu-item w-full text-left"
               >
                 New variation
               </button>
@@ -474,17 +488,17 @@ function RecipeCard({
                   handleViewHistory(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="brew-menu-item w-full text-left"
               >
                 View history
               </button>
-              <div className="my-1 border-t border-[rgb(var(--border))]" />
+              <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
               <button
                 onClick={(e) => {
                   handleExportMarkdown(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="brew-menu-item w-full text-left"
               >
                 Export Markdown
               </button>
@@ -493,7 +507,7 @@ function RecipeCard({
                   handleCopyMarkdown(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="brew-menu-item w-full text-left"
               >
                 Copy Markdown
               </button>
@@ -502,7 +516,7 @@ function RecipeCard({
                   handleExportJson(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="brew-menu-item w-full text-left"
               >
                 Export JSON
               </button>
@@ -511,17 +525,17 @@ function RecipeCard({
                   handleExportBeerXml(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="brew-menu-item w-full text-left"
               >
                 Export BeerXML
               </button>
-              <div className="my-1 border-t border-[rgb(var(--border))]" />
+              <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
               <button
                 onClick={(e) => {
                   onDelete(e);
                   setIsVersionMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                className="brew-menu-item brew-danger-text w-full text-left"
               >
                 Delete
               </button>
@@ -530,37 +544,51 @@ function RecipeCard({
         )}
       </div>
 
-      <div className="bg-[rgb(var(--card))] rounded-lg border border-[rgb(var(--border))] overflow-hidden">
+      <div className="bg-[rgb(var(--brew-card))] rounded-xl border border-[rgb(var(--brew-border))] overflow-hidden">
+        {/* SRM Color Strip */}
+        {calculations && (
+          <div
+            className="h-1.5 w-full"
+            style={{ backgroundColor: srmToRgb(calculations.srm) }}
+          />
+        )}
+
         {/* Header */}
-        <div className="p-4 border-b border-[rgb(var(--border))]">
+        <div className="p-4 border-b border-[rgb(var(--brew-border))]">
           <h3 className="font-semibold text-lg mb-1 truncate">{recipe.name}</h3>
-          {recipe.style && <p className="text-sm truncate">{recipe.style}</p>}
+          {recipe.style && <p className="text-sm text-muted truncate">{recipe.style}</p>}
         </div>
 
         {/* Stats */}
         {calculations && (
           <div className="p-4 grid grid-cols-3 gap-2">
             <div>
-              <div className="text-xs mb-1">ABV</div>
-              <div className="text-sm font-semibold text-green-600 dark:text-green-400">
+              <div className="brew-gauge-label text-[10px]">ABV</div>
+              <div className="text-sm font-bold tabular-nums" style={{ color: 'var(--brew-accent-700)' }}>
                 {calculations.abv.toFixed(1)}%
               </div>
             </div>
             <div>
-              <div className="text-xs mb-1">IBU</div>
-              <div className="text-sm font-semibold">
+              <div className="brew-gauge-label text-[10px]">IBU</div>
+              <div className="text-sm font-bold tabular-nums">
                 {calculations.ibu.toFixed(0)}
               </div>
             </div>
             <div>
-              <div className="text-xs mb-1">SRM</div>
-              <div className="text-sm font-semibold text-amber-600 dark:text-amber-400">
-                {calculations.srm.toFixed(0)}
+              <div className="brew-gauge-label text-[10px]">SRM</div>
+              <div className="flex items-center gap-1">
+                <div
+                  className="w-3.5 h-3.5 rounded-full ring-1 ring-black/10"
+                  style={{ backgroundColor: srmToRgb(calculations.srm) }}
+                />
+                <span className="text-sm font-bold tabular-nums">
+                  {calculations.srm.toFixed(0)}
+                </span>
               </div>
             </div>
             <div className="col-span-3">
-              <div className="text-xs mb-1">OG → FG</div>
-              <div className="text-sm font-semibold">
+              <div className="brew-gauge-label text-[10px]">OG / FG</div>
+              <div className="text-sm font-bold tabular-nums">
                 {calculations.og.toFixed(3)} → {calculations.fg.toFixed(3)}
               </div>
             </div>
@@ -572,15 +600,12 @@ function RecipeCard({
           <div className="px-4 pb-3">
             <div className="flex flex-wrap gap-1">
               {recipe.tags.slice(0, 3).map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded"
-                >
+                <span key={index} className="brew-tag">
                   {tag}
                 </span>
               ))}
               {recipe.tags.length > 3 && (
-                <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+                <span className="brew-tag">
                   +{recipe.tags.length - 3}
                 </span>
               )}
@@ -588,30 +613,40 @@ function RecipeCard({
           </div>
         )}
 
-        {/* Footer with Actions */}
-        <div className="p-3 bg-[rgb(var(--bg))] border-t border-[rgb(var(--border))] flex items-center justify-between rounded-b-lg">
-          <div className="text-xs">
+        {/* Footer */}
+        <div className="p-3 bg-[rgb(var(--brew-card-inset))] border-t border-[rgb(var(--brew-border))] rounded-b-xl">
+          <div className="text-xs text-muted">
             {new Date(recipe.updatedAt).toLocaleDateString()}
           </div>
-          <div className="flex gap-2 flex-wrap justify-end"></div>
         </div>
       </div>
 
       {/* New Version Dialog */}
       {showNewVersionDialog && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-version-dialog-title"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={(e) => {
             e.stopPropagation();
             setShowNewVersionDialog(false);
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.stopPropagation();
+              setShowNewVersionDialog(false);
+            }
+          }}
         >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
-            className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4"
+            className="brew-modal max-w-md mx-4 p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4">Create New Version</h3>
-            <p className="text-sm mb-4">
+            <h3 id="new-version-dialog-title" className="text-lg font-semibold mb-4">Create New Version</h3>
+            <p className="text-sm text-muted mb-4">
               This will save the current state of "{recipe.name}" as version{" "}
               {recipe.currentVersion} and increment to version{" "}
               {recipe.currentVersion + 1}.
@@ -622,7 +657,7 @@ function RecipeCard({
                   e.stopPropagation();
                   setShowNewVersionDialog(false);
                 }}
-                className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+                className="brew-btn-ghost"
               >
                 Cancel
               </button>
@@ -632,7 +667,7 @@ function RecipeCard({
                   createNewVersion(recipe.id);
                   setShowNewVersionDialog(false);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="brew-btn-primary"
               >
                 Create Version
               </button>
@@ -643,27 +678,38 @@ function RecipeCard({
 
       {/* Create Variation Dialog */}
       {showVariationDialog && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-variation-dialog-title"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={(e) => {
             e.stopPropagation();
             setShowVariationDialog(false);
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.stopPropagation();
+              setShowVariationDialog(false);
+            }
+          }}
         >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
-            className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4"
+            className="brew-modal max-w-md mx-4 p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4">Create Variation</h3>
-            <p className="text-sm mb-4">
+            <h3 id="create-variation-dialog-title" className="text-lg font-semibold mb-4">Create Variation</h3>
+            <p className="text-sm text-muted mb-4">
               This will create a new recipe based on "{recipe.name}" (v
               {recipe.currentVersion}).
             </p>
             <input
               type="text"
               defaultValue={`${recipe.name} - Variation`}
-              id="variation-name"
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md mb-4"
+              ref={variationNameRef}
+              className="brew-input w-full mb-4"
               placeholder="New recipe name"
             />
             <div className="flex gap-3 justify-end">
@@ -672,21 +718,18 @@ function RecipeCard({
                   e.stopPropagation();
                   setShowVariationDialog(false);
                 }}
-                className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+                className="brew-btn-ghost"
               >
                 Cancel
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const input = document.getElementById(
-                    "variation-name"
-                  ) as HTMLInputElement;
-                  const newName = input?.value || `${recipe.name} - Variation`;
+                  const newName = variationNameRef.current?.value || `${recipe.name} - Variation`;
                   createVariation(recipe.id, newName);
                   setShowVariationDialog(false);
                 }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                className="brew-btn-primary"
               >
                 Create Variation
               </button>
@@ -696,12 +739,11 @@ function RecipeCard({
       )}
 
       {/* Version History Modal */}
-      {showVersionModal && (
-        <VersionHistoryModal
-          recipe={recipe}
-          onClose={() => setShowVersionModal(false)}
-        />
-      )}
+      <VersionHistoryModal
+        recipe={recipe}
+        isOpen={showVersionModal}
+        onClose={() => setShowVersionModal(false)}
+      />
     </div>
   );
 }

@@ -13,19 +13,20 @@ export default function FlavorGraphs({
 }) {
   const [mode, setMode] = useState<"base" | "estimated">("base");
   const toProfile = (f: NonNullable<HopItem["flavor"]>): HopFlavorProfile => {
-    const anyf: any = f as any;
+    // Type assertion for legacy UI shape compatibility
+    const source = f as Record<string, number | undefined>;
     return {
       ...EMPTY_HOP_FLAVOR,
       // Support both legacy UI shape and canonical HopFlavorProfile
-      citrus: anyf.citrus ?? 0,
-      floral: anyf.floral ?? 0,
-      tropicalFruit: anyf.tropicalFruit ?? anyf.fruity ?? 0,
-      stoneFruit: anyf.stoneFruit ?? 0,
-      berry: anyf.berry ?? 0,
-      herbal: anyf.herbal ?? 0,
-      spice: anyf.spice ?? anyf.spicy ?? 0,
-      resinPine: anyf.resinPine ?? anyf.piney ?? 0,
-      grassy: anyf.grassy ?? anyf.earthy ?? 0,
+      citrus: source.citrus ?? 0,
+      floral: source.floral ?? 0,
+      tropicalFruit: source.tropicalFruit ?? source.fruity ?? 0,
+      stoneFruit: source.stoneFruit ?? 0,
+      berry: source.berry ?? 0,
+      herbal: source.herbal ?? 0,
+      spice: source.spice ?? source.spicy ?? 0,
+      resinPine: source.resinPine ?? source.piney ?? 0,
+      grassy: source.grassy ?? source.earthy ?? 0,
     };
   };
   const baseSeriesMapped = useMemo(

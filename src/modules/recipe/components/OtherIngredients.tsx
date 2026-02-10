@@ -50,7 +50,7 @@ export default function OtherIngredients({
 
   return (
     <section
-      className={"section-soft space-y-3 " + (items.length === 0 ? "py-2" : "")}
+      className={"section-soft space-y-3 border-t-4 border-t-orange-500 " + (items.length === 0 ? "py-2" : "")}
     >
       {/* spring keyframes for notes expansion */}
       <style>{`@keyframes springy{0%{transform:scaleY(0.985)}50%{transform:scaleY(1.02)}100%{transform:scaleY(1)}}`}</style>
@@ -233,6 +233,7 @@ export default function OtherIngredients({
 
       {showCustomModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowCustomModal(false)}

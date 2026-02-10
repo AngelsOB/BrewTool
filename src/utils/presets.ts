@@ -66,12 +66,6 @@ export const EMPTY_HOP_FLAVOR: HopFlavorProfile = {
   resinPine: 0,
 };
 
-// Convert prior yield% heuristics to GU using 46 * yield (legacy helper)
-// Kept for reference; not used now that presets are fully data-driven
-// const gu = (yieldDecimal: number) => Math.round(46 * yieldDecimal * 10) / 10;
-// Note: We keep this array empty to avoid duplicating data. The single source of
-// truth is the curated dataset imported above.
-export const GRAIN_PRESETS: GrainPreset[] = [];
 
 export const HOP_PRESETS: HopPreset[] = [
   // US Hops
@@ -1618,11 +1612,10 @@ export function getGrainPresets(): GrainPreset[] {
   const custom = loadJson<GrainPreset[]>(CUSTOM_GRAINS_KEY, []);
   const generated: GrainPreset[] = GENERATED_GRAINS as unknown as GrainPreset[];
 
-  // Deduplicate by name (prefer explicit entries -> generated -> custom)
+  // Deduplicate by name (prefer generated -> custom)
   const byName = new Map<string, GrainPreset>();
   const put = (p: GrainPreset) =>
     byName.set(p.name, { ...byName.get(p.name), ...p });
-  for (const p of GRAIN_PRESETS) put(p);
   for (const p of generated) put(p);
   for (const p of custom) put(p);
   return Array.from(byName.values());
@@ -1877,7 +1870,7 @@ export function addCustomGrain(p: GrainPreset): GrainPreset[] {
   const list = loadJson<GrainPreset[]>(CUSTOM_GRAINS_KEY, []);
   const next = [...list.filter((x) => x.name !== p.name), p];
   saveJson(CUSTOM_GRAINS_KEY, next);
-  return [...GRAIN_PRESETS, ...next];
+  return next;
 }
 
 export function addCustomHop(p: HopPreset): HopPreset[] {

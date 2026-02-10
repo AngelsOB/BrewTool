@@ -20,6 +20,7 @@ import {
   getHopPresets,
   getGrainPresets,
 } from "../utils/presets";
+import { generateId } from "../utils/id";
 import type {
   FermentableAddition,
   HopAddition,
@@ -29,19 +30,6 @@ import type {
   FermentationSchedule,
   EquipmentProfile,
 } from "../types/recipe";
-
-// Fallback for crypto.randomUUID in non-HTTPS contexts
-const generateId = () => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  // Fallback UUID v4 generator
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-};
 
 function defaultEquipmentFromUI(params: {
   mashThicknessLPerKg: number;
@@ -1849,7 +1837,7 @@ export default function RecipeBuilder() {
   };
 
   return (
-    <div className="page-recipe max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+    <div className="page-recipe max-w-6xl mx-auto space-y-6 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div className="flex-1">
           <h1 className="text-3xl font-semibold tracking-tight">

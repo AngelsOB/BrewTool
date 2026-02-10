@@ -148,14 +148,14 @@ export default function SearchSelect({
         }}
       />
       {open ? (
-        <div className="absolute z-20 mt-1 w-full rounded-md border-white/10 bg-black/50 backdrop-blur shadow-lg max-h-80 overflow-auto text-sm sm:text-base">
+        <div className="absolute z-20 mt-1 w-full rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--surface))] dark:bg-black/50 backdrop-blur shadow-lg max-h-80 overflow-auto text-sm sm:text-base">
           {hasSelectable ? (
             display.filteredGroups ? (
               <div>
                 {display.filteredGroups.map((g, gi) =>
                   g.options.length ? (
                     <div key={g.label + gi}>
-                      <div className="px-3 py-1 text-xs uppercase tracking-wide text-white/80 sticky top-0 bg-black/50 backdrop-blur-sm">
+                      <div className="px-3 py-1 text-xs uppercase tracking-wide text-muted sticky top-0 bg-[rgb(var(--surface))] dark:bg-black/50 backdrop-blur-sm">
                         {g.label}
                       </div>
                       {g.options.map((o, idx) => {
@@ -167,8 +167,8 @@ export default function SearchSelect({
                           <button
                             key={o.value + gi + idx}
                             type="button"
-                            className={`block w-full text-left px-3 py-2 hover:bg-white/10 ${
-                              active ? "bg-white/10" : ""
+                            className={`block w-full text-left px-3 py-2 hover:bg-[rgb(var(--border))]/50 ${
+                              active ? "bg-[rgb(var(--border))]/30" : ""
                             }`}
                             onMouseEnter={() => setHighlight(flatIndex)}
                             onMouseDown={(e) => {
@@ -191,8 +191,8 @@ export default function SearchSelect({
                   <button
                     key={o.value + idx}
                     type="button"
-                    className={`block w-full text-left px-3 py-2 hover:bg-white/10 ${
-                      idx === highlight ? "bg-white/10" : ""
+                    className={`block w-full text-left px-3 py-2 hover:bg-[rgb(var(--border))]/50 ${
+                      idx === highlight ? "bg-[rgb(var(--border))]/30" : ""
                     }`}
                     onMouseEnter={() => setHighlight(idx)}
                     onMouseDown={(e) => {
@@ -212,8 +212,8 @@ export default function SearchSelect({
                 <button
                   key={o.value + idx}
                   type="button"
-                  className={`block w-full text-left px-3 py-2 hover:bg-white/10 ${
-                    idx === highlight ? "bg-white/10" : ""
+                  className={`block w-full text-left px-3 py-2 hover:bg-[rgb(var(--border))]/50 ${
+                    idx === highlight ? "bg-[rgb(var(--border))]/30" : ""
                   }`}
                   onMouseEnter={() => setHighlight(idx)}
                   onMouseDown={(e) => {
@@ -230,7 +230,7 @@ export default function SearchSelect({
           {!hasSelectable && onCreate ? (
             <button
               type="button"
-              className="w-full text-left px-3 py-2 hover:bg-white/10"
+              className="w-full text-left px-3 py-2 hover:bg-[rgb(var(--border))]/50"
               onMouseDown={(e) => {
                 e.preventDefault();
                 onCreate(query);

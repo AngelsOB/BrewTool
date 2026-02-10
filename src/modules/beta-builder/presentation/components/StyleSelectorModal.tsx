@@ -48,7 +48,7 @@ export default function StyleSelectorModal({
       .filter((cat) => cat.styles.length > 0);
   }, [searchQuery, categories]);
 
-  const handleSelect = (style: BjcpStyle, _categoryName: string) => {
+  const handleSelect = (style: BjcpStyle) => {
     onSelect(`${style.code}. ${style.name}`);
     onClose();
     setSearchQuery("");
@@ -83,7 +83,7 @@ export default function StyleSelectorModal({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search styles by name or code..."
-            className="w-full px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]"
             autoFocus
           />
         </div>
@@ -127,7 +127,7 @@ export default function StyleSelectorModal({
                       return (
                         <button
                           key={style.code}
-                          onClick={() => handleSelect(style, category.name)}
+                          onClick={() => handleSelect(style)}
                           className={`text-left p-3 rounded border transition-colors ${
                             isSelected
                               ? "bg-blue-100 dark:bg-blue-900/40 border-blue-500"

@@ -5,10 +5,10 @@ import WaterSaltsCalc from "../components/WaterSaltsCalc";
 
 export default function Calculators() {
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-semibold tracking-tight">Calculators</h1>
-        <p className="mt-1 text-white/70 text-sm">
+        <p className="mt-1 text-muted text-sm">
           Quick brewing helpers. More coming soon.
         </p>
       </div>
@@ -19,13 +19,13 @@ export default function Calculators() {
         <IbuCalculator />
         <WaterSaltsCalc />
         <CalculatorCard title="SRM">
-          <div className="text-sm text-white/70">Coming next.</div>
+          <div className="text-sm text-muted">Coming next.</div>
         </CalculatorCard>
         <CalculatorCard title="Strike Water Temp">
-          <div className="text-sm text-white/70">Coming next.</div>
+          <div className="text-sm text-muted">Coming next.</div>
         </CalculatorCard>
         <CalculatorCard title="Priming Sugar">
-          <div className="text-sm text-white/70">Coming next.</div>
+          <div className="text-sm text-muted">Coming next.</div>
         </CalculatorCard>
       </div>
     </div>

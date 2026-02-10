@@ -12,10 +12,10 @@ export default function DualUnitInputTest() {
       <h1 className="text-2xl font-bold">DualUnitInput Test</h1>
 
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm text-gray-300 mb-2">
+        <label className="block">
+          <span className="block text-sm text-gray-300 mb-2">
             Weight (kg ↔ lb)
-          </label>
+          </span>
           <DualUnitInput
             value={weight}
             onChange={(newValue) => {
@@ -27,53 +27,42 @@ export default function DualUnitInputTest() {
           <p className="text-xs text-gray-400 mt-1">
             Current value: {weight} kg
           </p>
-        </div>
+        </label>
 
-        <div>
-          <label className="block text-sm text-gray-300 mb-2">
+        <label className="block">
+          <span className="block text-sm text-gray-300 mb-2">
             Volume (L ↔ gal)
-          </label>
+          </span>
           <DualUnitInput
             value={volume}
-            onChange={(newValue) => {
-              console.log("Volume changed from", volume, "to", newValue);
-              setVolume(newValue);
-            }}
+            onChange={setVolume}
             unitType="volume"
             placeholder="20.0"
           />
           <p className="text-xs text-gray-400 mt-1">
             Current value: {volume} L
           </p>
-        </div>
+        </label>
 
-        <div>
-          <label className="block text-sm text-gray-300 mb-2">
+        <label className="block">
+          <span className="block text-sm text-gray-300 mb-2">
             Temperature (°C ↔ °F)
-          </label>
+          </span>
           <DualUnitInput
             value={temperature}
-            onChange={(newValue) => {
-              console.log(
-                "Temperature changed from",
-                temperature,
-                "to",
-                newValue
-              );
-              setTemperature(newValue);
-            }}
+            onChange={setTemperature}
             unitType="temperature"
             placeholder="20.0"
           />
           <p className="text-xs text-gray-400 mt-1">
             Current value: {temperature} °C
           </p>
-        </div>
+        </label>
 
-        <div>
-          <label className="block text-sm text-gray-300 mb-2">
+        <label className="block">
+          <span className="block text-sm text-gray-300 mb-2">
             Gravity (read-only)
-          </label>
+          </span>
           <DualUnitInput
             value={1.05}
             onChange={() => {}}
@@ -81,7 +70,7 @@ export default function DualUnitInputTest() {
             placeholder="1.050"
             readOnly={true}
           />
-        </div>
+        </label>
       </div>
 
       <div className="mt-8 p-4 bg-gray-800 rounded">
@@ -94,7 +83,7 @@ export default function DualUnitInputTest() {
           <li>• Rounding should occur when switching units</li>
           <li>• All calculations should use the primary unit (kg, L, °C)</li>
           <li>• The read-only input should not allow unit toggling</li>
-          <li>• Check browser console for debug logs</li>
+          <li>• Check the displayed current value updates correctly</li>
         </ul>
       </div>
     </div>

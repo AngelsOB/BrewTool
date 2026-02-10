@@ -16,6 +16,7 @@ import type { Fermentable } from "../../domain/models/Recipe";
 import type { FermentablePreset } from "../../domain/models/Presets";
 import { getFermentability } from "../../data/fermentablePresets";
 import CustomFermentableModal from "./CustomFermentableModal";
+import PresetPickerModal from "./PresetPickerModal";
 import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
 
 export default function FermentableSection() {
@@ -151,6 +152,7 @@ export default function FermentableSection() {
       currentRecipe.fermentables
     );
     setPercentById((prev) => ({ ...percents, ...prev }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to fermentables changes
   }, [mode, currentRecipe?.fermentables]);
 
   // Calculate weights from percentages and target ABV
@@ -189,29 +191,32 @@ export default function FermentableSection() {
       currentRecipe.fermentables,
       percentById
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to fermentables changes
   }, [mode, currentRecipe?.fermentables, percentById]);
 
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-blue-500">
+    <div className="brew-section brew-animate-in brew-stagger-2" data-accent="grain">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold">Fermentables</h2>
+          <h2 className="brew-section-title">Fermentables</h2>
           {/* Mode Toggle */}
-          <div className="flex items-center rounded-md border border-[rgb(var(--border))] overflow-hidden text-xs">
+          <div className="flex items-center rounded-lg border border-[rgb(var(--brew-border-subtle))] overflow-hidden text-xs">
             <button
               type="button"
-              className={`px-3 py-1.5 ${
-                mode === "amount" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 font-semibold" : "bg-[rgb(var(--card))]"
+              className={`px-3 py-1.5 transition-colors ${
+                mode === "amount" ? "font-semibold" : ""
               }`}
+              style={mode === "amount" ? { background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-800)' } : { background: 'rgb(var(--brew-card-inset))' }}
               onClick={() => setMode("amount")}
             >
               Amount
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 ${
-                mode === "percent" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 font-semibold" : "bg-[rgb(var(--card))]"
+              className={`px-3 py-1.5 transition-colors ${
+                mode === "percent" ? "font-semibold" : ""
               }`}
+              style={mode === "percent" ? { background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-800)' } : { background: 'rgb(var(--brew-card-inset))' }}
               onClick={() => setMode("percent")}
             >
               %
@@ -220,12 +225,13 @@ export default function FermentableSection() {
           {/* Target ABV input (percent mode only) */}
           {mode === "percent" && (
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold">Target ABV</label>
+              <label htmlFor="fermentable-target-abv" className="text-xs font-semibold">Target ABV</label>
               <input
+                id="fermentable-target-abv"
                 type="number"
                 value={targetABV}
                 onChange={(e) => setTargetABV(parseFloat(e.target.value) || 0)}
-                className="w-20 px-2 py-1 text-sm border border-[rgb(var(--border))] rounded"
+                className="brew-input w-20 py-1 px-2"
                 step="0.1"
                 min="0"
               />
@@ -238,7 +244,7 @@ export default function FermentableSection() {
         </div>
         <button
           onClick={() => setIsPickerOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          className="brew-btn-primary"
         >
           Add Fermentable
         </button>
@@ -246,7 +252,7 @@ export default function FermentableSection() {
 
       {/* Fermentable List */}
       {!currentRecipe?.fermentables.length ? (
-        <p className="text-gray-500 dark:text-gray-400 italic">
+        <p className="text-muted italic">
           No fermentables yet. Click "Add Fermentable" to select from preset database.
         </p>
       ) : (
@@ -259,10 +265,10 @@ export default function FermentableSection() {
             return (
               <div
                 key={fermentable.id}
-                className="grid grid-cols-12 gap-2 items-center p-3 bg-[rgb(var(--card))] rounded border border-[rgb(var(--border))] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
+                className="brew-ingredient-row grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 gap-2 lg:gap-2 items-center"
               >
-                {/* Name */}
-                <div className="col-span-4">
+                {/* Name - full width on mobile, 4 cols on desktop */}
+                <div className="col-span-2 sm:col-span-4 lg:col-span-4 flex items-center justify-between">
                   <span className="font-medium flex items-center gap-2">
                     {fermentable.originCode && (
                       <span className="text-lg" title={fermentable.originCode}>
@@ -271,13 +277,25 @@ export default function FermentableSection() {
                     )}
                     {fermentable.name}
                   </span>
+                  {/* Remove button - visible only on mobile, next to name */}
+                  <button
+                    onClick={() => removeFermentable(fermentable.id)}
+                    className="lg:hidden brew-danger-text text-xl font-bold"
+                    aria-label={`Remove ${fermentable.name}`}
+                  >
+                    ×
+                  </button>
                 </div>
 
                 {/* Weight/Percent - Inline Editable */}
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
+                  <label htmlFor={`fermentable-weight-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">
+                    {mode === "amount" ? "Weight" : "Percent"}
+                  </label>
                   {mode === "amount" ? (
-                    <>
+                    <div className="flex items-center gap-1">
                       <input
+                        id={`fermentable-weight-${fermentable.id}`}
                         type="number"
                         value={fermentable.weightKg}
                         onChange={(e) =>
@@ -285,15 +303,16 @@ export default function FermentableSection() {
                             weightKg: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="0.1"
                         min="0"
                       />
                       <span className="text-xs font-medium">kg</span>
-                    </>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex items-center gap-1">
                       <input
+                        id={`fermentable-weight-${fermentable.id}`}
                         type="number"
                         value={percentById[fermentable.id] ?? 0}
                         onChange={(e) =>
@@ -302,68 +321,80 @@ export default function FermentableSection() {
                             [fermentable.id]: parseFloat(e.target.value) || 0,
                           }))
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="0.1"
                         min="0"
                         max="100"
                       />
                       <span className="text-xs font-medium">%</span>
-                    </>
+                    </div>
                   )}
                 </div>
 
                 {/* Color - Inline Editable */}
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    value={fermentable.colorLovibond}
-                    onChange={(e) =>
-                      updateFermentable(fermentable.id, {
-                        colorLovibond: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    step="1"
-                    min="0"
-                  />
-                  <span className="text-xs font-medium">°L</span>
+                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
+                  <label htmlFor={`fermentable-color-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">Color</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      id={`fermentable-color-${fermentable.id}`}
+                      type="number"
+                      value={fermentable.colorLovibond}
+                      onChange={(e) =>
+                        updateFermentable(fermentable.id, {
+                          colorLovibond: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="brew-input w-full py-1 px-2"
+                      step="1"
+                      min="0"
+                    />
+                    <span className="text-xs font-medium">°L</span>
+                  </div>
                 </div>
 
                 {/* PPG - Inline Editable */}
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    value={fermentable.ppg}
-                    onChange={(e) =>
-                      updateFermentable(fermentable.id, {
-                        ppg: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    step="0.1"
-                    min="0"
-                  />
-                  <span className="text-xs font-medium">PPG</span>
+                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
+                  <label htmlFor={`fermentable-ppg-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">PPG</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      id={`fermentable-ppg-${fermentable.id}`}
+                      type="number"
+                      value={fermentable.ppg}
+                      onChange={(e) =>
+                        updateFermentable(fermentable.id, {
+                          ppg: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="brew-input w-full py-1 px-2"
+                      step="0.1"
+                      min="0"
+                    />
+                    <span className="text-xs font-medium whitespace-nowrap">PPG</span>
+                  </div>
                 </div>
 
-                {/* Percentage or Weight (depends on mode) */}
-                <div className="col-span-1 text-right">
+                {/* Percentage or Weight display (depends on mode) */}
+                <div className="col-span-1 sm:col-span-1 lg:col-span-1 text-right">
+                  <span className="text-xs font-medium block mb-1 lg:hidden">
+                    {mode === "amount" ? "%" : "Weight"}
+                  </span>
                   {mode === "amount" ? (
                     <span className="text-sm font-medium">
                       {percentage.toFixed(1)}%
                     </span>
                   ) : (
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium whitespace-nowrap">
                       {fermentable.weightKg.toFixed(2)} kg
                     </span>
                   )}
                 </div>
 
-                {/* Remove Button */}
-                <div className="col-span-1 text-right">
+                {/* Remove Button - hidden on mobile (shown next to name), visible on desktop */}
+                <div className="hidden lg:block lg:col-span-1 text-right">
                   <button
                     onClick={() => removeFermentable(fermentable.id)}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    className="brew-danger-text text-xl font-bold"
+                    aria-label={`Remove ${fermentable.name}`}
                   >
                     ×
                   </button>
@@ -373,191 +404,128 @@ export default function FermentableSection() {
           })}
 
           {/* Total */}
-          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--border))] mt-2">
-            <span className="font-semibold">Total</span>
-            <span className="font-semibold">{totalGrainKg.toFixed(2)} kg</span>
+          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--brew-border-subtle))] mt-2">
+            <span className="font-semibold text-strong">Total</span>
+            <span className="font-semibold text-strong">{totalGrainKg.toFixed(2)} kg</span>
           </div>
         </div>
       )}
 
       {/* Preset Picker Modal */}
-      {isPickerOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
-          onClick={() => {
-            setIsPickerOpen(false);
-            setSearchQuery("");
-          }}
-        >
-          <div
-            className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="p-6 border-b border-[rgb(var(--border))]">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">Select Fermentable</h3>
+      <PresetPickerModal<FermentablePreset>
+        isOpen={isPickerOpen}
+        onClose={() => {
+          setIsPickerOpen(false);
+          setSearchQuery("");
+        }}
+        title="Select Fermentable"
+        searchPlaceholder="Search fermentables..."
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters(!showFilters)}
+        filterContent={
+          <>
+            {/* Type Filters */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="py-1 px-2 font-semibold brew-chip-label">
+                Type:
+              </span>
+              {["grain", "extract", "sugar", "adjunct_mashable"].map((type) => (
                 <button
-                  onClick={() => {
-                    setIsPickerOpen(false);
-                    setSearchQuery("");
-                  }}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              {/* Search */}
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  placeholder="Search fermentables..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  autoFocus
-                />
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`px-3 py-2 rounded-md border transition-colors ${
-                    showFilters
-                      ? "bg-blue-100 text-blue-600 border-blue-300 dark:bg-blue-900/60 dark:text-blue-200 dark:border-blue-700"
-                      : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                  key={type}
+                  onClick={() => toggleFilter("types", type)}
+                  className={`px-3 py-1 rounded-full border transition-colors ${
+                    activeFilters.types.includes(type)
+                      ? "brew-chip-active"
+                      : "brew-chip"
                   }`}
-                  title="Toggle Filters"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  {type === "adjunct_mashable"
+                    ? "Adjunct"
+                    : type.charAt(0).toUpperCase() + type.slice(1)}
                 </button>
-              </div>
+              ))}
+            </div>
 
-              {/* Advanced Filters */}
-              {showFilters && (
-                <div className="space-y-3 mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                {/* Type Filters */}
-                <div className="flex flex-wrap gap-2 text-xs">
-                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">Type:</span>
-                   {["grain", "extract", "sugar", "adjunct_mashable"].map(type => (
-                      <button
-                        key={type}
-                        onClick={() => toggleFilter("types", type)}
-                        className={`px-3 py-1 rounded-full border transition-colors ${
-                          activeFilters.types.includes(type)
-                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                        }`}
-                      >
-                        {type === "adjunct_mashable" ? "Adjunct" : type.charAt(0).toUpperCase() + type.slice(1)}
-                      </button>
-                   ))}
-                </div>
+            {/* Color Filters */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="py-1 px-2 font-semibold brew-chip-label">
+                Color:
+              </span>
+              {[
+                { id: "light", label: "Light (<10°L)" },
+                { id: "amber", label: "Amber (10-50°L)" },
+                { id: "dark", label: "Dark (50-200°L)" },
+                { id: "roasted", label: "Roasted (>200°L)" },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => toggleFilter("colors", opt.id)}
+                  className={`px-3 py-1 rounded-full border transition-colors ${
+                    activeFilters.colors.includes(opt.id)
+                      ? "brew-chip-active"
+                      : "brew-chip"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
 
-                {/* Color Filters */}
-                <div className="flex flex-wrap gap-2 text-xs">
-                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">Color:</span>
-                   {[
-                     { id: "light", label: "Light (<10°L)", color: "bg-yellow-50 border-yellow-200 text-yellow-800" },
-                     { id: "amber", label: "Amber (10-50°L)", color: "bg-orange-50 border-orange-200 text-orange-800" },
-                     { id: "dark", label: "Dark (50-200°L)", color: "bg-amber-900/10 border-amber-900/20 text-amber-900 dark:text-amber-100" },
-                     { id: "roasted", label: "Roasted (>200°L)", color: "bg-gray-900/10 border-gray-900/20 text-gray-900 dark:bg-gray-100/10 dark:text-gray-100" }
-                   ].map(opt => (
-                      <button
-                        key={opt.id}
-                        onClick={() => toggleFilter("colors", opt.id)}
-                        className={`px-3 py-1 rounded-full border transition-colors ${
-                          activeFilters.colors.includes(opt.id)
-                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700 ring-1 ring-blue-500"
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                   ))}
-                </div>
-
-                {/* Origin Filters */}
-                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">Origin:</span>
-                   {availableOrigins.map((code) => (
-                      <button
-                        key={code}
-                        onClick={() => toggleFilter("origins", code)}
-                        className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border flex items-center gap-1 ${
-                          activeFilters.origins.includes(code)
-                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                        }`}
-                      >
-                        <span>{getCountryFlag(code)}</span>
-                        {BREWING_ORIGINS[code] || code}
-                      </button>
-                   ))}
-                </div>
-                </div>
+            {/* Origin Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
+              <span className="py-1 px-2 font-semibold brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
+                Origin:
+              </span>
+              {availableOrigins.map((code) => (
+                <button
+                  key={code}
+                  onClick={() => toggleFilter("origins", code)}
+                  className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border flex items-center gap-1 ${
+                    activeFilters.origins.includes(code)
+                      ? "brew-chip-active"
+                      : "brew-chip"
+                  }`}
+                >
+                  <span>{getCountryFlag(code)}</span>
+                  {BREWING_ORIGINS[code] || code}
+                </button>
+              ))}
+            </div>
+          </>
+        }
+        groups={filteredGrouped}
+        isLoading={presetsLoading}
+        emptyMessage="No fermentables found"
+        renderItem={(preset) => (
+          <button
+            key={preset.name}
+            onClick={() => handleAddFromPreset(preset)}
+            className="w-full text-left px-4 py-2 rounded hover:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] transition-colors flex justify-between items-center"
+          >
+            <span className="font-medium flex items-center gap-2">
+              {preset.originCode && (
+                <span className="text-xl" title={BREWING_ORIGINS[preset.originCode]}>
+                  {getCountryFlag(preset.originCode)}
+                </span>
               )}
-            </div>
-
-            {/* Modal Body - Scrollable List */}
-            <div className="flex-1 overflow-y-auto pb-4">
-              {presetsLoading ? (
-                <p className="text-gray-500 dark:text-gray-400">Loading presets...</p>
-              ) : filteredGrouped.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 px-6 py-8 text-center">No fermentables found</p>
-              ) : (
-                <div className="space-y-6">
-                  {filteredGrouped.map((group) => (
-                    <div key={group.label}>
-                      <h4 className="text-sm font-semibold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--card))] px-6 py-2 border-b border-[rgb(var(--border))]">
-                        {group.label}
-                      </h4>
-                      <div className="space-y-1 px-6">
-                        {group.items.map((preset) => (
-                          <button
-                            key={preset.name}
-                            onClick={() => handleAddFromPreset(preset)}
-                            className="w-full text-left px-4 py-2 rounded hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors flex justify-between items-center"
-                          >
-                            <span className="font-medium flex items-center gap-2">
-                              {preset.originCode && (
-                                <span className="text-xl" title={BREWING_ORIGINS[preset.originCode]}>
-                                  {getCountryFlag(preset.originCode)}
-                                </span>
-                              )}
-                              {preset.name}
-                            </span>
-                            <span className="text-sm font-medium">
-                              {preset.colorLovibond}°L | {preset.potentialGu} PPG
-                              {preset.originCode && ` | ${preset.originCode}`}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))] flex justify-between items-center">
-              <div className="text-sm">
-                {fermentablePresetsGrouped.reduce(
-                  (sum, group) => sum + group.items.length,
-                  0
-                )}{" "}
-                presets available
-              </div>
-              <button
-                onClick={() => setIsCustomModalOpen(true)}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
-              >
-                + Create Custom
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              {preset.name}
+            </span>
+            <span className="text-sm font-medium">
+              {preset.colorLovibond}°L | {preset.potentialGu} PPG
+              {preset.originCode && ` | ${preset.originCode}`}
+            </span>
+          </button>
+        )}
+        totalCount={fermentablePresetsGrouped.reduce(
+          (sum, group) => sum + group.items.length,
+          0
+        )}
+        countLabel="presets available"
+        onCreateCustom={() => setIsCustomModalOpen(true)}
+        colorScheme="blue"
+      />
 
       {/* Custom Fermentable Modal */}
       <CustomFermentableModal

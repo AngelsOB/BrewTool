@@ -33,7 +33,7 @@ export default function AbvCalculator() {
     <CalculatorCard title="ABV (OG/FG)">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">
+          <div className="text-sm text-muted mb-1">
             Original Gravity (OG)
           </div>
           <input
@@ -42,14 +42,14 @@ export default function AbvCalculator() {
             step="0.001"
             min="0.99"
             max="1.2"
-            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
             value={ogInput}
             onChange={(e) => setOgInput(e.target.value)}
             placeholder="1.050"
           />
         </label>
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">
+          <div className="text-sm text-muted mb-1">
             Final Gravity (FG)
           </div>
           <input
@@ -58,7 +58,7 @@ export default function AbvCalculator() {
             step="0.001"
             min="0.99"
             max="1.2"
-            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
             value={fgInput}
             onChange={(e) => setFgInput(e.target.value)}
             placeholder="1.010"
@@ -68,10 +68,10 @@ export default function AbvCalculator() {
 
       <div className="mt-3">
         {error ? (
-          <div className="text-sm text-neutral-600">{error}</div>
+          <div className="text-sm text-muted">{error}</div>
         ) : (
           <div className="rounded-lg border bg-emerald-500/10 px-4 py-3">
-            <div className="text-sm text-neutral-700">Estimated ABV</div>
+            <div className="text-sm text-muted">Estimated ABV</div>
             <div className="text-3xl font-semibold tracking-tight">
               {abv != null ? `${abv.toFixed(2)}%` : "—"}
             </div>

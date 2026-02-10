@@ -57,7 +57,7 @@ export function HopSchedule({
     flavor: {},
   });
   return (
-    <section className="section-soft space-y-3">
+    <section className="section-soft space-y-3 border-t-4 border-t-green-500">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="font-semibold text-primary-strong">Hop Schedule</div>
         <button className="hidden sm:block btn-neon" onClick={onAdd}>
@@ -143,7 +143,7 @@ export function HopSchedule({
                         <button
                           type="button"
                           title="Save preset"
-                          className="rounded border px-2 py-1 text-[10px] text-neutral-700 hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
+                          className="rounded border px-2 py-1 text-[10px] text-muted hover:bg-white/70 bg-white/50 inline-flex items-center gap-2"
                           onClick={() => {
                             const name = (h.name || "").trim();
                             if (!name) return;
@@ -440,6 +440,7 @@ export function HopSchedule({
       </div>
       {showCustomModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowCustomModal(false)}

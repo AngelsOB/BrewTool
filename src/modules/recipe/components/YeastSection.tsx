@@ -71,7 +71,7 @@ export default function YeastSection({
     name: "",
   });
   return (
-    <section className="section-soft space-y-3">
+    <section className="section-soft space-y-3 border-t-4 border-t-amber-500">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="font-semibold text-primary-strong">Yeast</div>
         {yeast.attenuationPercent != null ? (
@@ -172,6 +172,7 @@ export default function YeastSection({
       </div>
       {showCustomModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowCustomModal(false)}

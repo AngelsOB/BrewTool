@@ -79,14 +79,14 @@ export default function IbuCalculator() {
     <CalculatorCard title="IBU (Tinseth)">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">Post-boil Volume</div>
+          <div className="text-sm text-muted mb-1">Post-boil Volume</div>
           <div className="flex gap-2">
             <input
               type="number"
               inputMode="decimal"
               min="0.1"
               step="0.1"
-              className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
               value={postBoilVolume}
               onChange={(e) => setPostBoilVolume(e.target.value)}
               placeholder={volumeUnit === "L" ? "20" : "5"}
@@ -103,7 +103,7 @@ export default function IbuCalculator() {
         </label>
 
         <label className="block">
-          <div className="text-sm text-neutral-700 mb-1">Original Gravity</div>
+          <div className="text-sm text-muted mb-1">Original Gravity</div>
           <input
             type="number"
             inputMode="decimal"
@@ -216,7 +216,7 @@ export default function IbuCalculator() {
         ))}
         <div>
           <button
-            className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-50"
+            className="rounded-md border px-3 py-2 text-sm hover:bg-white/10"
             onClick={() =>
               setHops((h) => [
                 ...h,
@@ -231,7 +231,7 @@ export default function IbuCalculator() {
 
       <div className="mt-3">
         <div className="rounded-lg border bg-emerald-500/10 px-4 py-3">
-          <div className="text-sm text-neutral-700">Estimated IBU</div>
+          <div className="text-sm text-muted">Estimated IBU</div>
           <div className="text-3xl font-semibold tracking-tight">
             {ibu != null ? ibu.toFixed(1) : "—"}
           </div>

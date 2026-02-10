@@ -1,17 +1,5 @@
 import type { HopFlavorProfile } from "../../domain/models/Presets";
-
-// Hop flavor keys in radar order
-export const HOP_FLAVOR_KEYS = [
-  "citrus",
-  "tropicalFruit",
-  "stoneFruit",
-  "berry",
-  "floral",
-  "spice",
-  "herbal",
-  "grassy",
-  "resinPine",
-] as const;
+import { HOP_FLAVOR_KEYS } from "../../domain/models/Presets";
 
 type Props = {
   flavor: HopFlavorProfile;

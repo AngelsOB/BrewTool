@@ -5,6 +5,7 @@
  * Sessions track actual brew days and measurements.
  */
 
+import { devError } from '../../../../utils/logger';
 import type { BrewSession, SessionId } from '../models/BrewSession';
 
 export class BrewSessionRepository {
@@ -21,7 +22,7 @@ export class BrewSessionRepository {
       const sessions = JSON.parse(json) as BrewSession[];
       return sessions;
     } catch (error) {
-      console.error('Failed to load brew sessions:', error);
+      devError('Failed to load brew sessions:', error);
       return [];
     }
   }
@@ -34,7 +35,7 @@ export class BrewSessionRepository {
       const sessions = this.loadAll();
       return sessions.find((s) => s.id === id) ?? null;
     } catch (error) {
-      console.error('Failed to load session:', error);
+      devError('Failed to load session:', error);
       return null;
     }
   }
@@ -49,7 +50,7 @@ export class BrewSessionRepository {
         .filter((s) => s.recipeId === recipeId)
         .sort((a, b) => new Date(b.brewDate).getTime() - new Date(a.brewDate).getTime());
     } catch (error) {
-      console.error('Failed to load sessions for recipe:', error);
+      devError('Failed to load sessions for recipe:', error);
       return [];
     }
   }
@@ -72,7 +73,7 @@ export class BrewSessionRepository {
 
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessions));
     } catch (error) {
-      console.error('Failed to save session:', error);
+      devError('Failed to save session:', error);
       throw new Error('Could not save brew session. Storage may be full.');
     }
   }
@@ -86,7 +87,7 @@ export class BrewSessionRepository {
       const filtered = sessions.filter((s) => s.id !== id);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to delete session:', error);
+      devError('Failed to delete session:', error);
       throw new Error('Could not delete brew session.');
     }
   }
@@ -100,7 +101,7 @@ export class BrewSessionRepository {
       const filtered = sessions.filter((s) => s.recipeId !== recipeId);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to delete sessions for recipe:', error);
+      devError('Failed to delete sessions for recipe:', error);
       throw new Error('Could not delete sessions.');
     }
   }
@@ -112,7 +113,7 @@ export class BrewSessionRepository {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
     } catch (error) {
-      console.error('Failed to clear sessions:', error);
+      devError('Failed to clear sessions:', error);
     }
   }
 

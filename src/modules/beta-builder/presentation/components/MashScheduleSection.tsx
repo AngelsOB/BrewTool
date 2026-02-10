@@ -94,11 +94,11 @@ export default function MashScheduleSection() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="brew-section brew-animate-in brew-stagger-3 space-y-4" data-accent="mash">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Mash Schedule</h3>
+          <h3 className="brew-section-title">Mash Schedule</h3>
           <p className="text-sm">
             Total Time: {totalMashTime} min | Water: {totalInfusionWater.toFixed(1)} L | Final Volume: {finalMashVolume.toFixed(1)} L
           </p>
@@ -106,13 +106,13 @@ export default function MashScheduleSection() {
         <div className="flex gap-2">
           <button
             onClick={handleGenerateSingleInfusion}
-            className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+            className="brew-btn-ghost text-xs px-3 py-1"
           >
             Single Infusion
           </button>
           <button
             onClick={handleGenerateMultiStep}
-            className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+            className="brew-btn-ghost text-xs px-3 py-1"
           >
             Multi-Step
           </button>
@@ -121,7 +121,7 @@ export default function MashScheduleSection() {
 
       {/* Mash Steps List */}
       {currentRecipe.mashSteps.length === 0 ? (
-        <div className="text-center py-8 border-2 border-dashed border-[rgb(var(--border))] rounded">
+        <div className="text-center py-8 border-2 border-dashed rounded-lg" style={{ borderColor: 'rgb(var(--brew-border))', background: 'rgb(var(--brew-card-inset))' }}>
           <p>No mash steps added yet.</p>
           <p className="text-sm">Use the buttons above to generate a default schedule, or add steps manually below.</p>
         </div>
@@ -130,10 +130,10 @@ export default function MashScheduleSection() {
           {currentRecipe.mashSteps.map((step, index) => (
             <div
               key={step.id}
-              className="flex items-center gap-3 p-3 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded shadow-sm hover:shadow-md transition-shadow"
+              className="brew-ingredient-row flex items-center gap-3"
             >
               {/* Step Number */}
-              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full font-semibold" style={{ background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-800)' }}>
                 {index + 1}
               </div>
 
@@ -162,7 +162,7 @@ export default function MashScheduleSection() {
                   {step.type === "infusion" && step.infusionVolumeLiters && step.infusionTempC && (
                     <div>
                       <div className="text-xs">Infusion</div>
-                      <div className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                      <div className="text-sm font-semibold brew-link">
                         {step.infusionVolumeLiters.toFixed(1)} L @ {step.infusionTempC.toFixed(1)}°C
                       </div>
                     </div>
@@ -174,13 +174,13 @@ export default function MashScheduleSection() {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleOpenEditModal(step)}
-                  className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                  className="px-3 py-1 text-sm brew-link rounded transition-colors"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => removeMashStep(step.id)}
-                  className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                  className="px-3 py-1 text-sm brew-danger-text rounded transition-colors"
                 >
                   Remove
                 </button>
@@ -193,15 +193,15 @@ export default function MashScheduleSection() {
       {/* Add Step Button */}
       <button
         onClick={handleOpenAddModal}
-        className="w-full px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+        className="brew-btn-primary w-full"
       >
         + Add Mash Step
       </button>
 
       {/* Warning if no grains */}
       {totalGrainKg === 0 && (
-        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-200">
-          ⚠️ Add fermentables first to enable mash calculations
+        <div className="brew-alert-warning">
+          Add fermentables first to enable mash calculations
         </div>
       )}
 
