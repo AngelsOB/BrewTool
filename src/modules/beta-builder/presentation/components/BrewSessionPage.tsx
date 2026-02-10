@@ -41,6 +41,7 @@ export default function BrewSessionPage() {
     updateRecipe: updateEditorRecipe,
   } = useRecipeStore();
   const saveTimerRef = useRef<number | null>(null);
+  const hasPendingSaveRef = useRef(false);
   const editorSnapshotRef = useRef<Recipe | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -49,6 +50,30 @@ export default function BrewSessionPage() {
       loadSession(sessionId);
     }
   }, [sessionId, loadSession]);
+
+  // Flush pending saves on unmount or tab close to prevent data loss
+  useEffect(() => {
+    const flushPendingSave = () => {
+      if (hasPendingSaveRef.current) {
+        if (saveTimerRef.current) {
+          window.clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
+        }
+        saveCurrentSession();
+        hasPendingSaveRef.current = false;
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      flushPendingSave();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      flushPendingSave(); // Also flush on component unmount (navigation)
+    };
+  }, [saveCurrentSession]);
 
   const brewDayCalcs = useRecipeCalculations(currentSession?.brewDayRecipe ?? null);
   const editorCalcs = useRecipeCalculations(editorRecipe ?? null);
@@ -82,8 +107,10 @@ export default function BrewSessionPage() {
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
     }
+    hasPendingSaveRef.current = true;
     saveTimerRef.current = window.setTimeout(() => {
       saveCurrentSession();
+      hasPendingSaveRef.current = false;
     }, 400);
   };
 
