@@ -1,6 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- legacy store uses any for ingredient types */
 import { loadJson, saveJson } from "../utils/storage";
-import type { BrewingDataStore, Recipe, EquipmentProfile } from "./recipe";
+import type {
+  BrewingDataStore,
+  Recipe,
+  EquipmentProfile,
+  FermentableIngredient,
+  HopIngredient,
+  YeastIngredient,
+} from "./recipe";
 import type { SavedWaterProfile } from "../utils/water";
 
 const RECIPES_KEY = "beerapp.recipes";
@@ -59,12 +65,13 @@ export function createLocalBrewingDataStore(): BrewingDataStore {
     },
     ingredients: {
       fermentables: {
-        list: () => loadJson<any[]>(FERMENTABLES_KEY, []),
+        list: () => loadJson<FermentableIngredient[]>(FERMENTABLES_KEY, []),
         get: (id: string) =>
-          loadJson<any[]>(FERMENTABLES_KEY, []).find((x) => x.id === id) ??
-          null,
-        save: (ingredient: any) => {
-          const list = loadJson<any[]>(FERMENTABLES_KEY, []);
+          loadJson<FermentableIngredient[]>(FERMENTABLES_KEY, []).find(
+            (x) => x.id === id
+          ) ?? null,
+        save: (ingredient: FermentableIngredient) => {
+          const list = loadJson<FermentableIngredient[]>(FERMENTABLES_KEY, []);
           const idx = list.findIndex((e) => e.id === ingredient.id);
           const next =
             idx >= 0
@@ -74,11 +81,12 @@ export function createLocalBrewingDataStore(): BrewingDataStore {
         },
       },
       hops: {
-        list: () => loadJson<any[]>(HOPS_KEY, []),
+        list: () => loadJson<HopIngredient[]>(HOPS_KEY, []),
         get: (id: string) =>
-          loadJson<any[]>(HOPS_KEY, []).find((x) => x.id === id) ?? null,
-        save: (ingredient: any) => {
-          const list = loadJson<any[]>(HOPS_KEY, []);
+          loadJson<HopIngredient[]>(HOPS_KEY, []).find((x) => x.id === id) ??
+          null,
+        save: (ingredient: HopIngredient) => {
+          const list = loadJson<HopIngredient[]>(HOPS_KEY, []);
           const idx = list.findIndex((e) => e.id === ingredient.id);
           const next =
             idx >= 0
@@ -88,11 +96,13 @@ export function createLocalBrewingDataStore(): BrewingDataStore {
         },
       },
       yeasts: {
-        list: () => loadJson<any[]>(YEASTS_KEY, []),
+        list: () => loadJson<YeastIngredient[]>(YEASTS_KEY, []),
         get: (id: string) =>
-          loadJson<any[]>(YEASTS_KEY, []).find((x) => x.id === id) ?? null,
-        save: (ingredient: any) => {
-          const list = loadJson<any[]>(YEASTS_KEY, []);
+          loadJson<YeastIngredient[]>(YEASTS_KEY, []).find(
+            (x) => x.id === id
+          ) ?? null,
+        save: (ingredient: YeastIngredient) => {
+          const list = loadJson<YeastIngredient[]>(YEASTS_KEY, []);
           const idx = list.findIndex((e) => e.id === ingredient.id);
           const next =
             idx >= 0

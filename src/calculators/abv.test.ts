@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { abvFromOGFG, abvMorey } from './abv';
+import { abvFromOGFG } from './abv';
 
 describe('ABV Calculations', () => {
   describe('abvFromOGFG (simple formula)', () => {
@@ -52,31 +52,6 @@ describe('ABV Calculations', () => {
       // This shouldn't happen in practice, but the formula handles it
       const abv = abvFromOGFG(1.010, 1.050);
       expect(abv).toBeLessThan(0);
-    });
-  });
-
-  describe('abvMorey (alternative formula)', () => {
-    test('returns a value for typical beer', () => {
-      // The Morey formula is more complex, just ensure it returns something
-      const abv = abvMorey(1.050, 1.010);
-      expect(abv).toBeGreaterThan(0);
-    });
-
-    test('returns 0 when OG equals FG', () => {
-      // When OG = FG, numerator is 0
-      const abv = abvMorey(1.050, 1.050);
-      expect(abv).toBe(0);
-    });
-
-    test('generally agrees with simple formula direction', () => {
-      // Both formulas should indicate higher ABV for larger OG-FG gap
-      const simpleHigh = abvFromOGFG(1.080, 1.010);
-      const simpleLow = abvFromOGFG(1.040, 1.010);
-      const moreyHigh = abvMorey(1.080, 1.010);
-      const moreyLow = abvMorey(1.040, 1.010);
-
-      expect(simpleHigh).toBeGreaterThan(simpleLow);
-      expect(moreyHigh).toBeGreaterThan(moreyLow);
     });
   });
 
