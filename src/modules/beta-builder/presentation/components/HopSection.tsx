@@ -399,6 +399,7 @@ export default function HopSection() {
                   <button
                     onClick={() => removeHop(hop.id)}
                     className="text-red-600 hover:text-red-800 text-xl font-bold"
+                    aria-label={`Remove ${hop.name}`}
                   >
                     ×
                   </button>

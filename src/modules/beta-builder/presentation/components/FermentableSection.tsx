@@ -367,6 +367,7 @@ export default function FermentableSection() {
                   <button
                     onClick={() => removeFermentable(fermentable.id)}
                     className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    aria-label={`Remove ${fermentable.name}`}
                   >
                     ×
                   </button>
