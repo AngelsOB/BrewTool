@@ -494,7 +494,6 @@ export class MashPhCalculationService {
     currentPh: number,
     targetPh: number,
     totalGrainKg: number,
-    _mashWaterL: number,
   ): MashPhAdjustment | null {
     const delta = currentPh - targetPh;
 

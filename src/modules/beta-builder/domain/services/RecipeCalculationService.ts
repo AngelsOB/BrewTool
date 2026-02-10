@@ -41,7 +41,6 @@ export class RecipeCalculationService {
           estimatedMashPh,
           DEFAULT_TARGET_PH,
           totalGrainKg,
-          mashWaterL,
         )
       : null;
 

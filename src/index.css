@@ -73,7 +73,12 @@
 
 @layer utilities {
   .bg-dashboard {
-    /* Lighter, gentle gradient */
+    /* Theme-aware background */
+    background: rgb(var(--bg));
+  }
+
+  .dark .bg-dashboard {
+    /* Dark mode: subtle gradient with glows */
     background: radial-gradient(
         1000px 360px at 15% -10%,
         rgba(255 235 210 / 0.35),
@@ -136,16 +141,27 @@
 
   /* Soften CTA but keep glow */
   .btn-neon {
-    @apply items-center gap-2 rounded-xl px-4 py-2 font-medium text-white transition;
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition;
+    color: var(--fg-strong);
+    background: color-mix(in oklch, var(--coral-600) 15%, transparent);
+    border: 2px solid var(--coral-600);
+    box-shadow: 0 0 12px color-mix(in oklch, var(--coral-600) 25%, transparent);
+  }
+  .btn-neon:hover {
+    box-shadow: 0 0 20px color-mix(in oklch, var(--coral-600) 40%, transparent);
+    background: color-mix(in oklch, var(--coral-600) 22%, transparent);
+  }
+
+  .dark .btn-neon {
+    color: white;
     background: linear-gradient(
       180deg,
       rgba(0, 0, 0, 0.25),
       rgba(0, 0, 0, 0.35)
     );
-    border: 2px solid var(--coral-600);
     box-shadow: 0 0 18px var(--coral-800);
   }
-  .btn-neon:hover {
+  .dark .btn-neon:hover {
     box-shadow: 0 0 26px var(--coral-600);
   }
 
@@ -154,14 +170,26 @@
     @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition;
     color: var(--fg-strong);
     border: 2px solid var(--coral-600);
+    background: color-mix(in oklch, var(--coral-600) 8%, transparent);
+  }
+  .btn-outline:hover {
+    box-shadow: 0 0 16px color-mix(in oklch, var(--coral-600) 35%, transparent);
+    background: color-mix(in oklch, var(--coral-600) 15%, transparent);
+  }
+
+  .dark .btn-outline {
     background: linear-gradient(
       180deg,
       rgba(0, 0, 0, 0.25),
       rgba(0, 0, 0, 0.35)
     );
   }
-  .btn-outline:hover {
-    box-shadow: 0 0 16px color-mix(in oklch, var(--coral-600) 35%, transparent);
+  .dark .btn-outline:hover {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.2),
+      rgba(0, 0, 0, 0.3)
+    );
   }
 
   .btn-tonal {
@@ -226,6 +254,9 @@
   .text-white\/60 {
     color: var(--fg-muted) !important;
   }
+  .text-white\/30 {
+    color: color-mix(in oklch, var(--fg-muted) 60%, transparent) !important;
+  }
   .hover\:text-white\/90:hover {
     color: color-mix(in oklch, var(--fg-strong) 95%, black 5%) !important;
   }
@@ -245,6 +276,27 @@
     ) !important;
   }
 
+  .bg-white\/5 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 5%,
+      transparent
+    ) !important;
+  }
+  .bg-white\/10 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 10%,
+      transparent
+    ) !important;
+  }
+  .bg-white\/15 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 15%,
+      transparent
+    ) !important;
+  }
   .bg-white\/25 {
     background-color: color-mix(
       in oklch,
@@ -270,6 +322,30 @@
     background-color: color-mix(
       in oklch,
       var(--fg-strong) 90%,
+      transparent
+    ) !important;
+  }
+
+  .hover\:bg-white\/10:hover {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 10%,
+      transparent
+    ) !important;
+  }
+  .hover\:bg-white\/15:hover {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 15%,
+      transparent
+    ) !important;
+  }
+
+  /* Theme-aware bg-black overrides (for dropdowns/overlays) */
+  .bg-black\/50 {
+    background-color: color-mix(
+      in oklch,
+      var(--fg-strong) 50%,
       transparent
     ) !important;
   }

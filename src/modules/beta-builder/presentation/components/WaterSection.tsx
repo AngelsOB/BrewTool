@@ -117,6 +117,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       calculations.mashWaterL,
       calculations.spargeWaterL
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to water chemistry changes
   }, [
     waterChem.sourceProfile,
     waterChem.saltAdditions,
@@ -132,6 +133,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       calculations.mashWaterL,
       calculations.spargeWaterL
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to water chemistry changes
   }, [waterChem.saltAdditions, calculations?.mashWaterL, calculations?.spargeWaterL]);
 
   // Filtered presets for the picker modal

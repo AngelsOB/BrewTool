@@ -73,12 +73,13 @@ export function ibuSingleAddition(
         utilization = whirlpoolUtilization(wpMin, wpTemp, wortGravity);
       }
       break;
-    case "dry hop":
+    case "dry hop": {
       // Dry hops contribute ~2-8% of their potential IBU through non-isomerized compounds
       // Higher for aged hops (more oxidation products), longer contact time, higher temps
       const dryHopFactor = 0.05; // Conservative 5% contribution
       utilization = tinsethUtilization(60, wortGravity) * dryHopFactor;
       break;
+    }
     case "mash":
       // Minimal contribution from carryover into the boil
       utilization = tinsethUtilization(60, wortGravity) * 0.15;

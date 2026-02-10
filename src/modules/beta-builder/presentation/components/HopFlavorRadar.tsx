@@ -1,5 +1,5 @@
 import type { HopFlavorProfile } from "../../domain/models/Presets";
-import { HOP_FLAVOR_KEYS } from "./HopFlavorMini";
+import { HOP_FLAVOR_KEYS } from "../../domain/models/Presets";
 
 type Series = { name: string; flavor: HopFlavorProfile };
 

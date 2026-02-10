@@ -48,7 +48,7 @@ export default function StyleSelectorModal({
       .filter((cat) => cat.styles.length > 0);
   }, [searchQuery, categories]);
 
-  const handleSelect = (style: BjcpStyle, _categoryName: string) => {
+  const handleSelect = (style: BjcpStyle) => {
     onSelect(`${style.code}. ${style.name}`);
     onClose();
     setSearchQuery("");
@@ -127,7 +127,7 @@ export default function StyleSelectorModal({
                       return (
                         <button
                           key={style.code}
-                          onClick={() => handleSelect(style, category.name)}
+                          onClick={() => handleSelect(style)}
                           className={`text-left p-3 rounded border transition-colors ${
                             isSelected
                               ? "bg-blue-100 dark:bg-blue-900/40 border-blue-500"

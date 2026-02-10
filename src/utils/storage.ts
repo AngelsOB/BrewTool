@@ -8,7 +8,7 @@ export function loadJson<T>(key: string, defaultValue: T): T {
     const raw = localStorage.getItem(key);
     if (!raw) return defaultValue;
     const parsed = JSON.parse(raw) as StoredValue<T> | T;
-    if (parsed && typeof parsed === "object" && "value" in (parsed as any)) {
+    if (parsed && typeof parsed === "object" && "value" in (parsed as object)) {
       return (parsed as StoredValue<T>).value;
     }
     return parsed as T;

@@ -81,7 +81,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     try {
       const recipes = recipeRepository.loadAll();
       set({ recipes, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load recipes', isLoading: false });
     }
   },
@@ -92,7 +92,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     try {
       const recipe = recipeRepository.loadById(id);
       set({ currentRecipe: recipe, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load recipe', isLoading: false });
     }
   },
@@ -160,7 +160,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Load all recipes to update the list
       const recipes = recipeRepository.loadAll();
       set({ recipes, currentRecipe: duplicate, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to duplicate recipe', isLoading: false });
     }
   },
@@ -188,7 +188,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes list
       get().loadRecipes();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to save recipe' });
     }
   },
@@ -205,7 +205,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes list
       get().loadRecipes();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to delete recipe' });
     }
   },
@@ -227,7 +227,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const recipes = recipeRepository.loadAll();
       set({ recipes, error: null });
       return recipe;
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to import BeerXML' });
       return null;
     }
@@ -264,7 +264,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const recipes = recipeRepository.loadAll();
       set({ recipes, error: null });
       return recipe;
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to import JSON' });
       return null;
     }
@@ -521,7 +521,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes
       get().loadRecipes();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to create new version' });
     }
   },
@@ -554,7 +554,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Load all recipes to update the list
       const recipes = recipeRepository.loadAll();
       set({ recipes, currentRecipe: variation, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to create variation', isLoading: false });
     }
   },
@@ -563,7 +563,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   loadVersionHistory: (recipeId: RecipeId): RecipeVersion[] => {
     try {
       return recipeVersionRepository.loadByRecipeId(recipeId);
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load version history' });
       return [];
     }
@@ -608,7 +608,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Reload recipes and set as current
       const recipes = recipeRepository.loadAll();
       set({ recipes, currentRecipe: restoredRecipe, error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to restore version' });
     }
   },

@@ -32,17 +32,6 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
     onClose();
   };
 
-  const handleStartWithModifications = () => {
-    // Create session and navigate to editor
-    const session = createSession(recipe);
-    session.brewDate = new Date(brewDate).toISOString();
-    saveCurrentSession();
-
-    // Navigate to session tracker (user can modify there)
-    navigate(`/beta-builder/sessions/${session.id}`);
-    onClose();
-  };
-
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"

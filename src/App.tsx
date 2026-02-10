@@ -6,10 +6,11 @@ import { useThemeStore } from "./stores/useThemeStore";
 export default function App() {
   // Initialize theme on mount
   const { theme, setTheme } = useThemeStore();
-  
+
   useEffect(() => {
     // Re-apply theme on mount to ensure consistency
     setTheme(theme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
   }, []);
 
   return (

@@ -151,6 +151,7 @@ export default function FermentableSection() {
       currentRecipe.fermentables
     );
     setPercentById((prev) => ({ ...percents, ...prev }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to fermentables changes
   }, [mode, currentRecipe?.fermentables]);
 
   // Calculate weights from percentages and target ABV
@@ -189,6 +190,7 @@ export default function FermentableSection() {
       currentRecipe.fermentables,
       percentById
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to fermentables changes
   }, [mode, currentRecipe?.fermentables, percentById]);
 
   return (

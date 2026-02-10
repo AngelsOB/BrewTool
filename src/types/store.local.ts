@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- legacy store uses any for ingredient types */
 import { loadJson, saveJson } from "../utils/storage";
 import type { BrewingDataStore, Recipe, EquipmentProfile } from "./recipe";
 import type { SavedWaterProfile } from "../utils/water";

@@ -50,7 +50,7 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
     try {
       const sessions = brewSessionRepository.loadAll();
       set({ sessions, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load sessions', isLoading: false });
     }
   },
@@ -61,7 +61,7 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
     try {
       const session = brewSessionRepository.loadById(id);
       set({ currentSession: session, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load session', isLoading: false });
     }
   },
@@ -70,7 +70,7 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
   loadSessionsByRecipeId: (recipeId: string): BrewSession[] => {
     try {
       return brewSessionRepository.loadByRecipeId(recipeId);
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to load recipe sessions' });
       return [];
     }
@@ -170,7 +170,7 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
       // Reload sessions list
       get().loadSessions();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to save session' });
     }
   },
@@ -187,7 +187,7 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
       // Reload sessions list
       get().loadSessions();
       set({ error: null });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to delete session' });
     }
   },

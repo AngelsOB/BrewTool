@@ -119,7 +119,7 @@ export default function HopSection() {
           // Let's say threshold 3 for "dominant"
           const matchesFlavor =
             activeFilters.flavors.length === 0 ||
-            (preset.flavor && activeFilters.flavors.some(f => (preset.flavor as any)[f] >= 3));
+            (preset.flavor && activeFilters.flavors.some(f => (preset.flavor as Record<string, number>)[f] >= 3));
 
           return matchesSearch && matchesOrigin && matchesAlpha && matchesFlavor;
         }),
@@ -167,6 +167,7 @@ export default function HopSection() {
       hopFlavorMap,
       currentRecipe.batchVolumeL
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to hops/volume changes
   }, [currentRecipe?.hops, currentRecipe?.batchVolumeL, hopFlavorMap]);
 
   // Calculate per-hop IBU contributions using RecipeCalculationService
