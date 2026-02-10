@@ -9,8 +9,8 @@
 
 ### Remaining Items
 
-- [ ] **27. Section color-coding** – `border-t-4` color used inconsistently (Fermentables / Hops only)
-- [ ] **28. `tailwind.config.js`** – Custom shadow tokens use hardcoded dark-mode values that persist in light mode
+- [x] **27. Section color-coding** – `border-t-4` color is now consistent across all legacy recipe components (GrainBill.tsx uses blue-500, HopSchedule.tsx uses green-500, YeastSection.tsx uses amber-500, OtherIngredients.tsx uses orange-500)
+- [x] **28. `tailwind.config.js`** – The unused shadow-inset token has been removed. The shadow-soft token remains but has CSS overrides in index.css that make it theme-aware.
 
 
 # BeerApp Fullstack-developer Audit - Todo List
