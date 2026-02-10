@@ -129,8 +129,15 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [ ] **No Prettier Configuration**
   - No `.prettierrc` or equivalent found. No Prettier in devDependencies. Add Prettier for consistent formatting.
 
-- [ ] **`src/modules/beta-builder/presentation/components/BrewSessionPage.tsx` - Monolithic Component**
-  - 911 lines: Handles session management, editing, modals, and calculations. Break into `SessionHeader`, `ActualsEditor`, `BrewDayRecipeModal`, `SessionMetrics` sub-components.
+- [x] **`src/modules/beta-builder/presentation/components/BrewSessionPage.tsx` - Monolithic Component**
+  - **Completed:** BrewSessionPage.tsx reduced from 911 lines to ~150 lines by extracting sub-components to a `brew-session/` subdirectory:
+    - `BrewSessionHeader.tsx` - Session header with title and navigation
+    - `IngredientsDisplaySection.tsx` - Ingredients display (fermentables, hops, yeast)
+    - `GravityTrackingSection.tsx` - Gravity and efficiency tracking
+    - `BrewInstructionsSection.tsx` - Brew day instructions display
+    - `BrewNotesSection.tsx` - Brew notes management
+    - `BrewedVersionModal.tsx` - Modal for viewing brewed recipe version
+  - Also created utility sub-components: `SectionCard`, `IngredientCard`, `InstructionStep`, `InfoPill`, `SubSectionHeader`, `ReadOnlyNumber`, `EditableNumber`
 
 - [x] **`src/modules/beta-builder/presentation/components/WaterSection.tsx` - Monolithic Component**
   - **Completed:** WaterSection.tsx reduced from 918 lines to 247 lines by extracting 10 sub-components to a `water-section/` subdirectory:
@@ -160,8 +167,8 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
   - **Completed:** Extracted `calculateSessionMetrics` to new `BrewSessionCalculationService` in domain layer with 26 unit tests. Store now calls the domain service instead of containing inline calculations.
   - Lines 204-261: `calculateSessionMetrics` contains ABV, attenuation, mash efficiency, and brewhouse efficiency calculations. These are domain concerns that should live in a domain service, not a Zustand store.
 
-- [ ] **`src/modules/beta-builder/presentation/stores/recipeStore.ts` - Hop Flavor Enrichment in Presentation**
-  - Lines 16-21 and 237-271: `HOP_FLAVOR_MAP` lookup and flavor enrichment during JSON import should live in the domain layer (e.g., `BeerXmlImportService` or a `HopEnrichmentService`).
+- [x] **`src/modules/beta-builder/presentation/stores/recipeStore.ts` - Hop Flavor Enrichment in Presentation**
+  - **Completed:** Created `HopEnrichmentService` in the domain layer (`src/modules/beta-builder/domain/services/HopEnrichmentService.ts`). Both `BeerXmlImportService` and `recipeStore` now use the shared service for hop flavor lookups. Removed duplicate `HOP_FLAVOR_MAP` code from both files.
 
 - [ ] **`src/utils/storage.ts` - Silent Error Swallowing**
   - Lines 6-17: `loadJson` catches all errors and returns `defaultValue`. Doesn't distinguish "key not found" (normal) from "JSON parse failed" (data corruption) or "SecurityError" (private browsing). Consider logging or differentiating error types.
