@@ -25,7 +25,8 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
   - **Completed:** Added Input.tsx (default, flush, filled variants), Select.tsx (matching variants with custom chevron), Textarea.tsx (matching variants). Updated CustomFermentableModal, CustomHopModal, CustomYeastModal, MashStepModal to use shared components.
 - [x] **9. No shared Button component** – Buttons use completely different styling per file (green-600, blue-600, neon, outline, tonal — all inline)
   - **Completed:** Added Button.tsx (neon, outline, tonal, danger, ghost, link variants) and IconButton.tsx (with required aria-label)
-- [ ] **10. No shared Modal component** – Modals are copy-pasted with inconsistent backdrops (`bg-black bg-opacity-50` vs `backdrop-blur-sm`)
+- [x] **10. No shared Modal component** – Modals are copy-pasted with inconsistent backdrops (`bg-black bg-opacity-50` vs `backdrop-blur-sm`)
+  - **Completed:** Migrated 6 modals to use ModalOverlay: CustomFermentableModal, CustomHopModal, CustomYeastModal, CustomEquipmentModal, EquipmentProfileModal, VersionHistoryModal. All now have consistent backdrop, focus trapping, ESC key support, and ARIA attributes.
 - [ ] **11. BetaBuilderPage.tsx** – Mixes Tailwind color utilities (`bg-white`, `bg-gray-800`) with CSS variable theme system (`rgb(var(--card))`) in the same file
 - [ ] **12. Focus ring inconsistency** – Some inputs use `ring-emerald-500`, others `ring-blue-500`, others have no focus indicator
 
@@ -78,7 +79,7 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 ### Highest-Impact TODOs
 
 - [ ] Fix theme system so light mode actually works (items 1–7)
-- [x] Create shared primitives: `Input`, `Button`, `Modal` (items 8–10) — Input and Button complete, Modal pending
+- [x] Create shared primitives: `Input`, `Button`, `Modal` (items 8–10) — All complete
 - [ ] Add NavBar navigation links (item 16)
 - [ ] Extract duplicated sticky stats bar (item 13)
 
@@ -153,8 +154,9 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [ ] **`src/types/store.local.ts` - Uses `any[]` Types (Legacy Store)**
   - Lines 60-101: All ingredient storage accessors (`fermentables`, `hops`, `yeasts`) use `any[]` instead of domain types like `Fermentable[]`, `Hop[]`, `Yeast[]`. Bypasses TypeScript safety.
 
-- [ ] **`src/modules/beta-builder/presentation/components/FermentableSection.tsx` - Inconsistent Modal Pattern**
+- [x] **`src/modules/beta-builder/presentation/components/FermentableSection.tsx` - Inconsistent Modal Pattern**
   - Implements its own modal inline with `<div className="fixed inset-0...">` instead of reusing the `ModalOverlay` component or `createPortal` like HopSection and other sections do. Standardize.
+  - **Completed:** CustomFermentableModal now uses ModalOverlay consistently.
 
 ## LOW SEVERITY
 
