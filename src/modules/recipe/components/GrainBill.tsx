@@ -127,7 +127,7 @@ export function GrainBill({
   }, [mode, grains, percentById]);
 
   return (
-    <section className="section-soft space-y-3 pb-1 sm:pb-2">
+    <section className="section-soft space-y-3 pb-1 sm:pb-2 border-t-4 border-t-blue-500">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="font-semibold text-primary-strong">Grain Bill</div>
         <div className="hidden sm:flex items-center gap-2">

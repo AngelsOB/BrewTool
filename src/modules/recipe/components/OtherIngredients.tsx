@@ -50,7 +50,7 @@ export default function OtherIngredients({
 
   return (
     <section
-      className={"section-soft space-y-3 " + (items.length === 0 ? "py-2" : "")}
+      className={"section-soft space-y-3 border-t-4 border-t-orange-500 " + (items.length === 0 ? "py-2" : "")}
     >
       {/* spring keyframes for notes expansion */}
       <style>{`@keyframes springy{0%{transform:scaleY(0.985)}50%{transform:scaleY(1.02)}100%{transform:scaleY(1)}}`}</style>

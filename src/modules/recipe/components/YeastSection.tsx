@@ -71,7 +71,7 @@ export default function YeastSection({
     name: "",
   });
   return (
-    <section className="section-soft space-y-3">
+    <section className="section-soft space-y-3 border-t-4 border-t-amber-500">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="font-semibold text-primary-strong">Yeast</div>
         {yeast.attenuationPercent != null ? (
