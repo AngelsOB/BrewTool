@@ -21,6 +21,7 @@ import { recipeCalculationService } from "../../domain/services/RecipeCalculatio
 import HopFlavorMini from "./HopFlavorMini";
 import HopFlavorRadar from "./HopFlavorRadar";
 import CustomHopModal from "./CustomHopModal";
+import PresetPickerModal from "./PresetPickerModal";
 
 export default function HopSection() {
   const { currentRecipe, addHop, updateHop, removeHop } = useRecipeStore();
@@ -474,198 +475,189 @@ export default function HopSection() {
       )}
 
       {/* Preset Picker Modal */}
-      {isPickerOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 overflow-hidden"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
-          onClick={() => {
-            setIsPickerOpen(false);
-            setSearchQuery("");
-          }}
-        >
-          <div
-            className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col overflow-visible"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="p-6 border-b border-[rgb(var(--border))]">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">Select Hop</h3>
+      <PresetPickerModal<HopPreset>
+        isOpen={isPickerOpen}
+        onClose={() => {
+          setIsPickerOpen(false);
+          setSearchQuery("");
+          setHoveredHopName(null);
+          setHoveredHopPosition(null);
+        }}
+        title="Select Hop"
+        searchPlaceholder="Search hops..."
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters(!showFilters)}
+        filterContent={
+          <>
+            {/* Alpha Filters */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+                Alpha:
+              </span>
+              {[
+                { id: "low", label: "Low (<5%)" },
+                { id: "med", label: "Med (5-10%)" },
+                { id: "high", label: "High (10-15%)" },
+                { id: "super", label: "Super (>15%)" },
+              ].map((opt) => (
                 <button
-                  onClick={() => {
-                    setIsPickerOpen(false);
-                    setSearchQuery("");
-                  }}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              {/* Search */}
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  placeholder="Search hops..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                  autoFocus
-                />
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`px-3 py-2 rounded-md border transition-colors ${
-                    showFilters
-                      ? "bg-amber-100 text-amber-600 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-700"
-                      : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                  key={opt.id}
+                  onClick={() => toggleFilter("alphas", opt.id)}
+                  className={`px-3 py-1 rounded-full border transition-colors ${
+                    activeFilters.alphas.includes(opt.id)
+                      ? "bg-green-600 text-white border-green-700 ring-1 ring-green-500"
+                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
                   }`}
-                  title="Toggle Filters"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  {opt.label}
                 </button>
+              ))}
+            </div>
+
+            {/* Flavor Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
+              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+                Flavor:
+              </span>
+              {[
+                "citrus",
+                "tropicalFruit",
+                "stoneFruit",
+                "berry",
+                "floral",
+                "resinPine",
+                "spice",
+                "herbal",
+                "grassy",
+              ].map((flavor) => {
+                const color =
+                  {
+                    citrus: "#facc15",
+                    tropicalFruit: "#fb923c",
+                    stoneFruit: "#f97316",
+                    berry: "#a855f7",
+                    floral: "#f472b6",
+                    resinPine: "#16a34a",
+                    spice: "#ef4444",
+                    herbal: "#22c55e",
+                    grassy: "#84cc16",
+                  }[flavor] || "#6b7280";
+
+                const isActive = activeFilters.flavors.includes(flavor);
+
+                return (
+                  <button
+                    key={flavor}
+                    onClick={() => toggleFilter("flavors", flavor)}
+                    style={
+                      isActive
+                        ? {
+                            backgroundColor: color,
+                            borderColor: color,
+                            color: flavor === "citrus" ? "#000" : "#fff",
+                          }
+                        : {}
+                    }
+                    className={`px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
+                      isActive
+                        ? ""
+                        : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                    }`}
+                  >
+                    {flavor === "resinPine"
+                      ? "Resin/Pine"
+                      : flavor === "tropicalFruit"
+                        ? "Tropical"
+                        : flavor === "stoneFruit"
+                          ? "Stone Fruit"
+                          : flavor.charAt(0).toUpperCase() + flavor.slice(1)}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Origin/Category Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
+              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+                Region:
+              </span>
+              {availableCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => toggleFilter("origins", cat)}
+                  className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border ${
+                    activeFilters.origins.includes(cat)
+                      ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-100 dark:border-green-800"
+                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </>
+        }
+        groups={filteredGrouped}
+        isLoading={presetsLoading}
+        emptyMessage="No hops found"
+        renderItem={(preset) => (
+          <button
+            key={preset.name}
+            onClick={() => handleAddFromPreset(preset)}
+            onMouseEnter={(e) => handleHopHover(preset, e)}
+            onMouseLeave={handleHopLeave}
+            className="w-full text-left px-4 py-2 rounded hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors flex justify-between items-center"
+          >
+            <div className="flex items-center gap-3">
+              {preset.flavor && <HopFlavorMini flavor={preset.flavor} size={24} />}
+              <span className="font-medium">{preset.name}</span>
+            </div>
+            <span className="text-sm font-medium">
+              {preset.alphaAcidPercent.toFixed(1)}% AA
+            </span>
+          </button>
+        )}
+        totalCount={hopPresetsGrouped.reduce(
+          (sum, group) => sum + group.items.length,
+          0
+        )}
+        countLabel="hop varieties available"
+        onCreateCustom={() => setIsCustomModalOpen(true)}
+        colorScheme="green"
+        portalContent={
+          hoveredPreset &&
+          hoveredPreset.flavor &&
+          hoveredHopPosition &&
+          createPortal(
+            <div
+              style={{
+                position: "fixed",
+                left: `${hoveredHopPosition.x}px`,
+                top: `${hoveredHopPosition.y}px`,
+                zIndex: 9999,
+              }}
+              className="bg-[rgb(var(--card))] border-2 border-green-400 rounded-lg shadow-2xl p-4 pointer-events-none"
+            >
+              <div className="text-sm font-semibold mb-2 text-center">
+                {hoveredPreset.name}
               </div>
-
-              {/* Advanced Filters */}
-              {showFilters && (
-                <div className="space-y-3 mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                 {/* Alpha Filters */}
-                 <div className="flex flex-wrap gap-2 text-xs">
-                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">Alpha:</span>
-                   {[
-                     { id: "low", label: "Low (<5%)", color: "bg-green-50 text-green-700 border-green-200" },
-                     { id: "med", label: "Med (5-10%)", color: "bg-green-100 text-green-800 border-green-300" },
-                     { id: "high", label: "High (10-15%)", color: "bg-green-200 text-green-900 border-green-400" },
-                     { id: "super", label: "Super (>15%)", color: "bg-green-300 text-green-950 border-green-500" }
-                   ].map(opt => (
-                      <button
-                        key={opt.id}
-                        onClick={() => toggleFilter("alphas", opt.id)}
-                        className={`px-3 py-1 rounded-full border transition-colors ${
-                          activeFilters.alphas.includes(opt.id)
-                            ? "bg-green-600 text-white border-green-700 ring-1 ring-green-500"
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                   ))}
-                 </div>
-
-                 {/* Flavor Filters */}
-                 <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">Flavor:</span>
-                   {["citrus", "tropicalFruit", "stoneFruit", "berry", "floral", "resinPine", "spice", "herbal", "grassy"].map(flavor => {
-                      const color = {
-                        citrus: "#facc15",
-                        tropicalFruit: "#fb923c",
-                        stoneFruit: "#f97316",
-                        berry: "#a855f7",
-                        floral: "#f472b6",
-                        resinPine: "#16a34a",
-                        spice: "#ef4444",
-                        herbal: "#22c55e",
-                        grassy: "#84cc16"
-                      }[flavor] || "#6b7280";
-                      
-                      const isActive = activeFilters.flavors.includes(flavor);
-                      
-                      return (
-                      <button
-                        key={flavor}
-                        onClick={() => toggleFilter("flavors", flavor)}
-                        style={isActive ? { backgroundColor: color, borderColor: color, color: flavor === 'citrus' ? '#000' : '#fff' } : {}}
-                        className={`px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
-                          isActive
-                            ? "" // style takes precedence for active
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                        }`}
-                      >
-                         {flavor === "resinPine" ? "Resin/Pine" : flavor === "tropicalFruit" ? "Tropical" : flavor === "stoneFruit" ? "Stone Fruit" : flavor.charAt(0).toUpperCase() + flavor.slice(1)}
-                      </button>
-                   );
-                   })}
-                 </div>
-
-                 {/* Origin/Category Filters */}
-                 <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-                    <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">Region:</span>
-                    {availableCategories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => toggleFilter("origins", cat)}
-                        className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border ${
-                          activeFilters.origins.includes(cat)
-                            ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-100 dark:border-green-800"
-                            : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                 </div>
-               </div>
-              )}
-            </div>
-
-            {/* Modal Body - Scrollable List */}
-            <div className="flex-1 overflow-y-auto overflow-x-visible pb-4">
-              {presetsLoading ? (
-                <p className="text-gray-500 dark:text-gray-400">Loading presets...</p>
-              ) : filteredGrouped.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 px-6 py-8 text-center">No hops found</p>
-              ) : (
-                <div className="space-y-6">
-                  {filteredGrouped.map((group) => (
-                    <div key={group.label}>
-                      <h4 className="text-sm font-semibold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--card))] px-6 py-2 border-b border-[rgb(var(--border))]">
-                        {group.label}
-                      </h4>
-                      <div className="space-y-1 px-6">
-                        {group.items.map((preset) => (
-                          <button
-                            key={preset.name}
-                            onClick={() => handleAddFromPreset(preset)}
-                            onMouseEnter={(e) => handleHopHover(preset, e)}
-                            onMouseLeave={handleHopLeave}
-                            className="w-full text-left px-4 py-2 rounded hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors flex justify-between items-center"
-                          >
-                            <div className="flex items-center gap-3">
-                              {preset.flavor && (
-                                <HopFlavorMini flavor={preset.flavor} size={24} />
-                              )}
-                              <span className="font-medium">{preset.name}</span>
-                            </div>
-                            <span className="text-sm font-medium">
-                              {preset.alphaAcidPercent.toFixed(1)}% AA
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))] flex justify-between items-center">
-              <div className="text-sm">
-                {hopPresetsGrouped.reduce(
-                  (sum, group) => sum + group.items.length,
-                  0
-                )}{" "}
-                hop varieties available
-              </div>
-              <button
-                onClick={() => setIsCustomModalOpen(true)}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
-              >
-                + Create Custom
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <HopFlavorRadar
+                series={[{ name: hoveredPreset.name, flavor: hoveredPreset.flavor }]}
+                maxValue={5}
+                size={240}
+                showLegend={false}
+                labelColorize={true}
+                outerPadding={50}
+                ringRadius={70}
+                colorStrategy="dominant"
+              />
+            </div>,
+            document.body
+          )
+        }
+      />
 
       {/* Custom Hop Modal */}
       <CustomHopModal
@@ -673,35 +665,6 @@ export default function HopSection() {
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleSaveCustomPreset}
       />
-
-      {/* Tooltip Portal - Rendered outside modal to prevent clipping */}
-      {isPickerOpen && hoveredPreset && hoveredPreset.flavor && hoveredHopPosition &&
-        createPortal(
-          <div
-            style={{
-              position: "fixed",
-              left: `${hoveredHopPosition.x}px`,
-              top: `${hoveredHopPosition.y}px`,
-              zIndex: 9999,
-            }}
-            className="bg-[rgb(var(--card))] border-2 border-green-400 rounded-lg shadow-2xl p-4 pointer-events-none"
-          >
-            <div className="text-sm font-semibold mb-2 text-center">
-              {hoveredPreset.name}
-            </div>
-            <HopFlavorRadar
-              series={[{ name: hoveredPreset.name, flavor: hoveredPreset.flavor }]}
-              maxValue={5}
-              size={240}
-              showLegend={false}
-              labelColorize={true}
-              outerPadding={50}
-              ringRadius={70}
-              colorStrategy="dominant"
-            />
-          </div>,
-          document.body
-        )}
     </div>
   );
 }

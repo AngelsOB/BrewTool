@@ -33,16 +33,20 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
   - **Completed:** Added Button.tsx (neon, outline, tonal, danger, ghost, link variants) and IconButton.tsx (with required aria-label)
 - [x] **10. No shared Modal component** – Modals are copy-pasted with inconsistent backdrops (`bg-black bg-opacity-50` vs `backdrop-blur-sm`)
   - **Completed:** Migrated 6 modals to use ModalOverlay: CustomFermentableModal, CustomHopModal, CustomYeastModal, CustomEquipmentModal, EquipmentProfileModal, VersionHistoryModal. All now have consistent backdrop, focus trapping, ESC key support, and ARIA attributes.
-- [ ] **11. BetaBuilderPage.tsx** – Mixes Tailwind color utilities (`bg-white`, `bg-gray-800`) with CSS variable theme system (`rgb(var(--card))`) in the same file
+- [x] **11. BetaBuilderPage.tsx** – Mixes Tailwind color utilities (`bg-white`, `bg-gray-800`) with CSS variable theme system (`rgb(var(--card))`) in the same file
+  - **Completed:** Replaced hardcoded Tailwind colors (bg-white, bg-gray-800, text-gray-500, etc.) with CSS variables (--surface, --border, --accent) and theme-aware utilities (text-muted, text-strong, text-primary)
 - [ ] **12. Focus ring inconsistency** – Some inputs use `ring-emerald-500`, others `ring-blue-500`, others have no focus indicator
 
 ---
 
 ### High: Code Duplication
 
-- [ ] **13. BetaBuilderPage.tsx** – Sticky top header and sticky bottom header are identical ~70-line blocks; extract a `StickyStatsBar` component
-- [ ] **14. BetaBuilderPage.tsx** – Calculated Values shown multiple times (inline cards, sticky top, sticky bottom, full bottom section); remove duplicate bottom section
-- [ ] **15. FermentableSection / HopSection** – Nearly identical modal structure; extract a shared `PresetPickerModal` shell
+- [x] **13. BetaBuilderPage.tsx** – Sticky top header and sticky bottom header are identical ~70-line blocks; extract a `StickyStatsBar` component
+  - **Completed:** Created StickyStatsBar component in beta-builder/presentation/components, replacing 180 lines of duplicated code
+- [x] **14. BetaBuilderPage.tsx** – Calculated Values shown multiple times (inline cards, sticky top, sticky bottom, full bottom section); remove duplicate bottom section
+  - **Completed:** Removed redundant 'Calculations Display' section that duplicated the inline calculated values cards
+- [x] **15. FermentableSection / HopSection / YeastSection** – Nearly identical modal structure; extract a shared `PresetPickerModal` shell
+  - **Completed:** Created PresetPickerModal.tsx component in beta-builder/presentation/components. Refactored all three sections (FermentableSection, HopSection, YeastSection) to use the shared component. PresetPickerModal uses ModalOverlay for accessibility (focus trapping, ESC key, ARIA) and provides a consistent API for search, filters, grouped item lists, and custom creation. ~450 lines of duplicated modal code removed.
 
 ---
 
@@ -88,7 +92,7 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [x] Fix theme system so light mode actually works (items 1–7) — All complete
 - [x] Create shared primitives: `Input`, `Button`, `Modal` (items 8–10) — All complete
 - [x] Add NavBar navigation links (item 16) — Complete
-- [ ] Extract duplicated sticky stats bar (item 13)
+- [x] Extract shared PresetPickerModal (item 15) — Complete
 
 
 # BeerApp Fullstack-developer Audit - Todo List

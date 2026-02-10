@@ -17,6 +17,7 @@ import type { Yeast, YeastType, StarterStep, StarterInfo } from "../../domain/mo
 import type { YeastPreset } from "../../domain/models/Presets";
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
 import CustomYeastModal from "./CustomYeastModal";
+import PresetPickerModal from "./PresetPickerModal";
 
 // Import brand favicons
 import escarpmentFavicon from "../../../../assets/yeast-favicons/escarpment-favicon.png";
@@ -661,170 +662,103 @@ export default function YeastSection() {
       )}
 
       {/* Preset Picker Modal */}
-      {isPickerOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
-          onClick={() => {
-            setIsPickerOpen(false);
-            setSearchQuery("");
-          }}
-        >
-          <div
-            className="bg-[rgb(var(--card))] rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="p-6 border-b border-[rgb(var(--border))]">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">Select Yeast</h3>
+      <PresetPickerModal<YeastPreset>
+        isOpen={isPickerOpen}
+        onClose={() => {
+          setIsPickerOpen(false);
+          setSearchQuery("");
+        }}
+        title="Select Yeast"
+        searchPlaceholder="Search yeasts..."
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters(!showFilters)}
+        filterContent={
+          <>
+            {/* Attenuation Filters */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+                Attenuation:
+              </span>
+              {[
+                { id: "low", label: "Low (<72%)" },
+                { id: "med", label: "Med (72-76%)" },
+                { id: "high", label: "High (>76%)" },
+              ].map((opt) => (
                 <button
-                  onClick={() => {
-                    setIsPickerOpen(false);
-                    setSearchQuery("");
-                  }}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              {/* Search */}
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  placeholder="Search yeasts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                  autoFocus
-                />
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`px-3 py-2 rounded-md border transition-colors ${
-                    showFilters
-                      ? "bg-amber-100 text-amber-600 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-700"
-                      : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                  key={opt.id}
+                  onClick={() => toggleFilter("attenuation", opt.id)}
+                  className={`px-3 py-1 rounded-full border transition-colors ${
+                    activeFilters.attenuation.includes(opt.id)
+                      ? "bg-amber-600 text-white border-amber-700 ring-1 ring-amber-500"
+                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
                   }`}
-                  title="Toggle Filters"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  {opt.label}
                 </button>
-              </div>
-
-              {/* Advanced Filters */}
-              {showFilters && (
-                <div className="space-y-3 mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                 {/* Attenuation Filters */}
-                 <div className="flex flex-wrap gap-2 text-xs">
-                   <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">Attenuation:</span>
-                   {[
-                     { id: "low", label: "Low (<72%)", color: "bg-amber-50 text-amber-700 border-amber-200" },
-                     { id: "med", label: "Med (72-76%)", color: "bg-amber-100 text-amber-800 border-amber-300" },
-                     { id: "high", label: "High (>76%)", color: "bg-amber-200 text-amber-900 border-amber-400" }
-                   ].map(opt => (
-                      <button
-                        key={opt.id}
-                        onClick={() => toggleFilter("attenuation", opt.id)}
-                        className={`px-3 py-1 rounded-full border transition-colors ${
-                          activeFilters.attenuation.includes(opt.id)
-                            ? "bg-amber-600 text-white border-amber-700 ring-1 ring-amber-500"
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                   ))}
-                 </div>
-
-                 {/* Category Filters */}
-                 <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-                    <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">Brand:</span>
-                    {availableCategories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => toggleFilter("categories", cat)}
-                        className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border ${
-                          activeFilters.categories.includes(cat)
-                            ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-800"
-                            : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                 </div>
-               </div>
-              )}
+              ))}
             </div>
 
-            {/* Modal Body - Scrollable List */}
-            <div className="flex-1 overflow-y-auto pb-4">
-              {presetsLoading ? (
-                <p className="text-gray-500 dark:text-gray-400">Loading presets...</p>
-              ) : filteredGrouped.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 px-6 py-8 text-center">No yeasts found</p>
+            {/* Category Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
+              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+                Brand:
+              </span>
+              {availableCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => toggleFilter("categories", cat)}
+                  className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border ${
+                    activeFilters.categories.includes(cat)
+                      ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-800"
+                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </>
+        }
+        groups={filteredGrouped}
+        isLoading={presetsLoading}
+        emptyMessage="No yeasts found"
+        renderItem={(preset) => (
+          <button
+            key={preset.name}
+            onClick={() => handleSelectFromPreset(preset)}
+            className="w-full text-left px-4 py-3 rounded hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors flex justify-between items-center group"
+          >
+            <div className="flex items-center gap-3">
+              {getFavicon(preset.category) ? (
+                <img
+                  src={getFavicon(preset.category)!}
+                  alt={preset.category}
+                  className="w-6 h-6 rounded-sm object-contain group-hover:scale-110 transition-transform"
+                />
               ) : (
-                <div className="space-y-6">
-                  {filteredGrouped.map((group) => (
-                    <div key={group.label}>
-                      <h4 className="text-sm font-semibold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--card))] px-6 py-2 border-b border-[rgb(var(--border))]">
-                        {group.label}
-                      </h4>
-                      <div className="space-y-1 px-6">
-                        {group.items.map((preset) => (
-                          <button
-                            key={preset.name}
-                            onClick={() => handleSelectFromPreset(preset)}
-                            className="w-full text-left px-4 py-3 rounded hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors flex justify-between items-center group"
-                          >
-                            <div className="flex items-center gap-3">
-                              {getFavicon(preset.category) ? (
-                                <img
-                                  src={getFavicon(preset.category)!}
-                                  alt={preset.category}
-                                  className="w-6 h-6 rounded-sm object-contain group-hover:scale-110 transition-transform"
-                                />
-                              ) : (
-                                <div className="w-6 h-6 rounded-sm border border-[rgb(var(--border))] bg-gray-50 flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase">
-                                  {preset.category.charAt(0)}
-                                </div>
-                              )}
-                              <span className="font-medium">{preset.name}</span>
-                            </div>
-                            <span className="text-sm font-medium text-gray-500">
-                              {preset.attenuationPercent
-                                ? `${(preset.attenuationPercent * 100).toFixed(0)}%`
-                                : "–"}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <div className="w-6 h-6 rounded-sm border border-[rgb(var(--border))] bg-gray-50 flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase">
+                  {preset.category.charAt(0)}
                 </div>
               )}
+              <span className="font-medium">{preset.name}</span>
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))] flex justify-between items-center">
-              <div className="text-sm">
-                {yeastPresetsGrouped.reduce(
-                  (sum, group) => sum + group.items.length,
-                  0
-                )}{" "}
-                yeast strains available
-              </div>
-              <button
-                onClick={() => setIsCustomModalOpen(true)}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
-              >
-                + Create Custom
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <span className="text-sm font-medium text-gray-500">
+              {preset.attenuationPercent
+                ? `${(preset.attenuationPercent * 100).toFixed(0)}%`
+                : "–"}
+            </span>
+          </button>
+        )}
+        totalCount={yeastPresetsGrouped.reduce(
+          (sum, group) => sum + group.items.length,
+          0
+        )}
+        countLabel="yeast strains available"
+        onCreateCustom={() => setIsCustomModalOpen(true)}
+        colorScheme="amber"
+      />
 
       {/* Custom Yeast Modal */}
       <CustomYeastModal
