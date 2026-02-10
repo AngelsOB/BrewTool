@@ -12,6 +12,8 @@
 
 import { useState } from "react";
 import type { YeastPreset } from "../../domain/models/Presets";
+import Input from "@components/Input";
+import Button from "@components/Button";
 
 interface CustomYeastModalProps {
   isOpen: boolean;
@@ -71,12 +73,12 @@ export default function CustomYeastModal({
             <label className="block text-sm font-semibold mb-2">
               Yeast Name *
             </label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Custom House Blend"
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              fullWidth
               autoFocus
             />
           </div>
@@ -86,12 +88,12 @@ export default function CustomYeastModal({
             <label className="block text-sm font-semibold mb-2">
               Category
             </label>
-            <input
+            <Input
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="e.g., Custom, Homebrew, House Blend"
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
+              fullWidth
             />
           </div>
 
@@ -100,14 +102,14 @@ export default function CustomYeastModal({
             <label className="block text-sm font-semibold mb-2">
               Attenuation %
             </label>
-            <input
+            <Input
               type="number"
               value={attenuationPercent}
               onChange={(e) => setAttenuationPercent(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md"
-              step="1"
-              min="50"
-              max="90"
+              fullWidth
+              step={1}
+              min={50}
+              max={90}
             />
             <p className="text-xs mt-1">
               Typical range: Low 65-70%, Medium 70-75%, High 75-85%
@@ -117,18 +119,12 @@ export default function CustomYeastModal({
 
         {/* Actions */}
         <div className="flex gap-3 mt-6">
-          <button
-            onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] transition-colors"
-          >
+          <Button variant="outline" onClick={handleClose} fullWidth>
             Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
+          </Button>
+          <Button variant="neon" onClick={handleSave} fullWidth>
             Create Preset
-          </button>
+          </Button>
         </div>
       </div>
     </div>
