@@ -147,20 +147,20 @@ export default function YeastSection() {
   };
 
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-amber-500">
+    <div className="brew-section brew-animate-in brew-stagger-5" data-accent="yeast">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Yeast</h2>
+        <h2 className="brew-section-title">Yeast</h2>
         {!currentYeast ? (
           <button
             onClick={() => setIsPickerOpen(true)}
-            className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+            className="brew-btn-primary"
           >
             Select Yeast
           </button>
         ) : (
           <button
             onClick={clearYeast}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            className="brew-btn-ghost brew-danger-text"
           >
             Clear Yeast
           </button>
@@ -169,7 +169,7 @@ export default function YeastSection() {
 
       {/* Yeast Display */}
       {!currentYeast ? (
-        <p className="text-gray-500 dark:text-gray-400 italic">
+        <p className="text-muted italic">
           No yeast selected. Click "Select Yeast" to choose from preset database.
         </p>
       ) : (
@@ -211,7 +211,7 @@ export default function YeastSection() {
           <>
             {/* Attenuation Filters */}
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="brew-chip-label">
                 Attenuation:
               </span>
               {[
@@ -222,11 +222,7 @@ export default function YeastSection() {
                 <button
                   key={opt.id}
                   onClick={() => toggleFilter("attenuation", opt.id)}
-                  className={`px-3 py-1 rounded-full border transition-colors ${
-                    activeFilters.attenuation.includes(opt.id)
-                      ? "bg-amber-600 text-white border-amber-700 ring-1 ring-amber-500"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                  }`}
+                  className={activeFilters.attenuation.includes(opt.id) ? "brew-chip-active" : "brew-chip"}
                 >
                   {opt.label}
                 </button>
@@ -235,18 +231,14 @@ export default function YeastSection() {
 
             {/* Category Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+              <span className="brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
                 Brand:
               </span>
               {availableCategories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => toggleFilter("categories", cat)}
-                  className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border ${
-                    activeFilters.categories.includes(cat)
-                      ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-800"
-                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-                  }`}
+                  className={`whitespace-nowrap ${activeFilters.categories.includes(cat) ? "brew-chip-active" : "brew-chip"}`}
                 >
                   {cat}
                 </button>
@@ -261,7 +253,7 @@ export default function YeastSection() {
           <button
             key={preset.name}
             onClick={() => handleSelectFromPreset(preset)}
-            className="w-full text-left px-4 py-3 rounded hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors flex justify-between items-center group"
+            className="brew-menu-item w-full text-left flex justify-between items-center group"
           >
             <div className="flex items-center gap-3">
               <YeastLabBadge
@@ -271,7 +263,7 @@ export default function YeastSection() {
               />
               <span className="font-medium">{preset.name}</span>
             </div>
-            <span className="text-sm font-medium text-gray-500">
+            <span className="text-sm font-medium text-muted">
               {preset.attenuationPercent
                 ? `${(preset.attenuationPercent * 100).toFixed(0)}%`
                 : "–"}

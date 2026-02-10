@@ -165,7 +165,7 @@ export default function ModalOverlay({
         aria-labelledby={dialogLabelId}
         aria-describedby={describedById}
         tabIndex={-1}
-        className={`bg-[rgb(var(--card))] rounded-lg shadow-xl ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col`}
+        className={`brew-modal ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

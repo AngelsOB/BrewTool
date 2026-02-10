@@ -134,7 +134,7 @@ export default function BetaBuilderPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-4">
+    <div className="brew-theme max-w-4xl mx-auto py-6 px-2">
       {/* Sticky Stats Bars */}
       {calculations && (
         <>
@@ -151,23 +151,24 @@ export default function BetaBuilderPage() {
         </>
       )}
         {/* Header */}
-        <div className="bg-[rgb(var(--card))] border-b border-[rgb(var(--border))] pb-6 mb-6 rounded-t-lg transition-colors">
+        <div className="mb-8 brew-animate-in">
           <div className="flex items-center justify-between">
             <div>
               <button
                 onClick={() => navigate('/beta-builder')}
-                className="text-primary hover:text-primary-strong text-sm mb-2 flex items-center gap-1"
+                className="text-sm font-medium mb-3 flex items-center gap-1.5 transition-colors"
+                style={{ color: 'var(--brew-accent-600)' }}
               >
-                ← Back to Recipes
+                <span className="text-xs">&#8592;</span> Back to Recipes
               </button>
-              <h1 className="text-3xl font-bold text-strong">
+              <h1 className="brew-section-title text-3xl">
                 {isReadOnly ? `Version ${versionNumber} (Read-only)` : 'Recipe Builder'}
               </h1>
             </div>
             {isReadOnly && id && (
               <button
                 onClick={() => navigate(`/beta-builder/${id}`)}
-                className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+                className="brew-btn-ghost"
               >
                 Open Current Recipe
               </button>
@@ -177,9 +178,9 @@ export default function BetaBuilderPage() {
 
         <div className={isReadOnly ? 'pointer-events-none opacity-90' : ''}>
         {/* Recipe Name & Metadata */}
-        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 space-y-4">
+        <div className="brew-section brew-animate-in brew-stagger-1 space-y-5">
           <div>
-            <label htmlFor="recipe-name" className="block text-sm font-semibold mb-2">
+            <label htmlFor="recipe-name" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
               Recipe Name
             </label>
             <input
@@ -187,27 +188,27 @@ export default function BetaBuilderPage() {
               type="text"
               value={currentRecipe.name}
               onChange={(e) => updateRecipe({ name: e.target.value })}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-[rgb(var(--surface))] text-strong focus:ring-2 focus:ring-[rgb(var(--accent))] focus:border-[rgb(var(--accent))]"
+              className="brew-input w-full text-lg font-semibold"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span id="bjcp-style-label" className="block text-sm font-semibold mb-2">
+              <span id="bjcp-style-label" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
                 BJCP Style
               </span>
               <button
                 aria-labelledby="bjcp-style-label"
                 onClick={() => setIsStyleModalOpen(true)}
-                className="w-full px-3 py-2 text-left border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] focus:ring-2 focus:ring-[rgb(var(--accent))] focus:border-[rgb(var(--accent))]"
+                className="brew-btn-ghost w-full text-left"
               >
                 {currentRecipe.style || <span className="text-muted">Select a style...</span>}
               </button>
             </div>
 
             <div>
-              <label htmlFor="recipe-tags" className="block text-sm font-semibold mb-2">
-                Tags (comma-separated)
+              <label htmlFor="recipe-tags" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
+                Tags
               </label>
               <input
                 id="recipe-tags"
@@ -221,89 +222,63 @@ export default function BetaBuilderPage() {
                   updateRecipe({ tags: tags.length > 0 ? tags : [] });
                 }}
                 placeholder="e.g., hoppy, sessionable"
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-[rgb(var(--surface))] text-strong focus:ring-2 focus:ring-[rgb(var(--accent))] focus:border-[rgb(var(--accent))]"
+                className="brew-input w-full"
               />
             </div>
           </div>
 
-          {/* Calculated Values */}
+          {/* Calculated Values - Gauge Style */}
           {calculations && (
-            <div ref={calculatedValuesRef} className="grid grid-cols-5 gap-3">
+            <div ref={calculatedValuesRef} className="grid grid-cols-4 sm:grid-cols-7 gap-3">
               {/* ABV */}
-              <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-lg p-4 text-center shadow-sm">
-                <div className="text-xs font-medium text-muted mb-2">
-                  Alcohol
-                </div>
-                <div className="text-2xl font-bold text-strong">
-                  {calculations.abv.toFixed(1)}%
-                </div>
+              <div className="brew-gauge">
+                <div className="brew-gauge-label">ABV</div>
+                <div className="brew-gauge-value">{calculations.abv.toFixed(1)}%</div>
               </div>
 
               {/* OG */}
-              <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-lg p-4 text-center shadow-sm">
-                <div className="text-xs font-medium text-muted mb-2">
-                  Original Gravity
-                </div>
-                <div className="text-2xl font-bold text-strong">
-                  {calculations.og.toFixed(3)}
-                </div>
+              <div className="brew-gauge">
+                <div className="brew-gauge-label">OG</div>
+                <div className="brew-gauge-value">{calculations.og.toFixed(3)}</div>
               </div>
 
               {/* FG */}
-              <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-lg p-4 text-center shadow-sm">
-                <div className="text-xs font-medium text-muted mb-2">
-                  Final Gravity
-                </div>
-                <div className="text-2xl font-bold text-strong">
-                  {calculations.fg.toFixed(3)}
-                </div>
+              <div className="brew-gauge">
+                <div className="brew-gauge-label">FG</div>
+                <div className="brew-gauge-value">{calculations.fg.toFixed(3)}</div>
               </div>
 
               {/* IBU */}
-              <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-lg p-4 text-center shadow-sm">
-                <div className="text-xs font-medium text-muted mb-2">
-                  Bitterness (IBU)
-                </div>
-                <div className="text-2xl font-bold text-strong">
-                  {calculations.ibu.toFixed(0)}
-                </div>
+              <div className="brew-gauge">
+                <div className="brew-gauge-label">IBU</div>
+                <div className="brew-gauge-value">{calculations.ibu.toFixed(0)}</div>
               </div>
 
-              {/* SRM with Color Background */}
+              {/* SRM with Color Background - the showpiece */}
               <div
-                className="border border-[rgb(var(--border))] rounded-lg p-4 text-center shadow-sm relative overflow-hidden"
-                style={{
-                  backgroundColor: srmToRgb(calculations.srm)
-                }}
+                className="brew-srm-swatch"
+                style={{ backgroundColor: srmToRgb(calculations.srm) }}
               >
-                <div className="text-xs font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mb-2">
-                  Color (SRM)
+                <div className="relative z-10 text-[10px] font-semibold uppercase tracking-widest text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mb-1">
+                  SRM
                 </div>
-                <div className="text-2xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                <div className="relative z-10 text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ fontVariantNumeric: 'tabular-nums lining-nums' }}>
                   {calculations.srm.toFixed(1)}
                 </div>
               </div>
 
               {/* Calories */}
-              <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-lg p-4 text-center shadow-sm">
-                <div className="text-xs font-medium text-muted mb-2">
-                  Calories
-                </div>
-                <div className="text-2xl font-bold text-strong">
-                  {calculations.calories}
-                </div>
-                <div className="text-[10px] text-muted">per 12 oz</div>
+              <div className="brew-gauge">
+                <div className="brew-gauge-label">Cal</div>
+                <div className="brew-gauge-value text-lg">{calculations.calories}</div>
+                <div className="text-[9px] text-muted">per 12 oz</div>
               </div>
 
               {/* Carbs */}
-              <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-lg p-4 text-center shadow-sm">
-                <div className="text-xs font-medium text-muted mb-2">
-                  Carbs
-                </div>
-                <div className="text-2xl font-bold text-strong">
-                  {calculations.carbsG.toFixed(1)}g
-                </div>
-                <div className="text-[10px] text-muted">per 12 oz</div>
+              <div className="brew-gauge">
+                <div className="brew-gauge-label">Carbs</div>
+                <div className="brew-gauge-value text-lg">{calculations.carbsG.toFixed(1)}g</div>
+                <div className="text-[9px] text-muted">per 12 oz</div>
               </div>
             </div>
           )}
@@ -323,7 +298,7 @@ export default function BetaBuilderPage() {
           )}
 
           <div>
-            <label htmlFor="recipe-notes" className="block text-sm font-semibold mb-2">
+            <label htmlFor="recipe-notes" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
               Notes
             </label>
             <textarea
@@ -332,7 +307,7 @@ export default function BetaBuilderPage() {
               onChange={(e) => updateRecipe({ notes: e.target.value || undefined })}
               placeholder="Brew notes, tasting notes, recipe inspiration..."
               rows={3}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-[rgb(var(--surface))] text-strong focus:ring-2 focus:ring-[rgb(var(--accent))] focus:border-[rgb(var(--accent))]"
+              className="brew-journal"
             />
           </div>
         </div>
@@ -343,10 +318,8 @@ export default function BetaBuilderPage() {
         {/* Fermentables - Now using dedicated component with preset picker */}
         <FermentableSection />
 
-        {/* Mash Schedule - Phase 5c addition */}
-        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6">
-          <MashScheduleSection />
-        </div>
+        {/* Mash Schedule */}
+        <MashScheduleSection />
 
         {/* Hops - Phase 3 addition */}
         <HopSection />
@@ -365,16 +338,16 @@ export default function BetaBuilderPage() {
 
         {/* Save Button */}
           {!isReadOnly && (
-        <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 flex gap-3">
+        <div className="brew-section brew-animate-in brew-stagger-9 flex gap-3">
           <button
             onClick={() => navigate('/beta-builder')}
-            className="flex-1 px-6 py-3 border border-[rgb(var(--border))] font-semibold rounded-md hover:bg-[rgb(var(--bg))] transition-colors"
+            className="brew-btn-ghost flex-1 py-3"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors"
+            className="brew-btn-primary flex-1 py-3 text-base"
           >
             Save & Close
           </button>

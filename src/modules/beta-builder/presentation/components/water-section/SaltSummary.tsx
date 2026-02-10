@@ -30,7 +30,7 @@ export default function SaltSummary({
   return (
     <div>
       {hasSalts && (
-        <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+        <div className="text-xs text-muted mb-3">
           Added to {sourceProfileName || "Custom"}:
         </div>
       )}
@@ -46,16 +46,17 @@ export default function SaltSummary({
             return (
               <div
                 key={saltKey}
-                className="bg-cyan-50 dark:bg-cyan-900/30 rounded-lg p-3 border border-cyan-200 dark:border-cyan-800"
+                className="rounded-lg p-3"
+                style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}
               >
-                <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-1 font-medium">
+                <div className="text-xs brew-link mb-1 font-medium">
                   {SALT_SHORT_LABELS[saltKey]}
                 </div>
-                <div className="text-lg font-bold text-cyan-900 dark:text-cyan-100">
+                <div className="text-lg font-bold" style={{ color: 'var(--fg-strong)' }}>
                   {totalAmount.toFixed(1)}
                   <span className="text-sm ml-1">g total</span>
                 </div>
-                <div className="text-xs text-cyan-600 dark:text-cyan-400 mt-1 space-y-0.5">
+                <div className="text-xs text-muted mt-1 space-y-0.5">
                   <div>Mash: {mashAmount.toFixed(1)}g</div>
                   <div>Sparge: {spargeAmount.toFixed(1)}g</div>
                 </div>
@@ -64,7 +65,7 @@ export default function SaltSummary({
           }
         )}
         {!hasSalts && (
-          <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic">
+          <div className="col-span-full text-sm text-muted italic">
             No salts added yet
           </div>
         )}

@@ -28,7 +28,7 @@ export default function SaltAdditionsPanel({
   return (
     <div>
       <h4 className="text-sm font-semibold mb-2">Salt Additions (grams total)</h4>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <p className="text-xs text-muted mb-3">
         Enter total amounts - they'll be automatically split between mash and sparge
         water
       </p>
@@ -40,7 +40,7 @@ export default function SaltAdditionsPanel({
 
           return (
             <div key={saltKey}>
-              <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+              <label className="block text-xs mb-1 text-muted">
                 {SALT_LABELS[saltKey]}
               </label>
               <input
@@ -52,10 +52,10 @@ export default function SaltAdditionsPanel({
                 placeholder="0"
                 step="0.1"
                 min="0"
-                className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                className="brew-input w-full"
               />
               {totalAmount > 0 && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div className="text-xs text-muted mt-1">
                   Mash: {mashAmount.toFixed(1)}g / Sparge: {spargeAmount.toFixed(1)}g
                 </div>
               )}

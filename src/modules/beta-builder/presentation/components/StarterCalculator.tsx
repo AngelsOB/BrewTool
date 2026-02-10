@@ -6,7 +6,7 @@
  * Uses White and Braukaiser models for cell growth calculations.
  */
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useRef, useCallback } from "react";
 import type { YeastType, StarterStep, StarterInfo } from "../../domain/models/Recipe";
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
 
@@ -34,38 +34,58 @@ export default function StarterCalculator({
   onStarterChange,
 }: StarterCalculatorProps) {
   // Starter state
-  const [yeastType, setYeastType] = useState<YeastType>("liquid-100");
-  const [packs, setPacks] = useState<number>(1);
-  const [mfgDate, setMfgDate] = useState<string>("");
-  const [slurryLiters, setSlurryLiters] = useState<number>(0);
-  const [slurryBillionPerMl, setSlurryBillionPerMl] = useState<number>(1);
-  const [steps, setSteps] = useState<StarterStep[]>([]);
+  const [yeastType, setYeastType] = useState<YeastType>(starterInfo?.yeastType ?? "liquid-100");
+  const [packs, setPacks] = useState<number>(starterInfo?.packs ?? 1);
+  const [mfgDate, setMfgDate] = useState<string>(starterInfo?.mfgDate ?? "");
+  const [slurryLiters, setSlurryLiters] = useState<number>(starterInfo?.slurryLiters ?? 0);
+  const [slurryBillionPerMl, setSlurryBillionPerMl] = useState<number>(starterInfo?.slurryBillionPerMl ?? 1);
+  const [steps, setSteps] = useState<StarterStep[]>(starterInfo?.steps ?? []);
 
-  // Hydrate state from starterInfo prop
+  // Track whether we're hydrating from prop to avoid re-notifying parent
+  const isHydrating = useRef(false);
+
+  // Hydrate state from starterInfo prop (only on initial mount or when prop identity truly changes from outside)
+  const prevStarterInfoRef = useRef(starterInfo);
   useEffect(() => {
+    // Skip if starterInfo hasn't actually changed from outside
+    if (starterInfo === prevStarterInfoRef.current) return;
+    prevStarterInfoRef.current = starterInfo;
+
     if (starterInfo) {
+      isHydrating.current = true;
       setYeastType(starterInfo.yeastType);
       setPacks(starterInfo.packs);
       setMfgDate(starterInfo.mfgDate || "");
       setSlurryLiters(starterInfo.slurryLiters || 0);
       setSlurryBillionPerMl(starterInfo.slurryBillionPerMl || 1);
       setSteps(starterInfo.steps);
+      // Reset hydrating flag after React processes the state updates
+      queueMicrotask(() => { isHydrating.current = false; });
     }
   }, [starterInfo]);
 
-  // Notify parent when starter info changes
+  // Stable ref to onStarterChange to avoid effect re-fires
+  const onStarterChangeRef = useRef(onStarterChange);
+  onStarterChangeRef.current = onStarterChange;
+
+  // Notify parent when starter info changes (but not during hydration from prop)
+  const notifyParent = useCallback(() => {
+    if (isHydrating.current) return;
+    onStarterChangeRef.current({
+      yeastType,
+      packs,
+      mfgDate,
+      slurryLiters,
+      slurryBillionPerMl,
+      steps,
+    });
+  }, [yeastType, packs, mfgDate, slurryLiters, slurryBillionPerMl, steps]);
+
   useEffect(() => {
     if (isOpen) {
-      onStarterChange({
-        yeastType,
-        packs,
-        mfgDate,
-        slurryLiters,
-        slurryBillionPerMl,
-        steps,
-      });
+      notifyParent();
     }
-  }, [yeastType, packs, mfgDate, slurryLiters, slurryBillionPerMl, steps, isOpen, onStarterChange]);
+  }, [notifyParent, isOpen]);
 
   // Calculate starter results
   const starterResults = useMemo(() => {

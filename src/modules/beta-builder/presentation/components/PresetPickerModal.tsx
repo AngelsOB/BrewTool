@@ -37,8 +37,8 @@ interface PresetPickerModalProps<T> {
   totalCount: number;
   countLabel: string;
   onCreateCustom: () => void;
-  /** Color scheme for accent elements: 'blue' | 'green' | 'amber' */
-  colorScheme?: "blue" | "green" | "amber";
+  /** @deprecated No longer used — unified accent theme */
+  colorScheme?: string;
   /** Additional content to render outside the modal (e.g., portaled tooltips) */
   portalContent?: React.ReactNode;
 }
@@ -76,31 +76,9 @@ export default function PresetPickerModal<T>({
   totalCount,
   countLabel,
   onCreateCustom,
-  colorScheme = "blue",
   portalContent,
 }: PresetPickerModalProps<T>) {
   const titleId = useId();
-
-  // Color scheme classes - focus rings use consistent coral-600 theme color
-  const colorClasses = {
-    blue: {
-      filterActive:
-        "bg-blue-100 text-blue-600 border-blue-300 dark:bg-blue-900/60 dark:text-blue-200 dark:border-blue-700",
-      focusRing: "focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
-    },
-    green: {
-      filterActive:
-        "bg-green-100 text-green-600 border-green-300 dark:bg-green-900/60 dark:text-green-200 dark:border-green-700",
-      focusRing: "focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
-    },
-    amber: {
-      filterActive:
-        "bg-amber-100 text-amber-600 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-700",
-      focusRing: "focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
-    },
-  };
-
-  const colors = colorClasses[colorScheme];
 
   return (
     <>
@@ -111,14 +89,14 @@ export default function PresetPickerModal<T>({
         labelledById={titleId}
       >
         {/* Modal Header */}
-        <div className="p-6 border-b border-[rgb(var(--border))]">
+        <div className="p-6 border-b border-[rgb(var(--brew-border))]">
           <div className="flex justify-between items-center mb-4">
-            <h3 id={titleId} className="text-xl font-semibold">
+            <h3 id={titleId} className="brew-section-title">
               {title}
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+              className="text-[var(--fg-muted)] hover:text-[var(--fg-strong)] text-2xl transition-colors"
               aria-label="Close"
             >
               ×
@@ -132,17 +110,13 @@ export default function PresetPickerModal<T>({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className={`flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 ${colors.focusRing}`}
+              className="brew-input flex-1"
               autoFocus
             />
             {filterContent && (
               <button
                 onClick={onToggleFilters}
-                className={`px-3 py-2 rounded-md border transition-colors ${
-                  showFilters
-                    ? colors.filterActive
-                    : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                }`}
+                className={showFilters ? "brew-chip-active px-3 py-2 rounded-lg" : "brew-chip px-3 py-2 rounded-lg"}
                 title="Toggle Filters"
                 aria-expanded={showFilters}
                 aria-label="Toggle filters"
@@ -163,18 +137,18 @@ export default function PresetPickerModal<T>({
         {/* Modal Body - Scrollable List */}
         <div className="flex-1 overflow-y-auto pb-4">
           {isLoading ? (
-            <p className="text-gray-500 dark:text-gray-400 px-6 py-8">
+            <p className="text-muted px-6 py-8">
               Loading presets...
             </p>
           ) : groups.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 px-6 py-8 text-center">
+            <p className="text-muted px-6 py-8 text-center">
               {emptyMessage}
             </p>
           ) : (
             <div className="space-y-6">
               {groups.map((group) => (
                 <div key={group.label}>
-                  <h4 className="text-sm font-semibold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--card))] px-6 py-2 border-b border-[rgb(var(--border))]">
+                  <h4 className="text-sm font-bold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--brew-card))] px-6 py-2 border-b border-[rgb(var(--brew-border))]" style={{ letterSpacing: 'var(--brew-tracking-wide)' }}>
                     {group.label}
                   </h4>
                   <div className="space-y-1 px-6">
@@ -189,13 +163,13 @@ export default function PresetPickerModal<T>({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))] flex justify-between items-center">
-          <div className="text-sm">
+        <div className="p-4 border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] flex justify-between items-center rounded-b-xl">
+          <div className="text-sm text-muted">
             {totalCount} {countLabel}
           </div>
           <button
             onClick={onCreateCustom}
-            className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+            className="brew-btn-primary text-sm"
           >
             + Create Custom
           </button>

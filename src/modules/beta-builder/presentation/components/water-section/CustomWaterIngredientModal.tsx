@@ -42,10 +42,10 @@ export default function CustomWaterIngredientModal({
   return (
     <ModalOverlay isOpen={isOpen} onClose={handleClose} size="sm">
       <div className="p-4">
-        <h3 className="text-lg font-semibold mb-4">Custom Ingredient</h3>
+        <h3 className="brew-section-title mb-4">Custom Ingredient</h3>
         <div className="space-y-3">
           <div>
-            <label htmlFor="custom-water-ingredient-name" className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+            <label htmlFor="custom-water-ingredient-name" className="block text-xs mb-1 text-muted">
               Name
             </label>
             <input
@@ -55,21 +55,21 @@ export default function CustomWaterIngredientModal({
               onChange={(e) => setName(e.target.value)}
               placeholder="Ingredient name"
               autoFocus
-              className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+              className="brew-input w-full"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleAdd();
               }}
             />
           </div>
           <div>
-            <label htmlFor="custom-water-ingredient-category" className="block text-xs mb-1 text-gray-600 dark:text-gray-400">
+            <label htmlFor="custom-water-ingredient-category" className="block text-xs mb-1 text-muted">
               Category
             </label>
             <select
               id="custom-water-ingredient-category"
               value={category}
               onChange={(e) => setCategory(e.target.value as OtherIngredientCategory)}
-              className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+              className="brew-input w-full"
             >
               {(Object.keys(CATEGORY_LABELS) as OtherIngredientCategory[]).map((cat) => (
                 <option key={cat} value={cat}>
@@ -81,14 +81,14 @@ export default function CustomWaterIngredientModal({
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleClose}
-              className="flex-1 px-3 py-2 text-sm rounded-md border border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))] transition-colors"
+              className="brew-btn-ghost flex-1"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
               disabled={!name.trim()}
-              className="flex-1 px-3 py-2 text-sm rounded-md bg-cyan-600 text-white hover:bg-cyan-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="brew-btn-primary flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Add
             </button>

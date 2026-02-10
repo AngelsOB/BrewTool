@@ -195,26 +195,28 @@ export default function FermentableSection() {
   }, [mode, currentRecipe?.fermentables, percentById]);
 
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-blue-500">
+    <div className="brew-section brew-animate-in brew-stagger-2" data-accent="grain">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold">Fermentables</h2>
+          <h2 className="brew-section-title">Fermentables</h2>
           {/* Mode Toggle */}
-          <div className="flex items-center rounded-md border border-[rgb(var(--border))] overflow-hidden text-xs">
+          <div className="flex items-center rounded-lg border border-[rgb(var(--brew-border-subtle))] overflow-hidden text-xs">
             <button
               type="button"
-              className={`px-3 py-1.5 ${
-                mode === "amount" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 font-semibold" : "bg-[rgb(var(--card))]"
+              className={`px-3 py-1.5 transition-colors ${
+                mode === "amount" ? "font-semibold" : ""
               }`}
+              style={mode === "amount" ? { background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-800)' } : { background: 'rgb(var(--brew-card-inset))' }}
               onClick={() => setMode("amount")}
             >
               Amount
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 ${
-                mode === "percent" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 font-semibold" : "bg-[rgb(var(--card))]"
+              className={`px-3 py-1.5 transition-colors ${
+                mode === "percent" ? "font-semibold" : ""
               }`}
+              style={mode === "percent" ? { background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-800)' } : { background: 'rgb(var(--brew-card-inset))' }}
               onClick={() => setMode("percent")}
             >
               %
@@ -229,7 +231,7 @@ export default function FermentableSection() {
                 type="number"
                 value={targetABV}
                 onChange={(e) => setTargetABV(parseFloat(e.target.value) || 0)}
-                className="w-20 px-2 py-1 text-sm border border-[rgb(var(--border))] rounded"
+                className="brew-input w-20 py-1 px-2"
                 step="0.1"
                 min="0"
               />
@@ -242,7 +244,7 @@ export default function FermentableSection() {
         </div>
         <button
           onClick={() => setIsPickerOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          className="brew-btn-primary"
         >
           Add Fermentable
         </button>
@@ -250,7 +252,7 @@ export default function FermentableSection() {
 
       {/* Fermentable List */}
       {!currentRecipe?.fermentables.length ? (
-        <p className="text-gray-500 dark:text-gray-400 italic">
+        <p className="text-muted italic">
           No fermentables yet. Click "Add Fermentable" to select from preset database.
         </p>
       ) : (
@@ -263,7 +265,7 @@ export default function FermentableSection() {
             return (
               <div
                 key={fermentable.id}
-                className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 gap-2 lg:gap-2 items-center p-3 bg-[rgb(var(--card))] rounded border border-[rgb(var(--border))] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
+                className="brew-ingredient-row grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 gap-2 lg:gap-2 items-center"
               >
                 {/* Name - full width on mobile, 4 cols on desktop */}
                 <div className="col-span-2 sm:col-span-4 lg:col-span-4 flex items-center justify-between">
@@ -278,7 +280,7 @@ export default function FermentableSection() {
                   {/* Remove button - visible only on mobile, next to name */}
                   <button
                     onClick={() => removeFermentable(fermentable.id)}
-                    className="lg:hidden text-red-600 hover:text-red-800 text-xl font-bold"
+                    className="lg:hidden brew-danger-text text-xl font-bold"
                     aria-label={`Remove ${fermentable.name}`}
                   >
                     ×
@@ -301,7 +303,7 @@ export default function FermentableSection() {
                             weightKg: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="0.1"
                         min="0"
                       />
@@ -319,7 +321,7 @@ export default function FermentableSection() {
                             [fermentable.id]: parseFloat(e.target.value) || 0,
                           }))
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="0.1"
                         min="0"
                         max="100"
@@ -342,7 +344,7 @@ export default function FermentableSection() {
                           colorLovibond: parseFloat(e.target.value) || 0,
                         })
                       }
-                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="brew-input w-full py-1 px-2"
                       step="1"
                       min="0"
                     />
@@ -363,7 +365,7 @@ export default function FermentableSection() {
                           ppg: parseFloat(e.target.value) || 0,
                         })
                       }
-                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="brew-input w-full py-1 px-2"
                       step="0.1"
                       min="0"
                     />
@@ -391,7 +393,7 @@ export default function FermentableSection() {
                 <div className="hidden lg:block lg:col-span-1 text-right">
                   <button
                     onClick={() => removeFermentable(fermentable.id)}
-                    className="text-red-600 hover:text-red-800 text-xl font-bold"
+                    className="brew-danger-text text-xl font-bold"
                     aria-label={`Remove ${fermentable.name}`}
                   >
                     ×
@@ -402,9 +404,9 @@ export default function FermentableSection() {
           })}
 
           {/* Total */}
-          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--border))] mt-2">
-            <span className="font-semibold">Total</span>
-            <span className="font-semibold">{totalGrainKg.toFixed(2)} kg</span>
+          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--brew-border-subtle))] mt-2">
+            <span className="font-semibold text-strong">Total</span>
+            <span className="font-semibold text-strong">{totalGrainKg.toFixed(2)} kg</span>
           </div>
         </div>
       )}
@@ -426,7 +428,7 @@ export default function FermentableSection() {
           <>
             {/* Type Filters */}
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="py-1 px-2 font-semibold brew-chip-label">
                 Type:
               </span>
               {["grain", "extract", "sugar", "adjunct_mashable"].map((type) => (
@@ -435,8 +437,8 @@ export default function FermentableSection() {
                   onClick={() => toggleFilter("types", type)}
                   className={`px-3 py-1 rounded-full border transition-colors ${
                     activeFilters.types.includes(type)
-                      ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      ? "brew-chip-active"
+                      : "brew-chip"
                   }`}
                 >
                   {type === "adjunct_mashable"
@@ -448,7 +450,7 @@ export default function FermentableSection() {
 
             {/* Color Filters */}
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="py-1 px-2 font-semibold brew-chip-label">
                 Color:
               </span>
               {[
@@ -462,8 +464,8 @@ export default function FermentableSection() {
                   onClick={() => toggleFilter("colors", opt.id)}
                   className={`px-3 py-1 rounded-full border transition-colors ${
                     activeFilters.colors.includes(opt.id)
-                      ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700 ring-1 ring-blue-500"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      ? "brew-chip-active"
+                      : "brew-chip"
                   }`}
                 >
                   {opt.label}
@@ -473,7 +475,7 @@ export default function FermentableSection() {
 
             {/* Origin Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+              <span className="py-1 px-2 font-semibold brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
                 Origin:
               </span>
               {availableOrigins.map((code) => (
@@ -482,8 +484,8 @@ export default function FermentableSection() {
                   onClick={() => toggleFilter("origins", code)}
                   className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border flex items-center gap-1 ${
                     activeFilters.origins.includes(code)
-                      ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-100 dark:border-blue-700"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      ? "brew-chip-active"
+                      : "brew-chip"
                   }`}
                 >
                   <span>{getCountryFlag(code)}</span>
@@ -500,7 +502,7 @@ export default function FermentableSection() {
           <button
             key={preset.name}
             onClick={() => handleAddFromPreset(preset)}
-            className="w-full text-left px-4 py-2 rounded hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors flex justify-between items-center"
+            className="w-full text-left px-4 py-2 rounded hover:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] transition-colors flex justify-between items-center"
           >
             <span className="font-medium flex items-center gap-2">
               {preset.originCode && (

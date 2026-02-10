@@ -72,15 +72,15 @@ export default function StyleRangeComparison({
 
     return (
       <div className="grid grid-cols-[5rem_1fr] items-center gap-3 py-2">
-        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
           {label}
         </div>
-        <div className="relative h-8 rounded bg-gray-200 dark:bg-gray-800 overflow-hidden border border-[rgb(var(--border))]">
+        <div className="relative h-8 rounded bg-[rgb(var(--brew-card))] overflow-hidden border border-[rgb(var(--brew-border))]">
           {/* Out of range - below min */}
           {range && minPct > 0 && !isSrm && (
             <div
-              className="absolute inset-y-0 left-0 bg-red-100 dark:bg-red-900/30"
-              style={{ width: `${minPct}%` }}
+              className="absolute inset-y-0 left-0"
+              style={{ background: 'color-mix(in oklch, var(--brew-danger) 15%, transparent)', width: `${minPct}%` }}
             />
           )}
 
@@ -99,8 +99,9 @@ export default function StyleRangeComparison({
                 />
                 {/* Valid range - full opacity */}
                 <div
-                  className="absolute inset-y-0 border-x border-gray-400 dark:border-gray-600"
+                  className="absolute inset-y-0 border-x"
                   style={{
+                    borderColor: 'rgb(var(--brew-border))',
                     left: `${minPct}%`,
                     width: `${Math.max(0, maxPct - minPct)}%`,
                     background: `linear-gradient(to right, ${srmToRgb(min)}, ${srmToRgb((min + max) / 2)}, ${srmToRgb(max)})`,
@@ -110,8 +111,10 @@ export default function StyleRangeComparison({
             ) : (
               // Normal green range
               <div
-                className="absolute inset-y-0 bg-green-100 dark:bg-green-900/30 border-x border-green-400 dark:border-green-600"
+                className="absolute inset-y-0 border-x"
                 style={{
+                  background: 'color-mix(in oklch, var(--brew-success) 15%, transparent)',
+                  borderColor: 'var(--brew-success)',
                   left: `${minPct}%`,
                   width: `${Math.max(0, maxPct - minPct)}%`,
                 }}
@@ -122,19 +125,15 @@ export default function StyleRangeComparison({
           {/* Out of range - above max */}
           {range && maxPct < 100 && !isSrm && (
             <div
-              className="absolute inset-y-0 right-0 bg-red-100 dark:bg-red-900/30"
-              style={{ width: `${Math.max(0, 100 - maxPct)}%` }}
+              className="absolute inset-y-0 right-0"
+              style={{ background: 'color-mix(in oklch, var(--brew-danger) 15%, transparent)', width: `${Math.max(0, 100 - maxPct)}%` }}
             />
           )}
 
           {/* Current value marker */}
           <div
-            className={`absolute top-0 bottom-0 w-1 shadow-lg ${
-              inRange
-                ? "bg-blue-500 dark:bg-blue-400"
-                : "bg-red-500 dark:bg-red-400"
-            }`}
-            style={{ left: `${valPct}%` }}
+            className="absolute top-0 bottom-0 w-1 shadow-lg"
+            style={{ background: inRange ? 'var(--brew-accent-500)' : 'var(--brew-danger)', left: `${valPct}%` }}
             title={format(value)}
           />
 
@@ -142,13 +141,13 @@ export default function StyleRangeComparison({
           {range && (
             <>
               <div
-                className="absolute -translate-x-1/2 top-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-400"
+                className="absolute -translate-x-1/2 top-0.5 text-[10px] font-medium text-muted"
                 style={{ left: `${minPct}%` }}
               >
                 {format(min)}
               </div>
               <div
-                className="absolute -translate-x-1/2 top-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-400"
+                className="absolute -translate-x-1/2 top-0.5 text-[10px] font-medium text-muted"
                 style={{ left: `${maxPct}%` }}
               >
                 {format(max)}
@@ -158,12 +157,8 @@ export default function StyleRangeComparison({
 
           {/* Current value label */}
           <div
-            className={`absolute -translate-x-1/2 bottom-0.5 text-[10px] font-semibold px-1 py-0.5 rounded ${
-              inRange
-                ? "bg-blue-500 dark:bg-blue-600 text-white"
-                : "bg-red-500 dark:bg-red-600 text-white"
-            }`}
-            style={{ left: `${valPct}%` }}
+            className="absolute -translate-x-1/2 bottom-0.5 text-[10px] font-semibold px-1 py-0.5 rounded text-white"
+            style={{ background: inRange ? 'var(--brew-accent-500)' : 'var(--brew-danger)', left: `${valPct}%` }}
           >
             {format(value)}
           </div>
@@ -188,8 +183,8 @@ export default function StyleRangeComparison({
   }
 
   return (
-    <div className="bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4">BJCP Style Ranges</h2>
+    <div className="bg-[rgb(var(--brew-card-inset))] border border-[rgb(var(--brew-border-subtle))] rounded-xl p-6">
+      <h2 className="brew-section-title text-lg mb-4">BJCP Style Ranges</h2>
       <div className="space-y-1">
         <RangeBar
           label="ABV"

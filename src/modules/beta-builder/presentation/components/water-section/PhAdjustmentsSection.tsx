@@ -28,42 +28,35 @@ export default function PhAdjustmentsSection({
   const inRange = ph >= 5.2 && ph <= 5.6;
   const inIdeal = ph >= 5.2 && ph <= 5.4;
 
+  // Semantic colors for pH status (data-driven, not theme colors)
+  const statusColor = inIdeal
+    ? 'var(--brew-success)'
+    : inRange
+      ? 'var(--brew-warning)'
+      : 'var(--brew-danger)';
+
   return (
     <div className="mb-6">
-      <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--fg-strong)' }}>
         Estimated Mash pH
       </h3>
       <div
-        className={`rounded-lg p-4 border ${
-          inIdeal
-            ? "bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800"
-            : inRange
-              ? "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800"
-              : "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800"
-        }`}
+        className="rounded-lg p-4"
+        style={{
+          background: `color-mix(in oklch, ${statusColor} 10%, rgb(var(--brew-card-inset)))`,
+          border: `1px solid color-mix(in oklch, ${statusColor} 25%, rgb(var(--brew-border-subtle)))`,
+          borderLeft: `3px solid ${statusColor}`,
+        }}
       >
         <div className="flex items-center justify-between">
           <div>
             <div
-              className={`text-3xl font-bold ${
-                inIdeal
-                  ? "text-green-900 dark:text-green-100"
-                  : inRange
-                    ? "text-yellow-900 dark:text-yellow-100"
-                    : "text-red-900 dark:text-red-100"
-              }`}
+              className="text-3xl font-bold"
+              style={{ color: statusColor }}
             >
               {ph.toFixed(2)}
             </div>
-            <div
-              className={`text-xs mt-1 ${
-                inIdeal
-                  ? "text-green-600 dark:text-green-400"
-                  : inRange
-                    ? "text-yellow-600 dark:text-yellow-400"
-                    : "text-red-600 dark:text-red-400"
-              }`}
-            >
+            <div className="text-xs text-muted mt-1">
               {hasWaterChemistry ? "With water profile" : "DI water estimate"} &middot;
               Target: 5.2–5.6
             </div>
@@ -73,12 +66,12 @@ export default function PhAdjustmentsSection({
               onClick={() =>
                 onAddPhAdjustment("Lactic acid (88%)", adj.lacticAcid88Ml, "ml")
               }
-              className="text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 rounded-md text-right hover:bg-amber-200 dark:hover:bg-amber-800/60 transition-colors cursor-pointer border border-amber-300 dark:border-amber-700"
+              className="brew-chip-active text-xs px-3 py-1.5 rounded-md text-right transition-colors cursor-pointer"
             >
               <div className="font-semibold">
                 + Add ~{adj.lacticAcid88Ml} mL lactic acid (88%)
               </div>
-              <div className="text-amber-600 dark:text-amber-400">
+              <div className="text-muted">
                 to reach pH {adj.targetPh.toFixed(1)}
               </div>
             </button>
@@ -86,12 +79,12 @@ export default function PhAdjustmentsSection({
           {adj && adj.bakingSodaG > 0 && (
             <button
               onClick={() => onAddPhAdjustment("Baking soda", adj.bakingSodaG, "g")}
-              className="text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 rounded-md text-right hover:bg-amber-200 dark:hover:bg-amber-800/60 transition-colors cursor-pointer border border-amber-300 dark:border-amber-700"
+              className="brew-chip-active text-xs px-3 py-1.5 rounded-md text-right transition-colors cursor-pointer"
             >
               <div className="font-semibold">
                 + Add ~{adj.bakingSodaG} g baking soda
               </div>
-              <div className="text-amber-600 dark:text-amber-400">
+              <div className="text-muted">
                 to reach pH {adj.targetPh.toFixed(1)}
               </div>
             </button>

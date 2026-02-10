@@ -166,8 +166,8 @@ export default function WaterSection({ calculations, recipe }: Props) {
   const targetStyle = BEER_STYLE_TARGETS[waterChem.targetStyleName || "Balanced"];
 
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-cyan-500">
-      <h2 className="text-xl font-semibold mb-4">Water</h2>
+    <div className="brew-section brew-animate-in brew-stagger-6" data-accent="water">
+      <h2 className="brew-section-title mb-4">Water</h2>
 
       {/* Water Volumes */}
       <WaterVolumesDisplay calculations={calculations} />
@@ -205,7 +205,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       />
 
       {/* Info note */}
-      <div className="mt-4 text-xs bg-[rgb(var(--bg))] p-3 rounded border border-[rgb(var(--border))]">
+      <div className="mt-4 text-xs p-3 rounded-lg" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
         <strong>Note:</strong> Water volumes account for grain absorption, boil-off, hop
         absorption, deadspace, and all equipment losses.
       </div>

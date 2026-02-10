@@ -29,19 +29,19 @@ export default function OtherIngredientsPanel({
   return (
     <div className="mt-6 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
           Other Ingredients
         </h3>
         <button
           onClick={onOpenPicker}
-          className="text-sm px-3 py-1.5 rounded-md border border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))] transition-colors"
+          className="brew-btn-primary text-sm"
         >
           + Add
         </button>
       </div>
 
       {ingredients.length === 0 ? (
-        <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+        <div className="text-sm text-muted italic">
           No additional ingredients — finings, spices, water agents, etc.
         </div>
       ) : (
@@ -49,7 +49,7 @@ export default function OtherIngredientsPanel({
           {ingredients.map((ing) => (
             <div
               key={ing.id}
-              className="flex items-center gap-2 p-2.5 rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--bg))]"
+              className="brew-ingredient-row flex items-center gap-2"
             >
               {/* Category badge */}
               <span
@@ -76,7 +76,7 @@ export default function OtherIngredientsPanel({
                     timing: e.target.value as OtherIngredient["timing"],
                   })
                 }
-                className="text-xs px-1.5 py-1 rounded border border-[rgb(var(--border))] bg-white dark:bg-gray-800 shrink-0"
+                className="brew-input text-xs px-1.5 py-1 shrink-0"
               >
                 {TIMINGS.map((t) => (
                   <option key={t} value={t}>
@@ -100,7 +100,7 @@ export default function OtherIngredientsPanel({
                   step={["tablet", "packet", "capsule"].includes(ing.unit) ? 1 : 0.1}
                   min="0"
                   placeholder="0"
-                  className="w-16 text-xs px-1.5 py-1 rounded border border-[rgb(var(--border))] bg-white dark:bg-gray-800 text-right"
+                  className="brew-input w-16 text-xs px-1.5 py-1 text-right"
                 />
                 <select
                   value={ing.unit}
@@ -112,7 +112,7 @@ export default function OtherIngredientsPanel({
                       amount: isDiscrete ? Math.round(ing.amount || 0) : ing.amount,
                     });
                   }}
-                  className="text-xs px-1 py-1 rounded border border-[rgb(var(--border))] bg-white dark:bg-gray-800"
+                  className="brew-input text-xs px-1 py-1"
                 >
                   {UNITS.map((u) => (
                     <option key={u} value={u}>
@@ -125,7 +125,7 @@ export default function OtherIngredientsPanel({
               {/* Remove */}
               <button
                 onClick={() => onRemove(ing.id)}
-                className="p-1 text-gray-400 hover:text-red-500 transition shrink-0"
+                className="p-1 brew-danger-text transition shrink-0"
                 aria-label={`Remove ${ing.name}`}
               >
                 <svg

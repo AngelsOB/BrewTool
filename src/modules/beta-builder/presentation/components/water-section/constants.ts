@@ -40,12 +40,12 @@ export const CATEGORY_LABELS: Record<OtherIngredientCategory, string> = {
 };
 
 export const CATEGORY_COLORS: Record<OtherIngredientCategory, string> = {
-  "water-agent": "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
-  fining: "bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300",
-  spice: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
-  flavor: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300",
-  herb: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
-  other: "bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300",
+  "water-agent": "brew-chip-active",
+  fining: "brew-chip-active",
+  spice: "brew-chip-active",
+  flavor: "brew-chip-active",
+  herb: "brew-chip-active",
+  other: "brew-chip",
 };
 
 /**

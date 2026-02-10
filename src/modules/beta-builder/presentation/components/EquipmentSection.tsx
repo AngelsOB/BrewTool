@@ -73,26 +73,27 @@ export const EquipmentSection: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+    <div className="brew-section brew-animate-in brew-stagger-1" data-accent="equipment">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="brew-section-title">
           Equipment & Volumes
         </h2>
         <div className="flex gap-2">
           {hasUnsavedChanges && (
             <button
               onClick={() => setIsCustomModalOpen(true)}
-              className="px-3 py-1.5 text-sm border-2 border-orange-600 text-orange-600 dark:border-orange-500 dark:text-orange-500 rounded-md hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              className="brew-btn-ghost text-xs px-3 py-1.5"
+              style={{ borderColor: 'var(--brew-accent-400)', color: 'var(--brew-accent-700)' }}
             >
-              💾 Save as Custom
+              Save as Custom
             </button>
           )}
           <button
             onClick={() => setIsPickerOpen(true)}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className="brew-btn-primary text-xs px-3 py-1.5"
           >
-            {currentProfile ? `📋 ${currentProfile.name}` : 'Select Profile'}
+            {currentProfile ? currentProfile.name : 'Select Profile'}
           </button>
         </div>
       </div>
@@ -110,7 +111,7 @@ export const EquipmentSection: React.FC = () => {
             onChange={(e) =>
               updateRecipe({ batchVolumeL: parseFloat(e.target.value) || 0 })
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="brew-input w-full"
             step="0.1"
           />
         </div>
@@ -130,7 +131,7 @@ export const EquipmentSection: React.FC = () => {
                 },
               })
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="brew-input w-full"
             step="1"
           />
         </div>
@@ -150,7 +151,7 @@ export const EquipmentSection: React.FC = () => {
                 },
               })
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="brew-input w-full"
             step="1"
           />
         </div>
@@ -158,11 +159,11 @@ export const EquipmentSection: React.FC = () => {
 
       {/* Advanced Settings - Collapsible */}
       <details className="group">
-        <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mb-4">
+        <summary className="cursor-pointer text-sm font-medium mb-4 transition-colors brew-link">
           Advanced Equipment Settings
         </summary>
 
-        <div className="grid grid-cols-3 gap-4 pl-4 border-l-2 border-blue-200 dark:border-blue-800">
+        <div className="grid grid-cols-3 gap-4 pl-4 border-l-2" style={{ borderColor: 'var(--brew-accent-300)' }}>
           <div>
             <label htmlFor="equipment-boil-off-rate" className="block text-xs font-semibold mb-2">
               Boil-Off Rate (L/hr)
@@ -179,7 +180,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -199,7 +200,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -219,7 +220,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.01"
             />
           </div>
@@ -239,7 +240,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -259,7 +260,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -279,7 +280,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -299,7 +300,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -319,7 +320,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>
@@ -339,7 +340,7 @@ export const EquipmentSection: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="brew-input w-full py-1 px-2"
               step="0.1"
             />
           </div>

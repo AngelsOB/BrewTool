@@ -208,12 +208,12 @@ export default function HopSection() {
   };
 
   return (
-    <div className="bg-[rgb(var(--card))] rounded-lg shadow p-6 mb-6 border-t-4 border-green-500">
+    <div className="brew-section brew-animate-in brew-stagger-4" data-accent="hops">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Hops</h2>
+        <h2 className="brew-section-title">Hops</h2>
         <button
           onClick={() => setIsPickerOpen(true)}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          className="brew-btn-primary"
         >
           Add Hop
         </button>
@@ -221,7 +221,7 @@ export default function HopSection() {
 
       {/* Hop List */}
       {!currentRecipe?.hops.length ? (
-        <p className="text-gray-500 dark:text-gray-400 italic">
+        <p className="text-muted italic">
           No hops yet. Click "Add Hop" to select from preset database.
         </p>
       ) : (
@@ -229,7 +229,7 @@ export default function HopSection() {
           {currentRecipe.hops.map((hop) => (
             <div
               key={hop.id}
-              className="p-4 bg-[rgb(var(--card))] rounded border border-[rgb(var(--border))] hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors"
+              className="brew-ingredient-row p-4"
             >
               {/* Mobile layout: stacked with remove button in header */}
               <div className="lg:hidden">
@@ -249,7 +249,7 @@ export default function HopSection() {
                   </div>
                   <button
                     onClick={() => removeHop(hop.id)}
-                    className="text-red-600 hover:text-red-800 text-xl font-bold"
+                    className="brew-danger-text text-xl font-bold"
                     aria-label={`Remove ${hop.name}`}
                   >
                     ×
@@ -273,7 +273,7 @@ export default function HopSection() {
                             grams: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded dark:bg-gray-800 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="1"
                         min="0"
                       />
@@ -294,7 +294,7 @@ export default function HopSection() {
                           type: e.target.value as Hop["type"],
                         })
                       }
-                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded"
+                      className="brew-input w-full py-1 px-2"
                     >
                       <option value="boil">Boil</option>
                       <option value="whirlpool">Whirlpool</option>
@@ -320,7 +320,7 @@ export default function HopSection() {
                               timeMinutes: parseFloat(e.target.value) || 0,
                             })
                           }
-                          className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                          className="brew-input w-full py-1 px-2"
                           step="5"
                           min="0"
                         />
@@ -345,7 +345,7 @@ export default function HopSection() {
                                 temperatureC: parseFloat(e.target.value) || 80,
                               })
                             }
-                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            className="brew-input w-full py-1 px-2"
                             step="5"
                             min="40"
                             max="100"
@@ -367,7 +367,7 @@ export default function HopSection() {
                                 whirlpoolTimeMinutes: parseFloat(e.target.value) || 0,
                               })
                             }
-                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            className="brew-input w-full py-1 px-2"
                             step="5"
                             min="0"
                           />
@@ -393,7 +393,7 @@ export default function HopSection() {
                                 dryHopStartDay: parseFloat(e.target.value) || 0,
                               })
                             }
-                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            className="brew-input w-full py-1 px-2"
                             step="1"
                             min="0"
                           />
@@ -414,7 +414,7 @@ export default function HopSection() {
                                 dryHopDays: parseFloat(e.target.value) || 0,
                               })
                             }
-                            className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            className="brew-input w-full py-1 px-2"
                             step="1"
                             min="0"
                           />
@@ -457,7 +457,7 @@ export default function HopSection() {
                           grams: parseFloat(e.target.value) || 0,
                         })
                       }
-                      className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded dark:bg-gray-800 dark:text-gray-100"
+                      className="brew-input w-full py-1 px-2"
                       step="1"
                       min="0"
                     />
@@ -478,7 +478,7 @@ export default function HopSection() {
                         type: e.target.value as Hop["type"],
                       })
                     }
-                    className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded"
+                    className="brew-input w-full py-1 px-2"
                   >
                     <option value="boil">Boil</option>
                     <option value="whirlpool">Whirlpool</option>
@@ -504,7 +504,7 @@ export default function HopSection() {
                             timeMinutes: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="5"
                         min="0"
                       />
@@ -529,7 +529,7 @@ export default function HopSection() {
                             temperatureC: parseFloat(e.target.value) || 80,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="5"
                         min="40"
                         max="100"
@@ -555,7 +555,7 @@ export default function HopSection() {
                             whirlpoolTimeMinutes: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="5"
                         min="0"
                       />
@@ -580,7 +580,7 @@ export default function HopSection() {
                             dryHopStartDay: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="1"
                         min="0"
                       />
@@ -605,7 +605,7 @@ export default function HopSection() {
                             dryHopDays: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full py-1 px-2"
                         step="1"
                         min="0"
                       />
@@ -625,7 +625,7 @@ export default function HopSection() {
                 <div className="col-span-1 text-right">
                   <button
                     onClick={() => removeHop(hop.id)}
-                    className="text-red-600 hover:text-red-800 text-xl font-bold"
+                    className="brew-danger-text text-xl font-bold"
                     aria-label={`Remove ${hop.name}`}
                   >
                     ×
@@ -636,33 +636,33 @@ export default function HopSection() {
           ))}
 
           {/* Total */}
-          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--border))] mt-2">
-            <span className="font-semibold">Total Hops</span>
-            <span className="font-semibold">{totalHopGrams} g</span>
+          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--brew-border-subtle))] mt-2">
+            <span className="font-semibold text-strong">Total Hops</span>
+            <span className="font-semibold text-strong">{totalHopGrams} g</span>
           </div>
 
           {/* Hop Flavor Visualizer */}
           {currentRecipe.hops.length > 0 && (
-            <div className="mt-6 p-4 rounded-lg border border-[rgb(var(--border))]">
+            <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold">Hop Flavor Profile</h3>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setFlavorViewMode("individual")}
-                    className={`px-3 py-1 text-xs rounded ${
+                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${
                       flavorViewMode === "individual"
-                        ? "bg-green-600 text-white"
-                        : "bg-[rgb(var(--card))] border border-[rgb(var(--border))]"
+                        ? "brew-btn-primary py-1"
+                        : "brew-btn-ghost py-1"
                     }`}
                   >
                     Preset
                   </button>
                   <button
                     onClick={() => setFlavorViewMode("combined")}
-                    className={`px-3 py-1 text-xs rounded ${
+                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${
                       flavorViewMode === "combined"
-                        ? "bg-green-600 text-white"
-                        : "bg-[rgb(var(--card))] border border-[rgb(var(--border))]"
+                        ? "brew-btn-primary py-1"
+                        : "brew-btn-ghost py-1"
                     }`}
                   >
                     Estimated
@@ -721,7 +721,7 @@ export default function HopSection() {
           <>
             {/* Alpha Filters */}
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="brew-chip-label">
                 Alpha:
               </span>
               {[
@@ -735,8 +735,8 @@ export default function HopSection() {
                   onClick={() => toggleFilter("alphas", opt.id)}
                   className={`px-3 py-1 rounded-full border transition-colors ${
                     activeFilters.alphas.includes(opt.id)
-                      ? "bg-green-600 text-white border-green-700 ring-1 ring-green-500"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      ? "brew-chip-active"
+                      : "brew-chip"
                   }`}
                 >
                   {opt.label}
@@ -746,7 +746,7 @@ export default function HopSection() {
 
             {/* Flavor Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+              <span className="brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
                 Flavor:
               </span>
               {[
@@ -791,7 +791,7 @@ export default function HopSection() {
                     className={`px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
                       isActive
                         ? ""
-                        : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                        : "brew-chip"
                     }`}
                   >
                     {flavor === "resinPine"
@@ -808,7 +808,7 @@ export default function HopSection() {
 
             {/* Origin/Category Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="py-1 px-2 font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[rgb(var(--card))] z-10">
+              <span className="brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
                 Region:
               </span>
               {availableCategories.map((cat) => (
@@ -817,8 +817,8 @@ export default function HopSection() {
                   onClick={() => toggleFilter("origins", cat)}
                   className={`px-3 py-1 rounded-full whitespace-nowrap transition-colors border ${
                     activeFilters.origins.includes(cat)
-                      ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-100 dark:border-green-800"
-                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
+                      ? "brew-chip-active"
+                      : "brew-chip"
                   }`}
                 >
                   {cat}
@@ -836,7 +836,7 @@ export default function HopSection() {
             onClick={() => handleAddFromPreset(preset)}
             onMouseEnter={(e) => handleHopHover(preset, e)}
             onMouseLeave={handleHopLeave}
-            className="w-full text-left px-4 py-2 rounded hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors flex justify-between items-center"
+            className="w-full text-left px-4 py-2 rounded hover:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] transition-colors flex justify-between items-center"
           >
             <div className="flex items-center gap-3">
               {preset.flavor && <HopFlavorMini flavor={preset.flavor} size={24} />}
@@ -868,7 +868,7 @@ export default function HopSection() {
                 maxWidth: "calc(100vw - 16px)",
                 maxHeight: "calc(100vh - 16px)",
               }}
-              className="bg-[rgb(var(--card))] border-2 border-green-400 rounded-lg shadow-2xl p-4 pointer-events-none"
+              className="bg-[rgb(var(--card))] border-2 border-[var(--brew-accent-400)] rounded-lg shadow-2xl p-4 pointer-events-none"
             >
               <div className="text-sm font-semibold mb-2 text-center">
                 {hoveredPreset.name}

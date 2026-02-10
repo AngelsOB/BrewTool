@@ -68,10 +68,10 @@ export default function WaterIngredientPickerModal({
     <ModalOverlay isOpen={isOpen} onClose={handleClose} size="lg">
       <div className="p-4 border-b border-[rgb(var(--border))]">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">Add Ingredient</h3>
+          <h3 className="brew-section-title">Add Ingredient</h3>
           <button
             onClick={handleClose}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="p-1 transition-colors" style={{ color: 'var(--fg-muted)' }}
             aria-label="Close modal"
           >
             <svg
@@ -96,16 +96,12 @@ export default function WaterIngredientPickerModal({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search ingredients..."
           autoFocus
-          className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 mb-3"
+          className="brew-input w-full mb-3"
         />
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-              activeCategory === "all"
-                ? "bg-cyan-600 text-white border-cyan-600"
-                : "border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))]"
-            }`}
+            className={activeCategory === "all" ? "brew-chip-active text-xs px-2.5 py-1" : "brew-chip text-xs px-2.5 py-1"}
           >
             All
           </button>
@@ -113,11 +109,7 @@ export default function WaterIngredientPickerModal({
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                activeCategory === cat
-                  ? "bg-cyan-600 text-white border-cyan-600"
-                  : "border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))]"
-              }`}
+              className={activeCategory === cat ? "brew-chip-active text-xs px-2.5 py-1" : "brew-chip text-xs px-2.5 py-1"}
             >
               {CATEGORY_LABELS[cat]}
             </button>
@@ -127,13 +119,13 @@ export default function WaterIngredientPickerModal({
 
       <div className="overflow-y-auto max-h-[50vh] p-2">
         {filteredPresets.length === 0 ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+          <div className="text-sm text-muted text-center py-8">
             No ingredients match your search
           </div>
         ) : (
           filteredPresets.map((group) => (
             <div key={group.category} className="mb-2">
-              <div className="sticky top-0 bg-[rgb(var(--card))] px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div className="sticky top-0 bg-[rgb(var(--brew-card))] px-2 py-1.5 text-xs font-semibold text-muted uppercase" style={{ letterSpacing: 'var(--brew-tracking-wide)' }}>
                 {group.label}
               </div>
               {group.items.map((name) => (
@@ -151,14 +143,14 @@ export default function WaterIngredientPickerModal({
       </div>
 
       <div className="p-3 border-t border-[rgb(var(--border))] flex items-center justify-between">
-        <span className="text-xs text-gray-500 dark:text-gray-400">
+        <span className="text-xs text-muted">
           {filteredPresets.reduce((sum, g) => sum + g.items.length, 0)} ingredients
         </span>
         <button
           onClick={handleOpenCustom}
-          className="text-sm px-3 py-1.5 rounded-md border border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))] transition-colors"
+          className="brew-btn-primary text-sm"
         >
-          Add Custom
+          + Create Custom
         </button>
       </div>
     </ModalOverlay>

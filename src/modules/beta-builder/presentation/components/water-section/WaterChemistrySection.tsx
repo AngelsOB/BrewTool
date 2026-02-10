@@ -66,21 +66,21 @@ export default function WaterChemistrySection({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
           Water Chemistry
         </h3>
 
         {/* Final Water Metrics - Inline */}
         <div className="flex items-center gap-3 flex-1 justify-center">
-          <span className="text-xs text-gray-600 dark:text-gray-400">Final:</span>
+          <span className="text-xs text-muted">Final:</span>
           {ION_LABELS.map((ion) => {
             const finalValue = Math.round(finalProfile[ion]);
             return (
               <div key={ion} className="text-xs">
-                <span className="font-semibold text-gray-600 dark:text-gray-400">
+                <span className="font-semibold text-muted">
                   {ion}:
                 </span>
-                <span className="ml-1 font-bold text-gray-900 dark:text-gray-100">
+                <span className="ml-1 font-bold" style={{ color: 'var(--fg-strong)' }}>
                   {finalValue}
                 </span>
               </div>
@@ -90,7 +90,7 @@ export default function WaterChemistrySection({
 
         <button
           onClick={onToggleExpanded}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+          className="text-sm brew-link hover:underline whitespace-nowrap"
         >
           {isExpanded ? "Hide Details" : "Show Details"}
         </button>
@@ -116,7 +116,7 @@ export default function WaterChemistrySection({
               <button
                 aria-labelledby="water-source-label"
                 onClick={onOpenSourceModal}
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-left hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"
+                className="brew-input w-full text-left cursor-pointer"
               >
                 {sourceProfileName || "Custom"}
               </button>
@@ -127,12 +127,12 @@ export default function WaterChemistrySection({
               <button
                 aria-labelledby="water-target-label"
                 onClick={onOpenTargetModal}
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 text-left hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"
+                className="brew-input w-full text-left cursor-pointer"
               >
                 {targetStyleName || "Balanced"}
               </button>
               {targetStyle && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-muted mt-1">
                   {targetStyle.clToSo4Ratio}
                 </p>
               )}

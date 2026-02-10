@@ -84,10 +84,10 @@ export default function WaterProfileComparison({
               return (
                 <tr key={ion} className="border-b border-[rgb(var(--border))]">
                   <td className="py-2 px-3 font-medium">{ion}</td>
-                  <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
+                  <td className="text-right py-2 px-3 text-muted">
                     {Math.round(sourceProfile[ion])}
                   </td>
-                  <td className="text-right py-2 px-3 text-gray-600 dark:text-gray-400">
+                  <td className="text-right py-2 px-3 text-muted">
                     {targetValue}
                   </td>
                   <td className="text-right py-2 px-3">
