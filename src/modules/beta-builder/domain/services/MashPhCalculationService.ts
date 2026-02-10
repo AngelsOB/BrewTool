@@ -16,6 +16,7 @@
 import type { Recipe, Fermentable, OtherIngredient } from '../models/Recipe';
 import type { WaterProfile, SaltAdditions } from './WaterChemistryService';
 import { waterChemistryService } from './WaterChemistryService';
+import { devWarn } from '@utils/logger';
 
 /* ------------------------------------------------------------------ */
 /*  Grain pH classification                                            */
@@ -324,8 +325,17 @@ function solvePhBisection(
   const fHi = protonBalance(hi, waterAlkMeq, grains, acidMeq, baseMeq);
 
   // No sign change → return boundary closer to zero
+  // This indicates extreme water chemistry or acid/base additions
+  // that push the equilibrium beyond the normal mash pH range
   if (fLo * fHi > 0) {
-    return Math.abs(fLo) < Math.abs(fHi) ? lo : hi;
+    const result = Math.abs(fLo) < Math.abs(fHi) ? lo : hi;
+    devWarn(
+      '[MashPh] Bisection solver: no sign change in bracket [3.0, 8.0]. ' +
+        'Returning boundary pH',
+      result.toFixed(2),
+      '(extreme water chemistry or acid/base additions).',
+    );
+    return result;
   }
 
   for (let i = 0; i < BISECT_MAX_ITER; i++) {
@@ -344,7 +354,16 @@ function solvePhBisection(
     }
   }
 
-  return (lo + hi) / 2;
+  // Max iterations exceeded without convergence
+  // This should be rare given the tolerance and max iterations
+  const midpoint = (lo + hi) / 2;
+  devWarn(
+    '[MashPh] Bisection solver: max iterations exceeded. ' +
+      'Returning midpoint pH',
+    midpoint.toFixed(2),
+    `(bracket narrowed to [${lo.toFixed(3)}, ${hi.toFixed(3)}]).`,
+  );
+  return midpoint;
 }
 
 /* ------------------------------------------------------------------ */
