@@ -8,13 +8,13 @@
 import { create } from 'zustand';
 import type {
   BrewSession,
-  SessionCalculated,
   SessionId,
   SessionActuals,
   SessionStatus,
 } from '../../domain/models/BrewSession';
 import type { Recipe } from '../../domain/models/Recipe';
 import { brewSessionRepository } from '../../domain/repositories/BrewSessionRepository';
+import { brewSessionCalculationService } from '../../domain/services/BrewSessionCalculationService';
 
 type BrewSessionStore = {
   // State
@@ -135,8 +135,12 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
       ...actuals,
     };
 
-    // Auto-calculate derived metrics
-    const calculated = calculateSessionMetrics(current.originalRecipe, current.brewDayRecipe, updatedActuals);
+    // Auto-calculate derived metrics using domain service
+    const calculated = brewSessionCalculationService.calculateSessionMetrics(
+      current.originalRecipe,
+      current.brewDayRecipe,
+      updatedActuals
+    );
 
     const updated = {
       ...current,
@@ -197,65 +201,3 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
     set({ currentSession: session });
   },
 }));
-
-/**
- * Calculate session metrics from actuals
- */
-function calculateSessionMetrics(
-  _originalRecipe: Recipe,
-  brewDayRecipe: Recipe,
-  actuals: SessionActuals
-) {
-  const calculated: SessionCalculated = {};
-  const gallonsPerLiter = 0.264172;
-
-  const calculatePotentialPoints = (recipe: Recipe) => {
-    if (recipe.fermentables.length === 0) return 0;
-    return recipe.fermentables.reduce((sum, fermentable) => {
-      const weightLbs = fermentable.weightKg * 2.20462;
-      return sum + fermentable.ppg * weightLbs;
-    }, 0);
-  };
-
-  const sgToPoints = (sg: number) => (sg - 1) * 1000;
-
-  // Calculate actual ABV from measured OG/FG
-  if (actuals.originalGravity && actuals.finalGravity) {
-    const og = actuals.originalGravity;
-    const fg = actuals.finalGravity;
-    calculated.actualABV = (og - fg) * 131.25;
-    if (og > 1) {
-    calculated.apparentAttenuation = ((og - fg) / (og - 1.0)) * 100;
-    }
-  }
-
-  // Calculate mash efficiency from pre-boil gravity
-  if (actuals.preBoilGravity && actuals.preBoilVolumeL) {
-    const potentialPoints = calculatePotentialPoints(brewDayRecipe);
-    const preBoilPoints = sgToPoints(actuals.preBoilGravity);
-    const preBoilVolumeGal = actuals.preBoilVolumeL * gallonsPerLiter;
-    const actualPoints = preBoilPoints * preBoilVolumeGal;
-
-    if (potentialPoints > 0) {
-      calculated.mashEfficiency = (actualPoints / potentialPoints) * 100;
-    }
-  }
-
-  // Calculate brewhouse efficiency from OG
-  if (actuals.originalGravity) {
-    const potentialPoints = calculatePotentialPoints(brewDayRecipe);
-    const ogPoints = sgToPoints(actuals.originalGravity);
-    const volumeL =
-      actuals.intoFermenterL ??
-      actuals.postBoilVolumeL ??
-      brewDayRecipe.batchVolumeL;
-    const volumeGal = volumeL * gallonsPerLiter;
-    const actualPoints = ogPoints * volumeGal;
-
-    if (potentialPoints > 0) {
-      calculated.brewhouseEfficiency = (actualPoints / potentialPoints) * 100;
-    }
-  }
-
-  return calculated;
-}
