@@ -56,8 +56,9 @@
 - [x] **`package.json` - Missing `engines` Field**
   - Added `"engines": { "node": ">=22.0.0" }` to package.json.
 
-- [ ] **`src/modules/beta-builder/domain/services/MashPhCalculationService.ts` - Bisection Solver Fallback**
-  - Lines 314-348: Bisection solver has proper convergence checking (`BISECT_TOL = 0.001`, `BISECT_MAX_ITER = 50`) and returns early on convergence. The fallback `return (lo + hi) / 2` after max iterations is mathematically sound but could optionally log a warning.
+- [x] **`src/modules/beta-builder/domain/services/MashPhCalculationService.ts` - Bisection Solver Fallback**
+  - Added `devWarn` logging for both fallback cases: (1) no sign change in bracket, and (2) max iterations exceeded.
+  - Warnings are development-only (silent in production) and include diagnostic info (pH value, bracket bounds).
 
 - [x] **Accessibility Warnings from eslint-plugin-jsx-a11y**
   - **Status:** Reduced from 73 warnings to 11 warnings
@@ -67,6 +68,8 @@
     - `label-has-associated-control` warnings fixed by configuring ESLint to recognize custom components (InputWithSuffix, DualUnitInput, InlineEditableNumber, AutoWidthUnitSelect, NotesTextarea, SearchSelect)
     - Modal backdrop click handlers now have proper eslint-disable comments since keyboard handling is done via document listeners
     - VersionHistoryModal now has proper keyboard handlers and ARIA roles for interactive elements
+    - Added `aria-label="Close modal"` to close buttons in TargetStyleModal, FermentationStepModal, SourceWaterModal
+    - Added `aria-hidden="true"` to decorative close button SVG icons
 
 ## BUG FIXES
 
