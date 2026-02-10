@@ -179,15 +179,17 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
   - **Completed:** Added loadJsonSafe() and saveJsonSafe() functions that return Result types with explicit error handling. Distinguished error types: 'not_found', 'parse_error', 'storage_unavailable', 'quota_exceeded'. Legacy loadJson() now logs errors (except for 'not_found'). Added 34 unit tests for storage utility.
   - Lines 6-17: `loadJson` catches all errors and returns `defaultValue`. Doesn't distinguish "key not found" (normal) from "JSON parse failed" (data corruption) or "SecurityError" (private browsing). Consider logging or differentiating error types.
 
-- [ ] **`src/hooks/useRecipeStore.ts` - Weak UUID Fallback (Legacy Store)**
+- [x] **`src/hooks/useRecipeStore.ts` - Weak UUID Fallback (Legacy Store)**
   - Lines 46-49 and 310-314: Falls back to `Date.now()` when `crypto.randomUUID()` is unavailable. Can produce collisions on rapid recipe creation. Use `crypto.getRandomValues` fallback or drop legacy browser support.
+  - **Completed:** Created shared generateId() utility in src/utils/id.ts with proper UUID v4 fallback. Updated useRecipeStore.ts and RecipeBuilder.tsx to use it.
 
 - [x] **`src/calculators/ibu.ts` - Missing Input Validation**
   - `ibuSingleAddition()` has no guards: negative `weightGrams` → negative IBUs, `postBoilVolumeLiters = 0` → Infinity/NaN, `alphaAcidPercent > 100` → inflated IBUs. Add boundary checks or document expected input ranges.
   - **Completed:** Added isValidNumber guards to all exported functions. Returns 0 for invalid inputs (NaN, Infinity, negative values, zero volume). 25 edge case tests added.
 
-- [ ] **`src/types/store.local.ts` - Uses `any[]` Types (Legacy Store)**
+- [x] **`src/types/store.local.ts` - Uses `any[]` Types (Legacy Store)**
   - Lines 60-101: All ingredient storage accessors (`fermentables`, `hops`, `yeasts`) use `any[]` instead of domain types like `Fermentable[]`, `Hop[]`, `Yeast[]`. Bypasses TypeScript safety.
+  - **Completed:** Replaced with proper FermentableIngredient[], HopIngredient[], and YeastIngredient[] types in store.local.ts.
 
 - [x] **`src/modules/beta-builder/presentation/components/FermentableSection.tsx` - Inconsistent Modal Pattern**
   - Implements its own modal inline with `<div className="fixed inset-0...">` instead of reusing the `ModalOverlay` component or `createPortal` like HopSection and other sections do. Standardize.
@@ -195,8 +197,9 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 
 ## LOW SEVERITY
 
-- [ ] **`src/calculators/abv.ts` - Dead Code (`abvMorey`)**
+- [x] **`src/calculators/abv.ts` - Dead Code (`abvMorey`)**
   - The `abvMorey` function has a double-application bug (`fg/0.794` applied twice), but nothing in the app imports or calls it. All actual ABV calculations use `(og - fg) * 131.25` correctly. Delete or fix the dead function.
+  - **Completed:** Removed the function with double-application bug and its tests. The function was never used in production.
 
 - [ ] **`package.json` - react-router-dom Vulnerabilities (SSR-Only)**
   - `react-router-dom@^7.8.0` has reported CVEs (CSRF, XSS via redirects, SSR XSS), but these affect **server-side rendering** features. This app is a pure client-side SPA using `createBrowserRouter` — no SSR code exists. Upgrade when convenient, but not a real attack vector here.
@@ -213,8 +216,9 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [ ] **`index.html` - Missing SEO/PWA Metadata**
   - No `<meta name="description">`, no Open Graph tags, no `manifest.json` link, no `apple-touch-icon`, default Vite favicon (`vite.svg`) still in use. Meaningful if the app is shared publicly.
 
-- [ ] **`src/utils/presets.ts` - Dead Code**
+- [x] **`src/utils/presets.ts` - Dead Code (GRAIN_PRESETS)**
   - Lines 71-74: `GRAIN_PRESETS` exported as an empty array with a comment explaining data comes from `GENERATED_GRAINS`. The export and the loop over it in `getGrainPresets()` are no-ops. Clean up.
+  - **Completed:** Removed the empty export and the no-op loops referencing it in getGrainPresets() and addCustomGrain().
 
 - [ ] **`src/modules/beta-builder/domain/services/*` - Some Undocumented Magic Numbers**
   - Most constants in calculation services have comments citing research (e.g., Maye et al. 2016 in IBU service). However, some values in `StarterCalculationService` (e.g., `0.007` viability loss/day, `1.4` billion/gram) could benefit from named constants.
