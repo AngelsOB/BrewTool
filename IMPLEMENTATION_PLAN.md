@@ -175,7 +175,8 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [x] **`src/modules/beta-builder/presentation/stores/recipeStore.ts` - Hop Flavor Enrichment in Presentation**
   - **Completed:** Created `HopEnrichmentService` in the domain layer (`src/modules/beta-builder/domain/services/HopEnrichmentService.ts`). Both `BeerXmlImportService` and `recipeStore` now use the shared service for hop flavor lookups. Removed duplicate `HOP_FLAVOR_MAP` code from both files.
 
-- [ ] **`src/utils/storage.ts` - Silent Error Swallowing**
+- [x] **`src/utils/storage.ts` - Silent Error Swallowing**
+  - **Completed:** Added loadJsonSafe() and saveJsonSafe() functions that return Result types with explicit error handling. Distinguished error types: 'not_found', 'parse_error', 'storage_unavailable', 'quota_exceeded'. Legacy loadJson() now logs errors (except for 'not_found'). Added 34 unit tests for storage utility.
   - Lines 6-17: `loadJson` catches all errors and returns `defaultValue`. Doesn't distinguish "key not found" (normal) from "JSON parse failed" (data corruption) or "SecurityError" (private browsing). Consider logging or differentiating error types.
 
 - [ ] **`src/hooks/useRecipeStore.ts` - Weak UUID Fallback (Legacy Store)**
