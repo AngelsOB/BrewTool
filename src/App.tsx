@@ -1,19 +1,8 @@
-import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import Toaster from "./components/Toaster";
-import { useThemeStore } from "./stores/useThemeStore";
 
 export default function App() {
-  // Initialize theme on mount
-  const { theme, setTheme } = useThemeStore();
-
-  useEffect(() => {
-    // Re-apply theme on mount to ensure consistency
-    setTheme(theme);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
-  }, []);
-
   return (
     <div className="min-h-dvh bg-[rgb(var(--bg))] text-[rgb(var(--text))] transition-colors">
       <a

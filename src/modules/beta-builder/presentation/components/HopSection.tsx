@@ -39,7 +39,11 @@ export default function HopSection() {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [hoveredHopName, setHoveredHopName] = useState<string | null>(null);
-  const [hoveredHopPosition, setHoveredHopPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredHopPosition, setHoveredHopPosition] = useState<{
+    x: number;
+    y: number;
+    placement: "right" | "left";
+  } | null>(null);
   const [flavorViewMode, setFlavorViewMode] = useState<"combined" | "individual">("individual");
 
   // Load presets on mount
@@ -66,14 +70,34 @@ export default function HopSection() {
     setHoveredHopPosition(null);
   };
 
-  // Handle hover with position tracking
+  // Handle hover with position tracking and viewport edge detection
   const handleHopHover = (preset: HopPreset, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
+    const tooltipWidth = 280; // 240px radar + 32px padding + 8px margin
+    const tooltipHeight = 320; // 240px radar + ~80px for title/padding
+    const margin = 8;
+
+    // Calculate available space on each side
+    const spaceRight = window.innerWidth - rect.right - margin;
+    const spaceLeft = rect.left - margin;
+
+    // Determine horizontal placement
+    const placement: "right" | "left" =
+      spaceRight >= tooltipWidth ? "right" : spaceLeft >= tooltipWidth ? "left" : "right";
+
+    // Calculate x position based on placement
+    const x = placement === "right" ? rect.right + margin : rect.left - tooltipWidth - margin;
+
+    // Calculate y position with edge detection
+    // Prefer aligning top of tooltip with trigger, but clamp to viewport
+    let y = rect.top;
+    if (y + tooltipHeight > window.innerHeight - margin) {
+      // Would overflow bottom, shift up
+      y = Math.max(margin, window.innerHeight - tooltipHeight - margin);
+    }
+
     setHoveredHopName(preset.name);
-    setHoveredHopPosition({
-      x: rect.right + 8,
-      y: rect.top,
-    });
+    setHoveredHopPosition({ x, y, placement });
   };
 
   const handleHopLeave = () => {
@@ -841,6 +865,8 @@ export default function HopSection() {
                 left: `${hoveredHopPosition.x}px`,
                 top: `${hoveredHopPosition.y}px`,
                 zIndex: 9999,
+                maxWidth: "calc(100vw - 16px)",
+                maxHeight: "calc(100vh - 16px)",
               }}
               className="bg-[rgb(var(--card))] border-2 border-green-400 rounded-lg shadow-2xl p-4 pointer-events-none"
             >
