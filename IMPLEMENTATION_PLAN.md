@@ -56,17 +56,21 @@ The app was clearly built dark-mode-first, and **light mode is largely non-funct
 - [x] **15. NavBar.tsx** – No navigation links; users can't navigate between Calculators / Recipes / Beta Builder without knowing URLs
 - [x] **16. NavBar.tsx** – Has `top-0` but missing `sticky`; doesn't actually stick on scroll
   - **Completed:** Added navigation links to Calculators, Recipes, Recipe Builder. Added sticky positioning. Mobile hamburger menu with accessibility (aria-expanded, keyboard support, focus management).
-- [ ] **17. Home.tsx** – Bottom grid has only one card in a three-column layout; looks incomplete
-- [ ] **18. App.tsx + Pages** – Double horizontal padding (`px-4 sm:px-6 lg:px-8`) applied at both app and page level
+- [x] **17. Home.tsx** – Bottom grid has only one card in a three-column layout; looks incomplete
+  - **Completed:** Added Recipe Builder and Beta Builder cards to complete the 3-column grid
+- [x] **18. App.tsx + Pages** – Double horizontal padding (`px-4 sm:px-6 lg:px-8`) applied at both app and page level
+  - **Completed:** Removed duplicate px-4 sm:px-6 lg:px-8 padding from page components since App.tsx provides the container
 
 ---
 
 ### Medium: Accessibility & UX
 
-- [ ] **19. ThemeToggle.tsx** – Hover state `hover:bg-white/10` invisible on light-mode background
+- [x] **19. ThemeToggle.tsx** – Hover state `hover:bg-white/10` invisible on light-mode background
+  - **Completed:** Changed hover:bg-white/10 to hover:bg-black/10 dark:hover:bg-white/10 for visible hover in both themes
 - [x] **20. RecipeListPage.tsx** – Delete modal text uses `text-black`; unreadable in dark mode
   - **Completed:** Fixed to use theme variable
-- [ ] **21. RecipeListPage.tsx** – Uses `document.getElementById` (React anti-pattern); should use `useRef`
+- [x] **21. RecipeListPage.tsx** – Uses `document.getElementById` (React anti-pattern); should use `useRef`
+  - **Completed:** Replaced document.getElementById with useRef for the variation name input
 - [x] **22. RecipeListPage.tsx** – Uses native `alert()` for import failures; should use in-app toast
   - **Completed:** Now uses toast notifications
 
