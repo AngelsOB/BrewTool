@@ -1,0 +1,166 @@
+/**
+ * Water Ingredient Picker Modal Component
+ *
+ * Modal for selecting preset ingredients to add to the recipe.
+ * Supports search filtering and category-based filtering.
+ */
+
+import { useMemo, useState } from "react";
+import type { OtherIngredientCategory } from "../../../domain/models/Recipe";
+import { OTHER_INGREDIENT_PRESETS } from "../../../../../utils/presets";
+import ModalOverlay from "../ModalOverlay";
+import { CATEGORY_LABELS } from "./constants";
+
+type Props = {
+  /** Whether the modal is open */
+  isOpen: boolean;
+  /** Callback when the modal closes */
+  onClose: () => void;
+  /** Callback when a preset ingredient is selected */
+  onSelect: (name: string, category: OtherIngredientCategory) => void;
+  /** Callback to open the custom ingredient modal */
+  onOpenCustomModal: () => void;
+};
+
+export default function WaterIngredientPickerModal({
+  isOpen,
+  onClose,
+  onSelect,
+  onOpenCustomModal,
+}: Props) {
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<OtherIngredientCategory | "all">("all");
+
+  const filteredPresets = useMemo(() => {
+    const categories = Object.entries(OTHER_INGREDIENT_PRESETS) as [
+      OtherIngredientCategory,
+      readonly string[],
+    ][];
+    return categories
+      .filter(([cat]) => activeCategory === "all" || cat === activeCategory)
+      .map(([cat, items]) => ({
+        category: cat as OtherIngredientCategory,
+        label: CATEGORY_LABELS[cat as OtherIngredientCategory],
+        items: items.filter((name) =>
+          name.toLowerCase().includes(search.toLowerCase())
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [search, activeCategory]);
+
+  const handleClose = () => {
+    setSearch("");
+    setActiveCategory("all");
+    onClose();
+  };
+
+  const handleSelect = (name: string, category: OtherIngredientCategory) => {
+    onSelect(name, category);
+    handleClose();
+  };
+
+  const handleOpenCustom = () => {
+    handleClose();
+    onOpenCustomModal();
+  };
+
+  return (
+    <ModalOverlay isOpen={isOpen} onClose={handleClose} size="lg">
+      <div className="p-4 border-b border-[rgb(var(--border))]">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">Add Ingredient</h3>
+          <button
+            onClick={handleClose}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            aria-label="Close modal"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search ingredients..."
+          autoFocus
+          className="w-full px-3 py-2 text-sm border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800 mb-3"
+        />
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setActiveCategory("all")}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              activeCategory === "all"
+                ? "bg-cyan-600 text-white border-cyan-600"
+                : "border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))]"
+            }`}
+          >
+            All
+          </button>
+          {(Object.keys(CATEGORY_LABELS) as OtherIngredientCategory[]).map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                activeCategory === cat
+                  ? "bg-cyan-600 text-white border-cyan-600"
+                  : "border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))]"
+              }`}
+            >
+              {CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="overflow-y-auto max-h-[50vh] p-2">
+        {filteredPresets.length === 0 ? (
+          <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+            No ingredients match your search
+          </div>
+        ) : (
+          filteredPresets.map((group) => (
+            <div key={group.category} className="mb-2">
+              <div className="sticky top-0 bg-[rgb(var(--card))] px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {group.label}
+              </div>
+              {group.items.map((name) => (
+                <button
+                  key={name}
+                  onClick={() => handleSelect(name, group.category)}
+                  className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[rgb(var(--bg))] transition-colors"
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="p-3 border-t border-[rgb(var(--border))] flex items-center justify-between">
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {filteredPresets.reduce((sum, g) => sum + g.items.length, 0)} ingredients
+        </span>
+        <button
+          onClick={handleOpenCustom}
+          className="text-sm px-3 py-1.5 rounded-md border border-[rgb(var(--border))] hover:bg-[rgb(var(--bg))] transition-colors"
+        >
+          Add Custom
+        </button>
+      </div>
+    </ModalOverlay>
+  );
+}
