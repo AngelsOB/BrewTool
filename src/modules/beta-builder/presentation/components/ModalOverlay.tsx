@@ -149,12 +149,15 @@ export default function ModalOverlay({
   };
 
   return (
+    // Backdrop: keyboard handling (ESC) is managed via useEffect keydown listener
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
       style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
       onClick={handleBackdropClick}
-      aria-hidden="true"
     >
+      {/* stopPropagation prevents backdrop click from closing when clicking inside dialog */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
       <div
         ref={modalRef}
         role="dialog"

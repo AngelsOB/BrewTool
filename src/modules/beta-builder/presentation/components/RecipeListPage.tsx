@@ -456,6 +456,7 @@ function RecipeCard({
           v{recipe.currentVersion}
         </button>
         {isVersionMenuOpen && (
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
           <div
             className="absolute right-0 mt-2 p-4 -m-4"
             onMouseLeave={() => setIsVersionMenuOpen(false)}
@@ -608,6 +609,7 @@ function RecipeCard({
 
       {/* New Version Dialog */}
       {showNewVersionDialog && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
           role="dialog"
           aria-modal="true"
@@ -624,6 +626,7 @@ function RecipeCard({
             }
           }}
         >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
@@ -661,6 +664,7 @@ function RecipeCard({
 
       {/* Create Variation Dialog */}
       {showVariationDialog && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
           role="dialog"
           aria-modal="true"
@@ -677,6 +681,7 @@ function RecipeCard({
             }
           }}
         >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}

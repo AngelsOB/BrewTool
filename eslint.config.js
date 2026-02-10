@@ -26,9 +26,21 @@ export default tseslint.config([
     rules: {
       // Accessibility rules - spread recommended, then override specific ones
       ...jsxA11y.configs.recommended.rules,
-      // Downgrade certain a11y rules to warnings for gradual adoption
-      // These are real accessibility issues but allow builds while we fix them
-      'jsx-a11y/label-has-associated-control': 'warn',
+      // Configure label rule to recognize our custom input components as form controls
+      'jsx-a11y/label-has-associated-control': [
+        'warn',
+        {
+          controlComponents: [
+            'InputWithSuffix',
+            'DualUnitInput',
+            'InlineEditableNumber',
+            'AutoWidthUnitSelect',
+            'NotesTextarea',
+            'SearchSelect',
+          ],
+          depth: 3,
+        },
+      ],
       'jsx-a11y/click-events-have-key-events': 'warn',
       'jsx-a11y/no-static-element-interactions': 'warn',
       'jsx-a11y/no-noninteractive-element-interactions': 'warn',

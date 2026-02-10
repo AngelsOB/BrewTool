@@ -124,9 +124,17 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
               </div>
             ) : (
               <div
+                role="button"
+                tabIndex={0}
                 className="mb-4 p-4 border border-[rgb(var(--border))] rounded-lg hover:shadow-md hover:border-[rgb(var(--accent))] transition-all bg-[rgb(var(--card))] cursor-pointer"
                 onClick={() => {
                   navigate(`/beta-builder/${recipe.id}/versions/${version!.versionNumber}`);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/beta-builder/${recipe.id}/versions/${version!.versionNumber}`);
+                  }
                 }}
               >
                 <div className="flex items-center justify-between">
@@ -172,7 +180,15 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                     {versionSessions.map((session) => (
                       <div
                         key={session.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => navigate(`/beta-builder/sessions/${session.id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            navigate(`/beta-builder/sessions/${session.id}`);
+                          }
+                        }}
                         className="p-3 border border-amber-300 dark:border-amber-700 rounded-lg bg-amber-50 dark:bg-amber-900/20 cursor-pointer hover:shadow-sm transition-shadow"
                       >
                         <div className="flex items-center justify-between">

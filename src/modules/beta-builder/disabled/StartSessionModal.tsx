@@ -33,16 +33,23 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={onClose}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="start-session-title"
     >
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
         className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-lg w-full mx-4"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold">Start Brew Session</h3>
+          <h3 id="start-session-title" className="text-xl font-semibold">Start Brew Session</h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -69,17 +76,17 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
         </div>
 
         {/* Brew Date */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">
+        <label className="block mb-6">
+          <span className="block text-sm font-medium mb-2">
             Brew Date
-          </label>
+          </span>
           <input
             type="date"
             value={brewDate}
             onChange={(e) => setBrewDate(e.target.value)}
             className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-[rgb(var(--bg))]"
           />
-        </div>
+        </label>
 
         {/* Info */}
         <div className="mb-6 text-sm text-gray-600 dark:text-gray-400">

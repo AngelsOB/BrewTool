@@ -172,6 +172,7 @@ export default function YeastSection({
       </div>
       {showCustomModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowCustomModal(false)}
