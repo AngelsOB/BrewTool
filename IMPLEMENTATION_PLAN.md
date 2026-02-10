@@ -31,11 +31,18 @@
 - [ ] **`vite.config.ts` - Missing Production Sourcemap Config**
   - No `build.sourcemap` setting. Vite defaults to no sourcemaps in production, which is fine. Explicitly setting `sourcemap: false` is just defensive documentation.
 
-- [ ] **`index.html` - Missing SEO/PWA Metadata**
-  - No `<meta name="description">`, no Open Graph tags, no `manifest.json` link, no `apple-touch-icon`, default Vite favicon (`vite.svg`) still in use. Meaningful if the app is shared publicly.
+- [x] **`index.html` - Missing SEO/PWA Metadata**
+  - Added meta description, keywords, and author tags for SEO
+  - Added Open Graph and Twitter Card meta tags for social sharing
+  - Created PWA manifest.json with app name, icons, and theme colors
+  - Added custom beer mug favicon (SVG) replacing default Vite icon
+  - Created Open Graph image (SVG) for social media previews
+  - Added apple-mobile-web-app tags for iOS PWA support
+  - **Note:** PNG icons (icon-192.png, icon-512.png) should be generated from the SVG for full PWA compatibility. Some social platforms don't render SVG og:images well - consider converting to PNG.
 
-- [ ] **`src/modules/beta-builder/domain/services/*` - Some Undocumented Magic Numbers**
+- [x] **`src/modules/beta-builder/domain/services/*` - Some Undocumented Magic Numbers**
   - Most constants in calculation services have comments citing research (e.g., Maye et al. 2016 in IBU service). However, some values in `StarterCalculationService` (e.g., `0.007` viability loss/day, `1.4` billion/gram) could benefit from named constants.
+  - All magic numbers in StarterCalculationService.ts have been extracted to documented named constants with source citations.
 
 - [x] **`src/modules/beta-builder/domain/repositories/EquipmentRepository.ts` - Unnecessary Async**
   - Added comment documenting that async signatures are intentional for future API migration.
