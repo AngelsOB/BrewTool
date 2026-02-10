@@ -3,6 +3,10 @@
  *
  * Handles loading and caching of equipment profiles from presets and localStorage.
  * Follows the repository pattern to abstract data access.
+ *
+ * Note: Methods are async despite current synchronous localStorage operations.
+ * This maintains a consistent API for consumers and allows future migration
+ * to an async backend (e.g., IndexedDB, remote API) without breaking changes.
  */
 
 import { devError } from '../../../../utils/logger';

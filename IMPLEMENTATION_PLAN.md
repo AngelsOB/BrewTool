@@ -17,8 +17,8 @@
 
 ## MEDIUM SEVERITY
 
-- [ ] **No Prettier Configuration**
-  - No `.prettierrc` or equivalent found. No Prettier in devDependencies. Add Prettier for consistent formatting.
+- [x] **No Prettier Configuration**
+  - Prettier (^3.5.3) and prettier-plugin-tailwindcss (^0.6.11) added to devDependencies with format scripts.
 
 ## LOW SEVERITY
 
@@ -37,22 +37,23 @@
 - [ ] **`src/modules/beta-builder/domain/services/*` - Some Undocumented Magic Numbers**
   - Most constants in calculation services have comments citing research (e.g., Maye et al. 2016 in IBU service). However, some values in `StarterCalculationService` (e.g., `0.007` viability loss/day, `1.4` billion/gram) could benefit from named constants.
 
-- [ ] **`src/modules/beta-builder/domain/repositories/EquipmentRepository.ts` - Unnecessary Async**
-  - Lines 19-81: All methods are `async` returning Promises, but only do synchronous localStorage operations. Remove `async` or add a comment documenting this is intentional for future API migration.
+- [x] **`src/modules/beta-builder/domain/repositories/EquipmentRepository.ts` - Unnecessary Async**
+  - Added comment documenting that async signatures are intentional for future API migration.
 
 - [ ] **`src/modules/beta-builder/domain/models/Recipe.ts` - Inconsistent Null vs Undefined**
   - Some optional fields use `?` (e.g., `fermentability?: number`) while others use `| null` (e.g., `estimatedMashPh: number | null`). Pick one convention for "no value."
 
-- [ ] **`package.json` - Missing `engines` Field**
-  - No Node version specification. CI uses Node 22, but contributors aren't constrained. Add `"engines": { "node": ">=22.0.0" }`.
+- [x] **`package.json` - Missing `engines` Field**
+  - Added `"engines": { "node": ">=22.0.0" }` to package.json.
 
 - [ ] **`src/modules/beta-builder/domain/services/MashPhCalculationService.ts` - Bisection Solver Fallback**
   - Lines 314-348: Bisection solver has proper convergence checking (`BISECT_TOL = 0.001`, `BISECT_MAX_ITER = 50`) and returns early on convergence. The fallback `return (lo + hi) / 2` after max iterations is mathematically sound but could optionally log a warning.
 
-- [ ] **Accessibility Warnings from eslint-plugin-jsx-a11y**
-  - **Status:** Reduced from 135 warnings to 73 warnings
-  - **Remaining Issues (73 warnings):**
-    - 38 `label-has-associated-control` in legacy recipe components (src/modules/recipe/components/*, src/pages/RecipeBuilder.tsx, src/components/*)
-    - 11 `no-autofocus` (appropriate in modals, warnings only)
-    - Various `click-events-have-key-events` in disabled components and legacy recipe components
-  - These are set to "warn" to allow builds while we continue addressing them incrementally
+- [x] **Accessibility Warnings from eslint-plugin-jsx-a11y**
+  - **Status:** Reduced from 73 warnings to 11 warnings
+  - **Remaining Issues (11 warnings):**
+    - All remaining warnings are `no-autofocus` (intentional for modal UX)
+  - **Fixes Applied:**
+    - `label-has-associated-control` warnings fixed by configuring ESLint to recognize custom components (InputWithSuffix, DualUnitInput, InlineEditableNumber, AutoWidthUnitSelect, NotesTextarea, SearchSelect)
+    - Modal backdrop click handlers now have proper eslint-disable comments since keyboard handling is done via document listeners
+    - VersionHistoryModal now has proper keyboard handlers and ARIA roles for interactive elements
