@@ -7,9 +7,11 @@
  * - Click-outside-to-close
  * - ESC key to close
  * - Prevents body scroll when open
+ * - Focus trapping for keyboard accessibility
+ * - ARIA attributes for screen readers
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback, useId } from "react";
 
 interface ModalOverlayProps {
   isOpen: boolean;
@@ -17,6 +19,24 @@ interface ModalOverlayProps {
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
   closeOnBackdropClick?: boolean;
+  /** Optional ID for aria-labelledby - if not provided, uses auto-generated ID */
+  labelledById?: string;
+  /** Optional ID for aria-describedby */
+  describedById?: string;
+}
+
+/** Get all focusable elements within a container */
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  const selector = [
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    'a[href]',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(', ');
+
+  return Array.from(container.querySelectorAll<HTMLElement>(selector));
 }
 
 export default function ModalOverlay({
@@ -25,20 +45,78 @@ export default function ModalOverlay({
   children,
   size = "lg",
   closeOnBackdropClick = true,
+  labelledById,
+  describedById,
 }: ModalOverlayProps) {
-  // Handle ESC key
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+  const generatedId = useId();
+  const dialogLabelId = labelledById ?? `modal-label-${generatedId}`;
+
+  // Handle ESC key and focus trapping
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      onClose();
+      return;
+    }
+
+    // Focus trap: Tab and Shift+Tab
+    if (e.key === "Tab" && modalRef.current) {
+      const focusable = getFocusableElements(modalRef.current);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        // Shift+Tab: if on first element, go to last
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        // Tab: if on last element, go to first
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  }, [onClose]);
+
+  // Set up keyboard listeners when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleKeyDown]);
 
-    document.addEventListener("keydown", handleEsc);
-    return () => document.removeEventListener("keydown", handleEsc);
-  }, [isOpen, onClose]);
+  // Focus management: move focus into modal on open, restore on close
+  useEffect(() => {
+    if (isOpen) {
+      // Store currently focused element to restore later
+      previousActiveElement.current = document.activeElement as HTMLElement;
+
+      // Focus first focusable element in modal after render
+      requestAnimationFrame(() => {
+        if (modalRef.current) {
+          const focusable = getFocusableElements(modalRef.current);
+          if (focusable.length > 0) {
+            focusable[0].focus();
+          } else {
+            // If no focusable elements, focus the modal itself
+            modalRef.current.focus();
+          }
+        }
+      });
+    } else {
+      // Restore focus to previous element
+      if (previousActiveElement.current) {
+        previousActiveElement.current.focus();
+      }
+    }
+  }, [isOpen]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -75,8 +153,15 @@ export default function ModalOverlay({
       className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
       style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
       onClick={handleBackdropClick}
+      aria-hidden="true"
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={dialogLabelId}
+        aria-describedby={describedById}
+        tabIndex={-1}
         className={`bg-[rgb(var(--card))] rounded-lg shadow-xl ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -85,3 +170,6 @@ export default function ModalOverlay({
     </div>
   );
 }
+
+/** Export the generated dialog label ID pattern for consumers to use */
+export { type ModalOverlayProps };
