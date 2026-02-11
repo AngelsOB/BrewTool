@@ -68,8 +68,10 @@ export default function SectionSidebar() {
     const bottomProximity = docHeight > viewportHeight
       ? scrollY / (docHeight - viewportHeight)
       : 0;
-    // When near the bottom, shift the trigger line down so bottom sections can activate
-    const triggerLine = viewportHeight * (0.33 + 0.47 * Math.pow(bottomProximity, 2));
+    // Trigger line sits near the bottom of the viewport (~80%) so sections
+    // activate as soon as they scroll into view. Shifts toward 100% at page end
+    // so the final sections can still activate.
+    const triggerLine = viewportHeight * (0.52 + 0.2 * Math.pow(bottomProximity, 2));
 
     let bestIndex = 0;
     let bestScore = -Infinity;

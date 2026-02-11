@@ -769,15 +769,63 @@
      Scoped under .brew-theme parent
      ============================================= */
 
-  /* Section card — warm with accent-colored top border, no position:relative */
+  /* Section card — accent-tinted background with prominent noise & top border */
   .brew-section {
     @apply rounded-2xl p-6 mb-6;
-    background: rgb(var(--brew-card));
-    background-image: var(--noise-texture);
-    background-size: 200px 200px;
-    border: 1px solid rgb(var(--brew-border-subtle));
+    /*
+     * Layer stack (top → bottom):
+     *  1. Heavy noise — gives tactile grain over the tinted surface
+     *  2. Top-left radial hotspot — strong accent bloom
+     *  3. Bottom-right radial hotspot — complementary secondary bloom
+     *  4. Full-card base wash — even accent tint edge-to-edge
+     *  5. Card background color
+     */
+    background:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E"),
+      radial-gradient(
+        ellipse 140% 100% at 5% -10%,
+        color-mix(in oklch, var(--brew-accent-100) 70%, transparent),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 110% 80% at 100% 110%,
+        color-mix(in oklch, var(--brew-accent-100) 50%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(
+        165deg,
+        color-mix(in oklch, var(--brew-accent-50) 60%, transparent) 0%,
+        color-mix(in oklch, var(--brew-accent-50) 25%, transparent) 50%,
+        transparent 100%
+      ),
+      rgb(var(--brew-card));
+    background-size: 180px 180px, auto, auto, auto, auto;
+    border: 1px solid color-mix(in oklch, var(--brew-accent-200) 40%, rgb(var(--brew-border-subtle)));
     border-top: 3px solid var(--brew-accent-500);
     box-shadow: var(--shadow-card);
+  }
+  .dark .brew-section {
+    background:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"),
+      radial-gradient(
+        ellipse 140% 100% at 5% -10%,
+        color-mix(in oklch, var(--brew-accent-900) 70%, transparent),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 110% 80% at 100% 110%,
+        color-mix(in oklch, var(--brew-accent-900) 45%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(
+        165deg,
+        color-mix(in oklch, var(--brew-accent-950) 65%, transparent) 0%,
+        color-mix(in oklch, var(--brew-accent-950) 30%, transparent) 50%,
+        transparent 100%
+      ),
+      rgb(var(--brew-card));
+    background-size: 180px 180px, auto, auto, auto, auto;
+    border-color: color-mix(in oklch, var(--brew-accent-800) 25%, rgb(var(--brew-border-subtle)));
   }
   .brew-section:hover {
     box-shadow: var(--shadow-card-hover);
