@@ -107,13 +107,13 @@ export default function RecipeListPage() {
   // Handle creating a new recipe
   const handleCreateNew = () => {
     setCurrentRecipe(null);
-    navigate("/beta-builder/new");
+    navigate("/recipes/new");
   };
 
   // Handle viewing/editing a recipe
   const handleViewRecipe = (recipe: Recipe) => {
     setCurrentRecipe(recipe);
-    navigate(`/beta-builder/${recipe.id}`);
+    navigate(`/recipes/${recipe.id}`);
   };
 
   // Handle delete confirmation
@@ -401,7 +401,7 @@ function RecipeCard({
     e.stopPropagation();
     const session = createSession(recipe);
     saveCurrentSession();
-    navigate(`/beta-builder/sessions/${session.id}`);
+    navigate(`/recipes/sessions/${session.id}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

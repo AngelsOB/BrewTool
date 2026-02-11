@@ -72,7 +72,7 @@ export default function RecipeSessionsBar({
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       e.stopPropagation();
-      navigate(`/beta-builder/sessions/${sessionId}`);
+      navigate(`/recipes/sessions/${sessionId}`);
     }
   };
 
@@ -95,7 +95,7 @@ export default function RecipeSessionsBar({
                 tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/beta-builder/sessions/${session.id}`);
+                  navigate(`/recipes/sessions/${session.id}`);
                 }}
                 onKeyDown={(e) => handleSessionKeyDown(e, session.id)}
                 className="px-4 py-3 hover:bg-[rgb(var(--bg))] cursor-pointer transition-colors focus:outline-none focus:bg-[rgb(var(--bg))]"

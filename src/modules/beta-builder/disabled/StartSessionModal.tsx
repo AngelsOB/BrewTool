@@ -28,7 +28,7 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
     saveCurrentSession();
 
     // Navigate to session tracker
-    navigate(`/beta-builder/sessions/${session.id}`);
+    navigate(`/recipes/sessions/${session.id}`);
     onClose();
   };
 

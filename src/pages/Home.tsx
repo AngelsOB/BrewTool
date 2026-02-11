@@ -18,12 +18,6 @@ export default function Home() {
                 Start a Recipe
               </Link>
               <Link
-                to="/beta-builder"
-                className="rounded-xl border border-blue-500/40 bg-blue-500/15 px-5 py-2.5 text-sm font-medium text-blue-700 dark:text-blue-200 shadow-soft hover:bg-blue-500/25 hover:border-blue-500/60 transition-colors"
-              >
-                🚀 Beta Builder (New!)
-              </Link>
-              <Link
                 to="/calculators"
                 className="btn-outline"
               >
@@ -72,20 +66,6 @@ export default function Home() {
               <div className="font-medium text-strong mb-1">Recipe Builder</div>
               <div className="text-sm text-muted">
                 Create and manage your brewing recipes
-              </div>
-            </div>
-            <span className="text-muted opacity-50">→</span>
-          </div>
-        </Link>
-        <Link
-          to="/beta-builder"
-          className="card-glass card-inner-ring p-5 neon-glow"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="font-medium text-strong mb-1">Beta Builder</div>
-              <div className="text-sm text-muted">
-                Advanced recipe builder with brew sessions
               </div>
             </div>
             <span className="text-muted opacity-50">→</span>
