@@ -89,7 +89,7 @@ export default function PresetPickerModal<T>({
         labelledById={titleId}
       >
         {/* Modal Header */}
-        <div className="p-6 border-b border-[rgb(var(--brew-border))]">
+        <div className="p-6 border-b border-[rgb(var(--brew-border-subtle))]">
           <div className="flex justify-between items-center mb-4">
             <h3 id={titleId} className="brew-section-title">
               {title}
@@ -148,10 +148,10 @@ export default function PresetPickerModal<T>({
             <div className="space-y-6">
               {groups.map((group) => (
                 <div key={group.label}>
-                  <h4 className="text-sm font-bold mb-2 uppercase sticky top-0 z-10 bg-[rgb(var(--brew-card))] px-6 py-2 border-b border-[rgb(var(--brew-border))]" style={{ letterSpacing: 'var(--brew-tracking-wide)' }}>
+                  <h4 className="text-sm font-bold uppercase sticky top-0 z-10 backdrop-blur-md px-6 py-2 border-b border-[rgb(var(--brew-border-subtle))]" style={{ letterSpacing: 'var(--brew-tracking-wide)', background: 'color-mix(in oklch, var(--brew-accent-600) 15%, rgb(var(--brew-card) / 0.9))' }}>
                     {group.label}
                   </h4>
-                  <div className="space-y-1 px-6">
+                  <div className="grid gap-1.5 px-6 pt-2 pb-1">
                     {group.items.map((item, index) => (
                       <div key={index}>{renderItem(item, group)}</div>
                     ))}
@@ -163,7 +163,7 @@ export default function PresetPickerModal<T>({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] flex justify-between items-center rounded-b-xl">
+        <div className="p-4 border-t border-[rgb(var(--brew-border-subtle))] flex justify-between items-center">
           <div className="text-sm text-muted">
             {totalCount} {countLabel}
           </div>

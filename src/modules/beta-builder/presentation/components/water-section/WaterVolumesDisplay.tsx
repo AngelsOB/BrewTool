@@ -23,7 +23,7 @@ export default function WaterVolumesDisplay({ calculations }: Props) {
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Mash Water */}
-        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
           <div className="text-sm mb-1 font-medium brew-link">
             Mash Water
           </div>
@@ -37,7 +37,7 @@ export default function WaterVolumesDisplay({ calculations }: Props) {
         </div>
 
         {/* Sparge Water */}
-        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
           <div className="text-sm mb-1 font-medium brew-link">
             Sparge Water
           </div>
@@ -51,7 +51,7 @@ export default function WaterVolumesDisplay({ calculations }: Props) {
         </div>
 
         {/* Pre-Boil Volume */}
-        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
           <div className="text-sm mb-1 font-medium brew-link">
             Pre-Boil
           </div>
@@ -65,7 +65,7 @@ export default function WaterVolumesDisplay({ calculations }: Props) {
         </div>
 
         {/* Total Water */}
-        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+        <div className="rounded-lg p-4" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
           <div className="text-sm mb-1 font-medium brew-link">
             Total Water
           </div>

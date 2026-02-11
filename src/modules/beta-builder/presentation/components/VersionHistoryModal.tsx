@@ -100,7 +100,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
           {/* Vertical line connector */}
           {depth > 0 && (
             <div className="flex flex-col items-center">
-              <div className="w-px h-6 bg-[rgb(var(--border))]" />
+              <div className="w-px h-6 bg-[rgb(var(--brew-border-subtle))]" />
             </div>
           )}
 
@@ -115,7 +115,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                       <div className="font-semibold text-green-700 dark:text-green-400">
                         Version {recipe.currentVersion} (Current)
                       </div>
-                      <div className="text-sm text-[rgb(var(--text-muted))]">
+                      <div className="text-sm text-muted">
                         Last updated: {new Date(recipe.updatedAt).toLocaleString()}
                       </div>
                     </div>
@@ -126,7 +126,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
               <div
                 role="button"
                 tabIndex={0}
-                className="mb-4 p-4 border border-[rgb(var(--border))] rounded-lg hover:shadow-md hover:border-[rgb(var(--accent))] transition-all bg-[rgb(var(--card))] cursor-pointer"
+                className="mb-4 p-4 border border-[rgb(var(--brew-border-subtle))] rounded-lg hover:shadow-md hover:border-[var(--brew-accent-400)] transition-all bg-[rgb(var(--brew-card)/0.6)] cursor-pointer"
                 onClick={() => {
                   navigate(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
                 }}
@@ -144,7 +144,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                       <div className="font-semibold text-blue-700 dark:text-blue-400">
                         Version {version!.versionNumber}
                       </div>
-                      <div className="text-sm text-[rgb(var(--text-muted))]">
+                      <div className="text-sm text-muted">
                         {new Date(version!.createdAt).toLocaleString()}
                       </div>
                       {version!.changeNotes && (
@@ -154,7 +154,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                       )}
                     </div>
                   </div>
-                  <div className="text-sm text-[rgb(var(--text-muted))]">
+                  <div className="text-sm text-muted">
                     Click to view →
                   </div>
                 </div>
@@ -173,7 +173,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
 
               return (
                 <div className="ml-8 mb-4">
-                  <div className="text-xs uppercase tracking-wide text-[rgb(var(--text-muted))] mb-2">
+                  <div className="text-xs uppercase tracking-wide text-muted mb-2">
                     Brew Sessions ({versionSessions.length})
                   </div>
                   <div className="space-y-2">
@@ -196,11 +196,11 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                             <div className="text-sm font-medium">
                               {new Date(session.brewDate).toLocaleDateString()}
                             </div>
-                            <div className="text-xs text-[rgb(var(--text-muted))]">
+                            <div className="text-xs text-muted">
                               {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                             </div>
                           </div>
-                          <div className="text-xs text-[rgb(var(--text-muted))]">
+                          <div className="text-xs text-muted">
                             OG {session.actuals.originalGravity?.toFixed(3) ?? '—'}
                           </div>
                         </div>
@@ -240,7 +240,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                           <div className="font-semibold text-purple-700 dark:text-purple-400">
                             {variation.name}
                           </div>
-                          <div className="text-xs text-[rgb(var(--text-muted))]">
+                          <div className="text-xs text-muted">
                             Variation (v{variation.currentVersion}) • Created {new Date(variation.createdAt).toLocaleDateString()}
                           </div>
                         </div>
@@ -265,20 +265,19 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
 
   return (
     <ModalOverlay isOpen={isOpen} onClose={onClose} size="3xl">
-      <div className="flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-[rgb(var(--border))] flex items-center justify-between">
+        <div className="p-6 border-b border-[rgb(var(--brew-border-subtle))] flex items-center justify-between">
           <div>
             <h3 id="modal-title" className="text-xl font-semibold">Version History: {recipe.name}</h3>
             {recipe.parentRecipeId && (
-              <p className="text-sm text-[rgb(var(--text-muted))] mt-1">
+              <p className="text-sm text-muted mt-1">
                 Variation of: {allRecipes.find(r => r.id === recipe.parentRecipeId)?.name || 'Unknown'}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text))] transition-colors"
+            className="text-muted hover:text-[var(--fg-strong)] transition-colors"
             aria-label="Close modal"
           >
             <svg
@@ -297,7 +296,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
         <div className="flex-1 overflow-y-auto p-6">
           {/* Version Tree */}
           {versions.length === 0 && tree.variations.length === 0 ? (
-            <div className="text-center py-8 text-[rgb(var(--text-muted))]">
+            <div className="text-center py-8 text-muted">
               <p>No version history yet.</p>
               <p className="text-sm mt-2">
                 Versions will appear here when you create new versions of this recipe.
@@ -311,12 +310,11 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-[rgb(var(--border))] flex justify-end">
+        <div className="p-6 border-t border-[rgb(var(--brew-border-subtle))] flex justify-end">
           <Button variant="neon" onClick={onClose}>
             Close
           </Button>
         </div>
-      </div>
     </ModalOverlay>
   );
 }

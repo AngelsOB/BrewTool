@@ -134,7 +134,7 @@ export default function HopFlavorRadar({
   return (
     <div className="flex flex-col gap-3">
       {title && (
-        <div className="text-center text-sm font-medium text-white/40">
+        <div className="text-center text-sm font-medium text-muted">
           {title}
         </div>
       )}
@@ -150,8 +150,9 @@ export default function HopFlavorRadar({
             key={i}
             points={ringPath(m)}
             fill="none"
-            stroke="#e5e7eb"
+            style={{ stroke: 'rgb(var(--brew-border-subtle))' }}
             strokeWidth={1}
+            strokeOpacity={0.5}
           />
         ))}
         {/* Axes */}
@@ -167,8 +168,9 @@ export default function HopFlavorRadar({
                 y1={center.y}
                 x2={x}
                 y2={y}
-                stroke="#e5e7eb"
+                style={{ stroke: 'rgb(var(--brew-border-subtle))' }}
                 strokeWidth={1}
+                strokeOpacity={0.5}
               />
             );
           }
@@ -205,7 +207,7 @@ export default function HopFlavorRadar({
                 textAnchor={textAnchor}
                 dominantBaseline="middle"
                 className="text-[11px]"
-                style={{ fill: labelColorize ? colorForAxis(key) : "#475569" }}
+                style={{ fill: labelColorize ? colorForAxis(key) : 'var(--fg-muted)' }}
                 dy={dy}
               >
                 {label}
@@ -239,7 +241,7 @@ export default function HopFlavorRadar({
             y={center.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-neutral-400 text-xs"
+            className="text-xs" style={{ fill: 'var(--fg-muted)' }}
           >
             {emptyHint || "No data"}
           </text>
@@ -251,18 +253,19 @@ export default function HopFlavorRadar({
           {list.map((s, i) => (
             <div
               key={s.name}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-[rgb(var(--card))]/60 px-2 py-1"
+              className="inline-flex items-center gap-2 rounded-lg px-2 py-1"
+              style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))' }}
             >
               <span
                 className="inline-block h-3 w-3 rounded-sm"
                 style={{ backgroundColor: colorForIndex(i, list.length) }}
               />
-              <span className="font-medium text-neutral-800">{s.name}</span>
+              <span className="font-medium" style={{ color: 'var(--fg-strong)' }}>{s.name}</span>
             </div>
           ))}
         </div>
       )}
-      <div className="text-center text-xs text-neutral-500">
+      <div className="text-center text-xs text-muted">
         0-5 scale. 0s mean no aroma values available.
       </div>
     </div>

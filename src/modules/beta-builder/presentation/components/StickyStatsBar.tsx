@@ -41,7 +41,7 @@ export default function StickyStatsBar({
 
   return (
     <div
-      className={`fixed left-0 right-0 bg-[rgb(var(--brew-card))]/95 backdrop-blur-md border-[rgb(var(--brew-border))] shadow-lg z-40 transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
+      className={`fixed left-0 right-0 bg-[rgb(var(--brew-card))]/25 backdrop-blur-md border-[rgb(var(--brew-border))] shadow-lg z-40 transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
     >
       <div className="max-w-4xl mx-auto px-8 py-2">
         <div className="grid grid-cols-7 gap-2">

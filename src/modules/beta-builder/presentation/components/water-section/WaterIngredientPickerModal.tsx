@@ -66,7 +66,7 @@ export default function WaterIngredientPickerModal({
 
   return (
     <ModalOverlay isOpen={isOpen} onClose={handleClose} size="lg">
-      <div className="p-4 border-b border-[rgb(var(--border))]">
+      <div className="p-4 border-b border-[rgb(var(--brew-border-subtle))]">
         <div className="flex items-center justify-between mb-3">
           <h3 className="brew-section-title">Add Ingredient</h3>
           <button
@@ -125,24 +125,26 @@ export default function WaterIngredientPickerModal({
         ) : (
           filteredPresets.map((group) => (
             <div key={group.category} className="mb-2">
-              <div className="sticky top-0 bg-[rgb(var(--brew-card))] px-2 py-1.5 text-xs font-semibold text-muted uppercase" style={{ letterSpacing: 'var(--brew-tracking-wide)' }}>
+              <div className="sticky top-0 backdrop-blur-md px-2 py-1.5 text-xs font-semibold text-muted uppercase" style={{ letterSpacing: 'var(--brew-tracking-wide)', background: 'color-mix(in oklch, var(--brew-accent-200) 55%, rgb(var(--brew-card) / 0.9))' }}>
                 {group.label}
               </div>
-              {group.items.map((name) => (
-                <button
-                  key={name}
-                  onClick={() => handleSelect(name, group.category)}
-                  className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[rgb(var(--bg))] transition-colors"
-                >
-                  {name}
-                </button>
-              ))}
+              <div className="grid gap-1.5 pt-1.5 pb-1">
+                {group.items.map((name) => (
+                  <button
+                    key={name}
+                    onClick={() => handleSelect(name, group.category)}
+                    className="brew-picker-row text-sm"
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
             </div>
           ))
         )}
       </div>
 
-      <div className="p-3 border-t border-[rgb(var(--border))] flex items-center justify-between">
+      <div className="p-3 border-t border-[rgb(var(--brew-border-subtle))] flex items-center justify-between">
         <span className="text-xs text-muted">
           {filteredPresets.reduce((sum, g) => sum + g.items.length, 0)} ingredients
         </span>

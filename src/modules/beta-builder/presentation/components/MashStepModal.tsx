@@ -151,7 +151,7 @@ export default function MashStepModal({
   return (
     <ModalOverlay isOpen={isOpen} onClose={handleClose} size="2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-[rgb(var(--card))] border-b border-[rgb(var(--border))] px-6 py-4">
+        <div className="border-b border-[rgb(var(--brew-border-subtle))] px-6 py-4">
           <h2 className="text-xl font-semibold">
             {existingStep ? "Edit Mash Step" : "Add Mash Step"}
           </h2>
@@ -255,10 +255,10 @@ export default function MashStepModal({
 
           {/* Calculated Infusion Temperature Display */}
           {stepType === "infusion" && totalGrainKg > 0 && infusionTempDisplay && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="font-semibold text-blue-900 mb-1">Calculated Infusion Temperature:</p>
-              <p className="text-lg font-bold text-blue-700">{infusionTempDisplay.toFixed(1)}°C</p>
-              <p className="text-sm text-blue-600 mt-2">
+            <div className="p-4 rounded-lg backdrop-blur-sm" style={{ background: 'color-mix(in oklch, var(--brew-info) 10%, rgb(var(--brew-card) / 0.5))', border: '1px solid color-mix(in oklch, var(--brew-info) 25%, transparent)' }}>
+              <p className="font-semibold mb-1" style={{ color: 'var(--fg-strong)' }}>Calculated Infusion Temperature:</p>
+              <p className="text-lg font-bold" style={{ color: 'var(--brew-info)' }}>{infusionTempDisplay.toFixed(1)}°C</p>
+              <p className="text-sm mt-2" style={{ color: 'var(--brew-info)' }}>
                 {recipe.mashSteps.length === 0 && !existingStep
                   ? "Strike water temperature for initial infusion"
                   : "Infusion water temperature to reach target mash temp"}
@@ -268,15 +268,15 @@ export default function MashStepModal({
 
           {/* Warning if no grains */}
           {totalGrainKg === 0 && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-sm text-yellow-800">
-                ⚠️ Add fermentables first to enable infusion temperature calculations
+            <div className="brew-alert-warning">
+              <p className="text-sm">
+                Add fermentables first to enable infusion temperature calculations
               </p>
             </div>
           )}
 
           {/* Common Presets */}
-          <div className="border-t border-[rgb(var(--border))] pt-4">
+          <div className="border-t border-[rgb(var(--brew-border-subtle))] pt-4">
             <p className="text-sm font-semibold mb-2">Common Mash Steps:</p>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -286,7 +286,7 @@ export default function MashStepModal({
                   setTemperature(50);
                   setDuration(15);
                 }}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded text-left"
+                className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
               >
                 Protein Rest (50°C, 15 min)
               </button>
@@ -297,7 +297,7 @@ export default function MashStepModal({
                   setTemperature(66);
                   setDuration(60);
                 }}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded text-left"
+                className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
               >
                 Saccharification (66°C, 60 min)
               </button>
@@ -308,7 +308,7 @@ export default function MashStepModal({
                   setTemperature(76);
                   setDuration(10);
                 }}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded text-left"
+                className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
               >
                 Mash Out (76°C, 10 min)
               </button>
@@ -319,7 +319,7 @@ export default function MashStepModal({
                   setTemperature(63);
                   setDuration(30);
                 }}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded text-left"
+                className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
               >
                 Beta Rest (63°C, 30 min)
               </button>
@@ -328,7 +328,7 @@ export default function MashStepModal({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-[rgb(var(--bg))] border-t border-[rgb(var(--border))] px-6 py-4 flex gap-3 justify-end">
+        <div className="border-t border-[rgb(var(--brew-border-subtle))] px-6 py-4 flex gap-3 justify-end">
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>

@@ -112,7 +112,7 @@ export default function CustomHopModal({
             />
           </div>
 
-          <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-md p-3">
+          <div className="bg-[rgb(var(--brew-card-inset)/0.4)] border border-[rgb(var(--brew-border-subtle))] rounded-md p-3">
             <p className="text-xs">
               Note: Custom hops won't have flavor profile data. You can still use them for
               calculations and scheduling.

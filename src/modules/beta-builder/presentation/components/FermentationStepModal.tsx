@@ -7,6 +7,9 @@
 import { useState, useEffect } from 'react';
 import type { FermentationStep, FermentationStepType } from '../../domain/models/Recipe';
 import ModalOverlay from './ModalOverlay';
+import Input from '@components/Input';
+import Select from '@components/Select';
+import Button from '@components/Button';
 
 type Props = {
   isOpen: boolean;
@@ -76,17 +79,17 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
   if (!isOpen) return null;
 
   return (
-    <ModalOverlay isOpen={isOpen} onClose={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
+    <ModalOverlay isOpen={isOpen} onClose={onClose} size="2xl">
+        {/* Header */}
+        <div className="border-b border-[rgb(var(--brew-border-subtle))] px-6 py-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-xl font-semibold">
               {editingStep ? 'Edit Fermentation Step' : 'Add Fermentation Step'}
             </h2>
             <button
               onClick={onClose}
               aria-label="Close modal"
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-[var(--fg-muted)] hover:text-[var(--fg-strong)] transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -95,34 +98,34 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
           </div>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="px-6 py-4 space-y-4">
           {/* Step Type */}
           <div>
             <label htmlFor="fermentation-step-type" className="block text-sm font-semibold mb-2">Step Type</label>
-            <select
+            <Select
               id="fermentation-step-type"
               value={stepType}
               onChange={(e) => handleTypeChange(e.target.value as FermentationStepType)}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+              fullWidth
             >
               {STEP_TYPE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           {/* Step Name */}
           <div>
             <label htmlFor="fermentation-step-name" className="block text-sm font-semibold mb-2">Step Name</label>
-            <input
+            <Input
               id="fermentation-step-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Primary Fermentation, Dry Hop"
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+              fullWidth
             />
           </div>
 
@@ -130,26 +133,26 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="fermentation-step-duration" className="block text-sm font-semibold mb-2">Duration (days)</label>
-              <input
+              <Input
                 id="fermentation-step-duration"
                 type="number"
                 value={durationDays}
                 onChange={(e) => setDurationDays(parseFloat(e.target.value) || 0)}
                 min="0"
                 step="1"
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                fullWidth
               />
             </div>
 
             <div>
               <label htmlFor="fermentation-step-temperature" className="block text-sm font-semibold mb-2">Temperature (°C)</label>
-              <input
+              <Input
                 id="fermentation-step-temperature"
                 type="number"
                 value={temperatureC}
                 onChange={(e) => setTemperatureC(parseFloat(e.target.value) || 0)}
                 step="0.5"
-                className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+                fullWidth
               />
             </div>
           </div>
@@ -163,27 +166,20 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g., Add dry hops on day 7, Cold crash before packaging"
               rows={3}
-              className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-white dark:bg-gray-800"
+              className="brew-journal"
             />
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-6 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
+        {/* Footer */}
+        <div className="border-t border-[rgb(var(--brew-border-subtle))] px-6 py-4 flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-          >
+          </Button>
+          <Button variant="neon" onClick={handleSave}>
             {editingStep ? 'Save Changes' : 'Add Step'}
-          </button>
+          </Button>
         </div>
-      </div>
     </ModalOverlay>
   );
 }
