@@ -55,41 +55,30 @@ export default function TargetStyleModal({
   };
 
   return (
-    <ModalOverlay isOpen={isOpen} onClose={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
+    <ModalOverlay isOpen={isOpen} onClose={onClose} size="3xl">
+        {/* Header */}
+        <div className="border-b border-[rgb(var(--brew-border-subtle))] px-6 py-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Select Target Water Style</h2>
+            <h2 className="text-xl font-semibold">Select Target Water Style</h2>
             <button
               onClick={onClose}
               aria-label="Close modal"
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-[var(--fg-muted)] hover:text-[var(--fg-strong)] transition-colors"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-sm text-muted mt-2">
             Choose a beer style to get target water profile recommendations
           </p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="px-6 py-4 space-y-6 overflow-y-auto">
           {Object.entries(STYLE_CATEGORIES).map(([category, styles]) => (
             <div key={category}>
-              <h3 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-bold uppercase mb-3 text-muted" style={{ letterSpacing: 'var(--brew-tracking-wide)' }}>
                 {category}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -103,41 +92,35 @@ export default function TargetStyleModal({
                     <button
                       key={styleName}
                       onClick={() => handleSelect(styleName)}
-                      className={`text-left p-4 rounded-lg border-2 transition-all ${
+                      className={`text-left p-4 rounded-lg transition-all duration-150 ${
                         isSelected
-                          ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30"
-                          : "border-gray-200 dark:border-gray-700 hover:border-cyan-300 dark:hover:border-cyan-600 bg-white dark:bg-gray-800"
+                          ? "brew-chip-active"
+                          : "brew-ingredient-row"
                       }`}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <div className="font-semibold text-gray-900 dark:text-gray-100">
+                        <div className="font-semibold">
                           {styleName}
                         </div>
-                        <div className="text-xs font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/50 px-2 py-1 rounded">
+                        <span className="brew-tag text-[10px]">
                           {target.clToSo4Ratio}
-                        </div>
+                        </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      <p className="text-sm text-muted mb-3">
                         {target.description}
                       </p>
                       <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                          <div className="text-gray-500 dark:text-gray-400">Ca</div>
-                          <div className="font-semibold text-gray-900 dark:text-gray-100">
-                            {target.profile.Ca}
-                          </div>
+                        <div className="brew-gauge p-2 rounded-lg">
+                          <div className="text-muted text-[10px]">Ca</div>
+                          <div className="font-semibold">{target.profile.Ca}</div>
                         </div>
-                        <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                          <div className="text-gray-500 dark:text-gray-400">Cl</div>
-                          <div className="font-semibold text-gray-900 dark:text-gray-100">
-                            {target.profile.Cl}
-                          </div>
+                        <div className="brew-gauge p-2 rounded-lg">
+                          <div className="text-muted text-[10px]">Cl</div>
+                          <div className="font-semibold">{target.profile.Cl}</div>
                         </div>
-                        <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                          <div className="text-gray-500 dark:text-gray-400">SO4</div>
-                          <div className="font-semibold text-gray-900 dark:text-gray-100">
-                            {target.profile.SO4}
-                          </div>
+                        <div className="brew-gauge p-2 rounded-lg">
+                          <div className="text-muted text-[10px]">SO4</div>
+                          <div className="font-semibold">{target.profile.SO4}</div>
                         </div>
                       </div>
                     </button>
@@ -147,7 +130,6 @@ export default function TargetStyleModal({
             </div>
           ))}
         </div>
-      </div>
     </ModalOverlay>
   );
 }

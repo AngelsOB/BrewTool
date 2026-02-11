@@ -154,7 +154,7 @@ export default function BetaBuilderPage() {
       )}
         {/* Header */}
         <div className="mb-8 brew-animate-in">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
             <div>
               <button
                 onClick={() => navigate('/recipes')}

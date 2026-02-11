@@ -267,7 +267,7 @@ export default function HopSection() {
 
           {/* Hop Flavor Visualizer */}
           {currentRecipe.hops.length > 0 && (
-            <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+            <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold">Hop Flavor Profile</h3>
                 <div className="flex gap-2">
@@ -370,7 +370,7 @@ export default function HopSection() {
 
             {/* Flavor Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
+              <span className="brew-chip-label whitespace-nowrap">
                 Flavor:
               </span>
               {[
@@ -432,7 +432,7 @@ export default function HopSection() {
 
             {/* Origin/Category Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
+              <span className="brew-chip-label whitespace-nowrap">
                 Region:
               </span>
               {availableCategories.map((cat) => (
@@ -460,7 +460,7 @@ export default function HopSection() {
             onClick={() => handleAddFromPreset(preset)}
             onMouseEnter={(e) => handleHopHover(preset, e)}
             onMouseLeave={handleHopLeave}
-            className="w-full text-left px-4 py-2 rounded hover:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] transition-colors flex justify-between items-center"
+            className="brew-picker-row flex justify-between items-center"
           >
             <div className="flex items-center gap-3">
               {preset.flavor && <HopFlavorMini flavor={preset.flavor} size={24} />}

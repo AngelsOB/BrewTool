@@ -475,7 +475,7 @@ export default function FermentableSection() {
 
             {/* Origin Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="py-1 px-2 font-semibold brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
+              <span className="py-1 px-2 font-semibold brew-chip-label whitespace-nowrap">
                 Origin:
               </span>
               {availableOrigins.map((code) => (
@@ -502,7 +502,7 @@ export default function FermentableSection() {
           <button
             key={preset.name}
             onClick={() => handleAddFromPreset(preset)}
-            className="w-full text-left px-4 py-2 rounded hover:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] transition-colors flex justify-between items-center"
+            className="brew-picker-row flex justify-between items-center"
           >
             <span className="font-medium flex items-center gap-2">
               {preset.originCode && (

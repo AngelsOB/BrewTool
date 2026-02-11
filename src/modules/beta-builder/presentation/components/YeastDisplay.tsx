@@ -23,7 +23,7 @@ export default function YeastDisplay({
   onUpdateAttenuation,
 }: YeastDisplayProps) {
   return (
-    <div className="p-4 rounded border border-[rgb(var(--border))]">
+    <div className="brew-ingredient-row">
       <div className="grid grid-cols-12 gap-4 items-center">
         {/* Name and Laboratory */}
         <div className="col-span-6 flex items-start gap-4">
@@ -31,9 +31,9 @@ export default function YeastDisplay({
             <YeastLabBadge laboratory={yeast.laboratory} size="md" />
           </div>
           <div>
-            <span className="font-medium text-lg block">{yeast.name}</span>
+            <span className="font-medium text-lg block" style={{ color: 'var(--fg-strong)' }}>{yeast.name}</span>
             {yeast.laboratory && (
-              <div className="text-sm font-medium text-gray-500">
+              <div className="text-sm font-medium text-muted">
                 {yeast.laboratory}
               </div>
             )}
@@ -53,7 +53,7 @@ export default function YeastDisplay({
               onChange={(e) =>
                 onUpdateAttenuation((parseFloat(e.target.value) || 0) / 100)
               }
-              className="w-24 px-3 py-2 border border-[rgb(var(--border))] rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="brew-input w-24"
               step="1"
               min="0"
               max="100"
@@ -66,7 +66,7 @@ export default function YeastDisplay({
         <div className="col-span-1 text-right">
           <button
             onClick={onChangeYeast}
-            className="text-amber-600 hover:text-amber-800 text-sm font-medium"
+            className="brew-link text-sm font-medium"
           >
             Change
           </button>

@@ -43,9 +43,10 @@ export default function PhAdjustmentsSection({
       <div
         className="rounded-lg p-4"
         style={{
-          background: `color-mix(in oklch, ${statusColor} 10%, rgb(var(--brew-card-inset)))`,
+          background: `color-mix(in oklch, ${statusColor} 10%, rgb(var(--brew-card-inset) / 0.4))`,
           border: `1px solid color-mix(in oklch, ${statusColor} 25%, rgb(var(--brew-border-subtle)))`,
           borderLeft: `3px solid ${statusColor}`,
+          boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)',
         }}
       >
         <div className="flex items-center justify-between">

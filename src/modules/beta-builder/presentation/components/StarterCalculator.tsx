@@ -155,18 +155,18 @@ export default function StarterCalculator({
   };
 
   return (
-    <div className="border border-[rgb(var(--border))] rounded-lg">
-      <div className="flex items-center justify-between p-4 bg-[rgb(var(--bg))] border-b border-[rgb(var(--border))]">
+    <div className="rounded-lg" style={{ border: '1px solid rgb(var(--brew-border-subtle))' }}>
+      <div className="flex items-center justify-between p-4 rounded-t-lg" style={{ background: 'rgb(var(--brew-card-inset) / 0.3)', borderBottom: '1px solid rgb(var(--brew-border-subtle))' }}>
         <div className="flex items-center gap-3">
-          <span className="font-medium">Pitch Rate & Starter</span>
+          <span className="font-medium" style={{ color: 'var(--fg-strong)' }}>Pitch Rate & Starter</span>
           {!isOpen && summaryText && (
-            <span className="text-xs font-medium">{summaryText}</span>
+            <span className="text-xs font-medium text-muted">{summaryText}</span>
           )}
         </div>
         <button
           type="button"
           onClick={onToggle}
-          className="text-xs px-3 py-1.5 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--card))] transition-colors"
+          className="brew-btn-ghost text-xs"
         >
           {isOpen ? "Hide Calculator" : "Show Calculator"}
         </button>
@@ -175,15 +175,15 @@ export default function StarterCalculator({
       {isOpen && (
         <div className="p-4 space-y-4">
           {/* Part 1: Cells */}
-          <div className="rounded-lg border border-[rgb(var(--border))] p-4 space-y-3">
-            <div className="text-sm font-semibold">Part 1: Cells</div>
+          <div className="rounded-lg p-4 space-y-3" style={{ background: 'rgb(var(--brew-card-inset) / 0.3)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
+            <div className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>Part 1: Cells</div>
 
             {/* Package inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
               <label className="block">
                 <div className="text-xs font-semibold mb-1">Package Type</div>
                 <select
-                  className="w-full rounded-md border border-[rgb(var(--border))] px-2 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  className="brew-input w-full"
                   value={yeastType}
                   onChange={(e) => setYeastType(e.target.value as YeastType)}
                 >
@@ -201,7 +201,7 @@ export default function StarterCalculator({
                       Slurry Amount (L)
                     </div>
                     <input
-                      className="w-full rounded-md border border-[rgb(var(--border))] px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="brew-input w-full"
                       type="number"
                       step={0.1}
                       min={0}
@@ -214,7 +214,7 @@ export default function StarterCalculator({
                       Density (B/mL)
                     </div>
                     <input
-                      className="w-full rounded-md border border-[rgb(var(--border))] px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="brew-input w-full"
                       type="number"
                       step={0.1}
                       min={0}
@@ -229,7 +229,7 @@ export default function StarterCalculator({
                 <label className="block">
                   <div className="text-xs font-semibold mb-1">Packs</div>
                   <input
-                    className="w-full rounded-md border border-[rgb(var(--border))] px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    className="brew-input w-full"
                     type="number"
                     step={1}
                     min={0}
@@ -242,7 +242,7 @@ export default function StarterCalculator({
                   <label className="block">
                     <div className="text-xs font-semibold mb-1">Packs</div>
                     <input
-                      className="w-full rounded-md border border-[rgb(var(--border))] px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="brew-input w-full"
                       type="number"
                       step={1}
                       min={0}
@@ -253,7 +253,7 @@ export default function StarterCalculator({
                   <label className="block">
                     <div className="text-xs font-semibold mb-1">Mfg Date</div>
                     <input
-                      className="w-full rounded-md border border-[rgb(var(--border))] px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="brew-input w-full"
                       type="date"
                       value={mfgDate}
                       onChange={(e) => setMfgDate(e.target.value)}
@@ -266,23 +266,22 @@ export default function StarterCalculator({
             {/* Cell counts */}
             <div className="text-sm flex flex-wrap gap-x-6 gap-y-2">
               <span>
-                <span className="text-gray-600 dark:text-gray-400">Available:</span>{" "}
+                <span className="text-muted">Available:</span>{" "}
                 <span className="font-semibold">
                   {starterResults.cellsAvailableB.toFixed(0)} B
                 </span>
               </span>
               <span>
-                <span className="text-gray-600 dark:text-gray-400">Required:</span>{" "}
+                <span className="text-muted">Required:</span>{" "}
                 <span className="font-semibold">
                   {starterResults.requiredCellsB.toFixed(0)} B
                 </span>
               </span>
               <span>
-                <span className="text-gray-600 dark:text-gray-400">Diff:</span>{" "}
+                <span className="text-muted">Diff:</span>{" "}
                 <span
-                  className={`font-semibold ${
-                    diffB < 0 ? "text-red-600" : "text-green-600"
-                  }`}
+                  className={`font-semibold ${diffB < 0 ? "brew-danger-text" : ""}`}
+                  style={diffB >= 0 ? { color: 'var(--brew-success)' } : undefined}
                 >
                   {(diffB >= 0 ? "+" : "") + diffB.toFixed(0)} B
                 </span>
@@ -291,8 +290,8 @@ export default function StarterCalculator({
           </div>
 
           {/* Part 2: Starter Steps */}
-          <div className="rounded-lg border border-[rgb(var(--border))] p-4 space-y-3">
-            <div className="text-sm font-semibold">
+          <div className="rounded-lg p-4 space-y-3" style={{ background: 'rgb(var(--brew-card-inset) / 0.3)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
+            <div className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
               Part 2: Starter (up to 3 steps)
             </div>
 
@@ -309,7 +308,7 @@ export default function StarterCalculator({
                     <label className="block">
                       <div className="text-xs font-semibold mb-1">Size (L)</div>
                       <input
-                        className="w-full rounded-md border border-[rgb(var(--border))] px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full"
                         type="number"
                         step={0.1}
                         value={s.liters}
@@ -326,7 +325,7 @@ export default function StarterCalculator({
                         Gravity (SG)
                       </div>
                       <input
-                        className="w-full rounded-md border border-[rgb(var(--border))] px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full"
                         type="number"
                         step={0.001}
                         value={s.gravity}
@@ -341,7 +340,7 @@ export default function StarterCalculator({
                     <label className="block">
                       <div className="text-xs font-semibold mb-1">Model</div>
                       <select
-                        className="w-full rounded-md border border-[rgb(var(--border))] px-2 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="brew-input w-full"
                         value={
                           s.model.kind === "white"
                             ? `white-${s.model.aeration}`
@@ -366,16 +365,16 @@ export default function StarterCalculator({
                       </select>
                     </label>
 
-                    <div className="rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 py-2">
-                      <div className="text-[11px]">DME (g)</div>
-                      <div className="font-semibold text-sm">
+                    <div className="rounded-md px-3 py-2" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+                      <div className="text-[11px] text-muted">DME (g)</div>
+                      <div className="font-semibold text-sm" style={{ color: 'var(--fg-strong)' }}>
                         {res?.dmeGrams.toFixed(0) ?? "–"}
                       </div>
                     </div>
 
-                    <div className="rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 py-2">
-                      <div className="text-[11px]">End (B)</div>
-                      <div className="font-semibold text-sm">
+                    <div className="rounded-md px-3 py-2" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+                      <div className="text-[11px] text-muted">End (B)</div>
+                      <div className="font-semibold text-sm" style={{ color: 'var(--fg-strong)' }}>
                         {res?.endBillion.toFixed(0) ?? "–"}
                       </div>
                     </div>
@@ -383,7 +382,7 @@ export default function StarterCalculator({
                     <button
                       type="button"
                       aria-label={`Remove step ${i + 1}`}
-                      className="p-2 hover:text-red-600"
+                      className="p-2 brew-danger-text opacity-60 hover:opacity-100 transition-opacity"
                       onClick={() => handleRemoveStep(s.id)}
                     >
                       ×
@@ -395,17 +394,16 @@ export default function StarterCalculator({
               {steps.length > 0 && (
                 <div className="text-sm flex justify-end gap-x-6">
                   <span>
-                    <span className="text-gray-600 dark:text-gray-400">Final:</span>{" "}
+                    <span className="text-muted">Final:</span>{" "}
                     <span className="font-semibold">
                       {starterResults.finalEndB.toFixed(0)} B
                     </span>
                   </span>
                   <span>
-                    <span className="text-gray-600 dark:text-gray-400">Diff:</span>{" "}
+                    <span className="text-muted">Diff:</span>{" "}
                     <span
-                      className={`font-semibold ${
-                        finalDiffB < 0 ? "text-red-600" : "text-green-600"
-                      }`}
+                      className={`font-semibold ${finalDiffB < 0 ? "brew-danger-text" : ""}`}
+                      style={finalDiffB >= 0 ? { color: 'var(--brew-success)' } : undefined}
                     >
                       {(finalDiffB >= 0 ? "+" : "") + finalDiffB.toFixed(0)} B
                     </span>
@@ -416,7 +414,7 @@ export default function StarterCalculator({
               <div className="flex items-center justify-start">
                 <button
                   type="button"
-                  className="rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 py-2 text-xs hover:bg-[rgb(var(--bg))]"
+                  className="brew-btn-ghost text-xs"
                   onClick={handleAddStep}
                   disabled={steps.length >= 3}
                 >

@@ -39,16 +39,15 @@ export const EquipmentProfileModal = ({
 
   return (
     <ModalOverlay isOpen={isOpen} onClose={onClose} size="3xl">
-      <div className="flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-[rgb(var(--border))]">
+        <div className="p-6 border-b border-[rgb(var(--brew-border-subtle))]">
           <div className="flex items-center justify-between mb-4">
             <h2 id="modal-title" className="text-xl font-bold">
               Select Equipment Profile
             </h2>
             <button
               onClick={onClose}
-              className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text))] transition-colors"
+              className="text-muted hover:text-[var(--fg-strong)] transition-colors"
               aria-label="Close modal"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,7 +71,7 @@ export const EquipmentProfileModal = ({
           {/* Preset Profiles */}
           {presetProfiles.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wide mb-3">
+              <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
                 Preset Profiles
               </h3>
               <div className="space-y-2">
@@ -90,7 +89,7 @@ export const EquipmentProfileModal = ({
           {/* Custom Profiles */}
           {customProfiles.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wide mb-3">
+              <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
                 Custom Profiles
               </h3>
               <div className="space-y-2">
@@ -108,7 +107,7 @@ export const EquipmentProfileModal = ({
           {/* No Results */}
           {filteredProfiles.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-[rgb(var(--text-muted))]">
+              <p className="text-muted">
                 No equipment profiles found
               </p>
             </div>
@@ -116,7 +115,7 @@ export const EquipmentProfileModal = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-[rgb(var(--border))] flex gap-3">
+        <div className="p-6 border-t border-[rgb(var(--brew-border-subtle))] flex gap-3">
           <Button variant="neon" onClick={onCreateCustom}>
             + Create Custom
           </Button>
@@ -124,7 +123,6 @@ export const EquipmentProfileModal = ({
             Cancel
           </Button>
         </div>
-      </div>
     </ModalOverlay>
   );
 };
@@ -139,7 +137,7 @@ const ProfileCard = ({ profile, onSelect }: ProfileCardProps) => {
   return (
     <button
       onClick={onSelect}
-      className="w-full text-left p-4 border border-[rgb(var(--border))] rounded-lg hover:border-[rgb(var(--accent))] hover:bg-[rgb(var(--surface))] transition-colors"
+      className="w-full text-left p-4 border border-[rgb(var(--brew-border-subtle))] rounded-lg hover:border-[var(--brew-accent-400)] hover:bg-[rgb(var(--brew-card-inset)/0.4)] transition-colors"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -155,7 +153,7 @@ const ProfileCard = ({ profile, onSelect }: ProfileCardProps) => {
       </div>
 
       {profile.description && (
-        <p className="text-sm text-[rgb(var(--text-muted))] mb-3">
+        <p className="text-sm text-muted mb-3">
           {profile.description}
         </p>
       )}
@@ -163,25 +161,25 @@ const ProfileCard = ({ profile, onSelect }: ProfileCardProps) => {
       {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-3 text-xs">
         <div>
-          <span className="text-[rgb(var(--text-muted))]">Batch:</span>{' '}
+          <span className="text-muted">Batch:</span>{' '}
           <span className="font-semibold">
             {profile.batchSizeL.toFixed(1)}L
           </span>
         </div>
         <div>
-          <span className="text-[rgb(var(--text-muted))]">Boil:</span>{' '}
+          <span className="text-muted">Boil:</span>{' '}
           <span className="font-semibold">
             {profile.boilTimeMin}min
           </span>
         </div>
         <div>
-          <span className="text-[rgb(var(--text-muted))]">Mash Eff:</span>{' '}
+          <span className="text-muted">Mash Eff:</span>{' '}
           <span className="font-semibold">
             {profile.mashEfficiency}%
           </span>
         </div>
         <div>
-          <span className="text-[rgb(var(--text-muted))]">BH Eff:</span>{' '}
+          <span className="text-muted">BH Eff:</span>{' '}
           <span className="font-semibold">
             {profile.brewhouseEfficiency}%
           </span>

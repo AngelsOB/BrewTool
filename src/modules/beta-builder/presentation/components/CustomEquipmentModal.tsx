@@ -77,7 +77,7 @@ export const CustomEquipmentModal = ({
           Save Equipment Profile
         </h3>
 
-        <p className="text-sm text-[rgb(var(--text-muted))] mb-4">
+        <p className="text-sm text-muted mb-4">
           Save your current equipment settings as a reusable profile.
         </p>
 

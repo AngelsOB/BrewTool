@@ -52,7 +52,7 @@ export default function StyleRangeComparison({
   }
 
   return (
-    <div className="bg-[rgb(var(--brew-card-inset))] border border-[rgb(var(--brew-border-subtle))] rounded-xl p-6">
+    <div className="bg-[rgb(var(--brew-card-inset)/0.45)] dark:bg-[rgb(var(--brew-card-inset)/0.35)] backdrop-blur-sm border border-[rgb(var(--brew-border-subtle))] dark:border-[rgb(255_255_255/0.08)] rounded-xl p-6" style={{ boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
       <h2 className="brew-section-title text-lg mb-4">BJCP Style Ranges</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
         <ArcGauge

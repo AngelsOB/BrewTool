@@ -47,7 +47,7 @@ export default function SaltSummary({
               <div
                 key={saltKey}
                 className="rounded-lg p-3"
-                style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}
+                style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}
               >
                 <div className="text-xs brew-link mb-1 font-medium">
                   {SALT_SHORT_LABELS[saltKey]}

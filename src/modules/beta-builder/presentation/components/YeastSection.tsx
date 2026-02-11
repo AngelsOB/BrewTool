@@ -231,7 +231,7 @@ export default function YeastSection() {
 
             {/* Category Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide text-xs">
-              <span className="brew-chip-label sticky left-0 bg-[rgb(var(--brew-card))] z-10">
+              <span className="brew-chip-label whitespace-nowrap">
                 Brand:
               </span>
               {availableCategories.map((cat) => (
@@ -253,7 +253,7 @@ export default function YeastSection() {
           <button
             key={preset.name}
             onClick={() => handleSelectFromPreset(preset)}
-            className="brew-menu-item w-full text-left flex justify-between items-center group"
+            className="brew-picker-row flex justify-between items-center group"
           >
             <div className="flex items-center gap-3">
               <YeastLabBadge
