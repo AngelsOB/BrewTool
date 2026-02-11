@@ -170,7 +170,7 @@ export default function BrewSessionPage() {
 
   const handleSave = () => {
     saveCurrentSession();
-    navigate('/beta-builder/recipes');
+    navigate('/recipes');
   };
 
   const handleNotesChange = (notes: string) => {

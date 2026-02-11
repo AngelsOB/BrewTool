@@ -5,7 +5,6 @@ import ThemeToggle from "./ThemeToggle";
 const navLinks = [
   { to: "/calculators", label: "Calculators" },
   { to: "/recipes", label: "Recipes" },
-  { to: "/beta-builder", label: "Recipe Builder" },
 ] as const;
 
 function NavLinkItem({

@@ -1,6 +1,10 @@
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import "./index.css";
 import App from "./App.tsx";
 import RouteErrorPage from "./components/RouteErrorPage.tsx";
@@ -28,25 +32,9 @@ const router = createBrowserRouter(
         },
         {
           path: "recipes",
-          lazy: async () => ({
-            Component: (await import("./pages/RecipeBuilder.tsx")).default,
-          }),
-        },
-        {
-          path: "beta-builder",
           children: [
             {
               index: true,
-              lazy: async () => ({
-                Component: (
-                  await import(
-                    "./modules/beta-builder/presentation/components/RecipeListPage.tsx"
-                  )
-                ).default,
-              }),
-            },
-            {
-              path: "recipes",
               lazy: async () => ({
                 Component: (
                   await import(
@@ -98,10 +86,8 @@ const router = createBrowserRouter(
           ],
         },
         {
-          path: "brew/:id",
-          lazy: async () => ({
-            Component: (await import("./pages/BrewMode.tsx")).default,
-          }),
+          path: "beta-builder/*",
+          element: <Navigate to="/recipes" replace />,
         },
         ...(import.meta.env.DEV
           ? [

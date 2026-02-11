@@ -128,12 +128,12 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                 tabIndex={0}
                 className="mb-4 p-4 border border-[rgb(var(--border))] rounded-lg hover:shadow-md hover:border-[rgb(var(--accent))] transition-all bg-[rgb(var(--card))] cursor-pointer"
                 onClick={() => {
-                  navigate(`/beta-builder/${recipe.id}/versions/${version!.versionNumber}`);
+                  navigate(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    navigate(`/beta-builder/${recipe.id}/versions/${version!.versionNumber}`);
+                    navigate(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
                   }
                 }}
               >
@@ -182,11 +182,11 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                         key={session.id}
                         role="button"
                         tabIndex={0}
-                        onClick={() => navigate(`/beta-builder/sessions/${session.id}`)}
+                        onClick={() => navigate(`/recipes/sessions/${session.id}`)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            navigate(`/beta-builder/sessions/${session.id}`);
+                            navigate(`/recipes/sessions/${session.id}`);
                           }
                         }}
                         className="p-3 border border-amber-300 dark:border-amber-700 rounded-lg bg-amber-50 dark:bg-amber-900/20 cursor-pointer hover:shadow-sm transition-shadow"

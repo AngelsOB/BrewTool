@@ -116,7 +116,7 @@ export default function BetaBuilderPage() {
           <div className="text-center">
             <p className="mb-4">Version not found.</p>
             <button
-              onClick={() => navigate('/beta-builder')}
+              onClick={() => navigate('/recipes')}
               className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
             >
               Back to Recipes
@@ -131,7 +131,7 @@ export default function BetaBuilderPage() {
 
   const handleSave = () => {
     saveCurrentRecipe();
-    navigate('/beta-builder');
+    navigate('/recipes');
   };
 
   return (
@@ -157,7 +157,7 @@ export default function BetaBuilderPage() {
           <div className="flex items-center justify-between">
             <div>
               <button
-                onClick={() => navigate('/beta-builder')}
+                onClick={() => navigate('/recipes')}
                 className="text-sm font-medium mb-3 flex items-center gap-1.5 transition-colors"
                 style={{ color: 'var(--brew-accent-600)' }}
               >
@@ -169,7 +169,7 @@ export default function BetaBuilderPage() {
             </div>
             {isReadOnly && id && (
               <button
-                onClick={() => navigate(`/beta-builder/${id}`)}
+                onClick={() => navigate(`/recipes/${id}`)}
                 className="brew-btn-ghost"
               >
                 Open Current Recipe
@@ -342,7 +342,7 @@ export default function BetaBuilderPage() {
           {!isReadOnly && (
         <div className="brew-section brew-animate-in brew-stagger-9 flex gap-3">
           <button
-            onClick={() => navigate('/beta-builder')}
+            onClick={() => navigate('/recipes')}
             className="brew-btn-ghost flex-1 py-3"
           >
             Cancel
